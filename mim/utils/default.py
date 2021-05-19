@@ -1,0 +1,35 @@
+import os
+import site
+
+USER = 'open-mmlab'
+DEFAULT_URL = f'https://github.com/{USER}'
+
+WHEEL_URL = {
+    'mmcv-full':
+    'https://download.openmmlab.com/mmcv/dist/{cuda_version}/'
+    '{torch_version}/index.html',
+}
+RAW_GITHUB_URL = 'https://raw.githubusercontent.com/{owner}/{repo}/{branch}'
+PKG2PROJECT = {
+    'mmcv-full': 'mmcv',
+    'mmcls': 'mmclassification',
+    'mmdet': 'mmdetection',
+    'mmdet3d': 'mmdetection3d',
+    'mmseg': 'mmsegmentation',
+    'mmaction': 'mmaction2',
+    'mmtrack': 'mmtracking',
+    'mmpose': 'mmpose',
+    'mmedit': 'mmediting',
+    'mmocr': 'mmocr',
+    'mmgen': 'mmgeneration',
+}
+PKG_ALIAS = {
+    'mmcv-full': 'mmcv',
+    'mmcv': 'mmcv',
+}
+
+DEFAULT_CACHE_DIR = f'{os.environ["HOME"]}/.cache/mim'
+if not os.path.exists(DEFAULT_CACHE_DIR):
+    os.makedirs(DEFAULT_CACHE_DIR)
+
+MMPACKAGE_PATH = os.path.join(site.getsitepackages()[0], 'mmpackage.txt')
