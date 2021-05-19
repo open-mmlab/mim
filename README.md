@@ -31,7 +31,7 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
     + from source
 
         ```bash
-        git clone https://gitlab.sz.sensetime.com/open-mmlab/mim.git
+        git clone https://github.com/open-mmlab/mim.git
         cd mim
         python setup.py develop or python setup.py install
         ```
@@ -68,8 +68,6 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 
 <details>
 <summary>1. install</summary>
-
-[![asciicast](https://asciinema.org/a/LyMXALRosqzmM2RoFCZsC8DoV.svg)](https://asciinema.org/a/LyMXALRosqzmM2RoFCZsC8DoV)
 
 + command
 
@@ -166,8 +164,6 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>4. search</summary>
 
-[![asciicast](https://asciinema.org/a/bPrejDHbfKMdIoAwR1OUXDgbC.svg)](https://asciinema.org/a/bPrejDHbfKMdIoAwR1OUXDgbC)
-
 + command
 
     ```bash
@@ -206,8 +202,6 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>5. download</summary>
 
-[![asciicast](https://asciinema.org/a/RGlsdl9EzVCNYCNmckJBTq6Nv.svg)](https://asciinema.org/a/RGlsdl9EzVCNYCNmckJBTq6Nv)
-
 + command
 
     ```bash
@@ -228,8 +222,6 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 
 <details>
 <summary>6. train</summary>
-
-[![asciicast](https://asciinema.org/a/5S2okqQxQDt2oxbQSyfLJESF5.svg)](https://asciinema.org/a/5S2okqQxQDt2oxbQSyfLJESF5)
 
 + command
 
@@ -266,8 +258,6 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 
 <details>
 <summary>7. test</summary>
-
-[![asciicast](https://asciinema.org/a/p9fAC4hwYy2P0lsI75RhbmexY.svg)](https://asciinema.org/a/p9fAC4hwYy2P0lsI75RhbmexY)
 
 + command
 
@@ -313,8 +303,6 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>8. run</summary>
 
-[![asciicast](https://asciinema.org/a/I3dipVYjXEzZGLbsiVqG7VkGV.svg)](https://asciinema.org/a/I3dipVYjXEzZGLbsiVqG7VkGV)
-
 + command
 
     ```bash
@@ -357,8 +345,6 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 
 <details>
 <summary>9. gridsearch</summary>
-
-[![asciicast](https://asciinema.org/a/kOIaJxvecSMxs8KXpK4KJ0oKA.svg)](https://asciinema.org/a/kOIaJxvecSMxs8KXpK4KJ0oKA)
 
 + command
 
@@ -443,4 +429,3 @@ tmp --gpus 1
 ## Contributing
 
 We appreciate all contributions to improve mim. Please refer to [CONTRIBUTING.md](https://github.com/open-mmlab/mmcv/blob/master/CONTRIBUTING.md) for the contributing guideline.
-
