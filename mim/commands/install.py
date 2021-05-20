@@ -73,8 +73,8 @@ def cli(
     \b
     # install latest version of mmcv-full
     > mim install mmcv-full  # wheel
-    # install 1.2.7
-    > mim install mmcv-full==1.2.7
+    # install 1.3.1
+    > mim install mmcv-full==1.3.1
     # install master branch
     > mim install mmcv-full -f https://github.com/open-mmlab/mmcv.git
 
