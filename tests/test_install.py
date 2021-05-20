@@ -27,8 +27,8 @@ def test_mmcv_install():
     result = runner.invoke(install, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
 
-    # mim install mmcv-full==1.2.7 --yes
-    result = runner.invoke(install, ['mmcv-full==1.2.7', '--yes'])
+    # mim install mmcv-full==1.3.0 --yes
+    result = runner.invoke(install, ['mmcv-full==1.3.0', '--yes'])
     assert result.exit_code == 0
 
     # mim uninstall mmcv-full --yes
