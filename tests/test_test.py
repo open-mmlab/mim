@@ -8,11 +8,9 @@ from mim.commands.install import cli as install
 from mim.commands.test import cli as test
 from mim.utils import download_from_file, extract_tar, is_installed
 
-dataset_url = ('https://openmmlab.oss-cn-hangzhou.aliyuncs.com/mim/'
-               'dataset.tar')
-cfg_url = ('https://openmmlab.oss-cn-hangzhou.aliyuncs.com/mim/'
-           'resnet18_b16x8_custom.py')
-ckpt_url = 'https://openmmlab.oss-cn-hangzhou.aliyuncs.com/mim/epoch_3.pth'
+dataset_url = 'https://download.openmmlab.com/mim/dataset.tar'
+cfg_url = 'https://download.openmmlab.com/mim/resnet18_b16x8_custom.py'
+ckpt_url = 'https://download.openmmlab.com/mim/epoch_3.pth'
 
 
 def setup_module():
