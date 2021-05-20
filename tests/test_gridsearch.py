@@ -8,10 +8,8 @@ from mim.commands.gridsearch import cli as gridsearch
 from mim.commands.install import cli as install
 from mim.utils import download_from_file, extract_tar, is_installed
 
-dataset_url = ('https://openmmlab.oss-cn-hangzhou.aliyuncs.com/mim/'
-               'dataset.tar')
-cfg_url = ('https://openmmlab.oss-cn-hangzhou.aliyuncs.com/mim/'
-           'resnet18_b16x8_custom.py')
+dataset_url = 'https://download.openmmlab.com/mim/dataset.tar'
+cfg_url = 'https://download.openmmlab.com/mim/resnet18_b16x8_custom.py'
 
 
 def setup_module():
