@@ -69,13 +69,15 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>1. install</summary>
 
+[![asciicast](https://asciinema.org/a/5fd2bzqlxz9g0a2H3tV3avJO6.svg)](https://asciinema.org/a/5fd2bzqlxz9g0a2H3tV3avJO6)
+
 + command
 
     ```bash
     # install latest version of mmcv-full
     > mim install mmcv-full  # wheel
-    # install 1.2.7
-    > mim install mmcv-full==1.2.7
+    # install 1.3.1
+    > mim install mmcv-full==1.3.1
     # install master branch
     > mim install mmcv-full -f https://github.com/open-mmlab/mmcv.git
 
@@ -105,7 +107,7 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
     # install mmcls
     # install mmcls will automatically install mmcv if it is not installed
     install('mmcv-full', find_url='https://github.com/open-mmlab/mmcv.git')
-    install('mmcv-full==1.2.7', find_url='https://github.com/open-mmlab/mmcv.git')
+    install('mmcv-full==1.3.1', find_url='https://github.com/open-mmlab/mmcv.git')
 
     # install extension based on OpenMMLab
     install('mmcls-project', find_url='https://github.com/xxx/mmcls-project.git')
@@ -115,6 +117,8 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 
 <details>
 <summary>2. uninstall</summary>
+
+[![asciicast](https://asciinema.org/a/7Wps2UeQ0MeqhNAFRIRpry4k1.svg)](https://asciinema.org/a/7Wps2UeQ0MeqhNAFRIRpry4k1)
 
 + command
 
@@ -143,6 +147,8 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>3. list</summary>
 
+[![asciicast](https://asciinema.org/a/m1EYNM1hrOy8yvjXpS4R62FRm.svg)](https://asciinema.org/a/m1EYNM1hrOy8yvjXpS4R62FRm)
+
 + command
 
     ```bash
@@ -163,6 +169,8 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 
 <details>
 <summary>4. search</summary>
+
+[![asciicast](https://asciinema.org/a/wVYllCMEUOw8PrW68g2IE5fpk.svg)](https://asciinema.org/a/wVYllCMEUOw8PrW68g2IE5fpk)
 
 + command
 
@@ -202,6 +210,8 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>5. download</summary>
 
+[![asciicast](https://asciinema.org/a/Srg7AF7y07qx1on7i6Jmym8ay.svg)](https://asciinema.org/a/Srg7AF7y07qx1on7i6Jmym8ay)
+
 + command
 
     ```bash
@@ -222,6 +232,8 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 
 <details>
 <summary>6. train</summary>
+
+[![asciicast](https://asciinema.org/a/6PnfF3Vg8ja6RpN3gxxqqA4n8.svg)](https://asciinema.org/a/6PnfF3Vg8ja6RpN3gxxqqA4n8)
 
 + command
 
@@ -258,6 +270,8 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 
 <details>
 <summary>7. test</summary>
+
+[![asciicast](https://asciinema.org/a/0GZWW9b9dfR6L4PNqOlzykSkp.svg)](https://asciinema.org/a/0GZWW9b9dfR6L4PNqOlzykSkp)
 
 + command
 
@@ -303,6 +317,8 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>8. run</summary>
 
+[![asciicast](https://asciinema.org/a/6Jh4CABs4F5kEZUGYyxcBZai1.svg)](https://asciinema.org/a/6Jh4CABs4F5kEZUGYyxcBZai1)
+
 + command
 
     ```bash
@@ -345,6 +361,8 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 
 <details>
 <summary>9. gridsearch</summary>
+
+[![asciicast](https://asciinema.org/a/2D0rkhvaT0oM9sDvHfspdrgpM.svg)](https://asciinema.org/a/2D0rkhvaT0oM9sDvHfspdrgpM)
 
 + command
 
