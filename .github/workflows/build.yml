@@ -29,13 +29,27 @@ jobs:
       CUDA_SHORT: 10.1
       UBUNTU_VERSION: ubuntu1804
       FORCE_CUDA: 1
-
+    strategy:
+      matrix:
+        python-version: [3.7]
+        torch: [1.5.0+cu101, 1.8.0+cu101]
+        include:
+          - torch: 1.5.0+cu101
+            torchvision: 0.6.0+cu101
+          - torch: 1.8.0+cu101
+            torchvision: 0.9.0+cu101
+          - torch: 1.8.0+cu101
+            torchvision: 0.9.0+cu101
+            python-version: 3.6
+          - torch: 1.8.0+cu101
+            torchvision: 0.9.0+cu101
+            python-version: 3.8
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python 3.7
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: ${{ matrix.python-version }}
       - name: Install CUDA
         run: |
           export INSTALLER=cuda-repo-${UBUNTU_VERSION}_${CUDA}_amd64.deb
@@ -50,7 +64,7 @@ jobs:
           export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${CUDA_HOME}/include:${LD_LIBRARY_PATH}
           export PATH=${CUDA_HOME}/bin:${PATH}
       - name: Install PyTorch
-        run: pip install torch==1.8.0+cu101 torchvision==0.9.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+        run: pip install torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html
       - name: Build and install
         run: rm -rf .eggs && pip install -e .
       - name: Validate the installation
