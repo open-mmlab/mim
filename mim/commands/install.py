@@ -360,7 +360,8 @@ def install_from_repo(repo_root: str,
         if dependencies:
             install_dependencies(dependencies, timeout, is_yes, is_user_dir)
 
-    pkg_root = osp.join(repo_root, package)
+    true_pkg = PKG_ALIAS.get(package, package)
+    pkg_root = osp.join(repo_root, true_pkg)
     src_tool_root = osp.join(repo_root, 'tools')
     dst_tool_root = osp.join(pkg_root, 'tools')
     src_config_root = osp.join(repo_root, 'configs')
@@ -404,6 +405,7 @@ def install_from_repo(repo_root: str,
     if package in WHEEL_URL or os.getenv('MMCV_WITH_OPS', '1') == 1:
         echo_warning(f'compiling {package} with "MMCV_WITH_OPS=1"')
         os.environ['MMCV_WITH_OPS'] = '1'
+        os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
 
     call_command(install_cmd)
 
