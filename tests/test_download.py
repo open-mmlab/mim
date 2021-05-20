@@ -25,7 +25,7 @@ def test_download():
         download('mmcls==0.11.0', ['resnet18_b16x8_cifar10'])
 
     with pytest.raises(RuntimeError):
-        # mim is not installed
+        # mmcls is not installed
         download('mmcls', ['resnet18_b16x8_cifar10'])
 
     with pytest.raises(ValueError):
