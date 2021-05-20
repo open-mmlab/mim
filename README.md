@@ -1,4 +1,4 @@
-# MIM: **M**IM **I**nstalls Open**M**MLab Packages
+# MIM: MIM Installs OpenMMLab Packages
 
 MIM provides a unified API for launching and installing OpenMMLab projects and their extensions, and managing the OpenMMLab model zoo.
 
