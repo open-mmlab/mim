@@ -74,8 +74,8 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
     ```bash
     # install latest version of mmcv-full
     > mim install mmcv-full  # wheel
-    # install 1.2.7
-    > mim install mmcv-full==1.2.7
+    # install 1.3.1
+    > mim install mmcv-full==1.3.1
     # install master branch
     > mim install mmcv-full -f https://github.com/open-mmlab/mmcv.git
 
@@ -105,7 +105,7 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
     # install mmcls
     # install mmcls will automatically install mmcv if it is not installed
     install('mmcv-full', find_url='https://github.com/open-mmlab/mmcv.git')
-    install('mmcv-full==1.2.7', find_url='https://github.com/open-mmlab/mmcv.git')
+    install('mmcv-full==1.3.1', find_url='https://github.com/open-mmlab/mmcv.git')
 
     # install extension based on OpenMMLab
     install('mmcls-project', find_url='https://github.com/xxx/mmcls-project.git')
