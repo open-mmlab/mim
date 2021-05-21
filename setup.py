@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup  # type: ignore
 
 setup(
-    name='mim',
+    name='openmim',
     version='0.1.0',
     description='MIM Install OpenMMLab packages',
     author='OpenMMLab',
