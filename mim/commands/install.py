@@ -195,7 +195,7 @@ def install(package: str,
                                is_user_dir)
         except RuntimeError as error:
             if target_pkg in PKG2PROJECT:
-                find_url = (f'{DEFAULT_URL}/{PKG2PROJECT[target_pkg]}' '.git')
+                find_url = f'{DEFAULT_URL}/{PKG2PROJECT[target_pkg]}.git'
                 if target_version:
                     target_pkg = f'{target_pkg}=={target_version}'
                 if is_yes:
