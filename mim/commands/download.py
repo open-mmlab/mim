@@ -85,13 +85,11 @@ def download(package: str,
         checkpoint_urls = model_info[config]['weight']
         for checkpoint_url in checkpoint_urls.split(','):
             filename = checkpoint_url.split('/')[-1]
-            hash_prefix = filename.split('.')[0].split('-')[-1]
             checkpoint_path = osp.join(dest_root, filename)
             if osp.exists(checkpoint_path):
                 echo_success(f'{filename} exists in {dest_root}')
             else:
-                download_from_file(checkpoint_url, checkpoint_path,
-                                   hash_prefix)
+                download_from_file(checkpoint_url, checkpoint_path)
 
                 echo_success(
                     f'Successfully downloaded {filename} to {dest_root}')
