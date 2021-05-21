@@ -89,6 +89,7 @@ def download(package: str,
             if osp.exists(checkpoint_path):
                 echo_success(f'{filename} exists in {dest_root}')
             else:
+                # TODO: check checkpoint hash when all the models are ready.
                 download_from_file(checkpoint_url, checkpoint_path)
 
                 echo_success(
