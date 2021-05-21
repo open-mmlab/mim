@@ -33,7 +33,8 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
         ```bash
         git clone https://github.com/open-mmlab/mim.git
         cd mim
-        python setup.py develop or python setup.py install
+        pip install -e .
+        # python setup.py develop or python setup.py install
         ```
 
 4. Auto completion (Optional)
