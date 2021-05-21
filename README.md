@@ -430,17 +430,13 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 </details>
 
 
-## Build custom projects with mim
+## Build custom projects with MIM
 
-We provide an example about how to build custom projects based on MM codebases
-and mim. In `examples/custom_backbone`, we define a custom backbone and there
-is a classification config file that uses the backbone. To train this model,
-you can use the command:
+We provide some examples about how to build custom projects based on OpenMMLAB codebases and MIM in [MIM-Example](https://github.com/open-mmlab/mim-example). In [mmcls_custom_backbone](https://github.com/open-mmlab/mim-example/tree/master/mmcls_custom_backbone), we define a custom backbone and a classification config file that uses the backbone. To train this model, you can use the command:
 
 ```python
-# The working directory is `examples/custom_backbone`
-PYTHONPATH=$PWD:$PYTHONPATH mim train mmcls custom_net_config.py --work-dir \
-tmp --gpus 1
+# The working directory is `mim-example/mmcls_custom_backbone`
+PYTHONPATH=$PWD:$PYTHONPATH mim train mmcls custom_net_config.py --work-dir tmp --gpus 1
 ```
 
 
