@@ -1,8 +1,9 @@
 from .default import (
     DEFAULT_CACHE_DIR,
     DEFAULT_URL,
+    MODULENAME2PKG,
+    PKG2MODULENAME,
     PKG2PROJECT,
-    PKG_ALIAS,
     RAW_GITHUB_URL,
     USER,
     WHEEL_URL,
@@ -59,7 +60,7 @@ __all__ = [
     'is_installed',
     'parse_url',
     'PKG2PROJECT',
-    'PKG_ALIAS',
+    'PKG2MODULENAME',
     'RAW_GITHUB_URL',
     'read_installation_records',
     'write_installation_records',
@@ -82,4 +83,5 @@ __all__ = [
     'highlighted_error',
     'extract_tar',
     'get_release_version',
+    'MODULENAME2PKG',
 ]

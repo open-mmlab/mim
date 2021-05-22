@@ -14,8 +14,9 @@ from mim.click import get_official_package, param2lowercase
 from mim.commands.uninstall import uninstall
 from mim.utils import (
     DEFAULT_URL,
+    MODULENAME2PKG,
+    PKG2MODULENAME,
     PKG2PROJECT,
-    PKG_ALIAS,
     WHEEL_URL,
     call_command,
     echo_success,
@@ -115,10 +116,10 @@ def install(package: str,
     target_pkg, target_version = split_package_version(package)
 
     # mmcv-full -> mmcv
-    true_pkg = PKG_ALIAS.get(target_pkg, target_pkg)
+    # module_name = PKG2MODULENAME.get(target_pkg, target_pkg)
 
     # whether install from local repo
-    is_install_local_repo = osp.isdir(osp.abspath(true_pkg)) and not find_url
+    is_install_local_repo = osp.isdir(osp.abspath(target_pkg)) and not find_url
 
     # whether install master branch from github
     is_install_master = bool(not target_version and find_url)
@@ -166,14 +167,15 @@ def install(package: str,
 
     if is_install_local_repo:
         is_record = True
-        repo_root = osp.abspath(true_pkg)
-        target_pkg, target_version = get_package_version(repo_root)
-
-        echo_success(f'installing {target_pkg} from local repo.')
-
-        if not target_pkg:
+        repo_root = osp.abspath(target_pkg)
+        module_name, target_version = get_package_version(repo_root)
+        if not module_name:
             raise FileNotFoundError(
                 highlighted_error(f'version.py is missed in {repo_root}'))
+
+        target_pkg = MODULENAME2PKG.get(module_name, module_name)
+
+        echo_success(f'installing {target_pkg} from local repo.')
 
         install_from_repo(
             repo_root,
@@ -189,7 +191,7 @@ def install(package: str,
     else:
         # if installing from wheel failed, it will try to install package by
         # building from source if possible.
-        is_record = bool(target_pkg in PKG_ALIAS)
+        is_record = bool(target_pkg in PKG2MODULENAME)
         try:
             install_from_wheel(target_pkg, target_version, find_url, timeout,
                                is_user_dir)
@@ -360,8 +362,8 @@ def install_from_repo(repo_root: str,
         if dependencies:
             install_dependencies(dependencies, timeout, is_yes, is_user_dir)
 
-    true_pkg = PKG_ALIAS.get(package, package)
-    pkg_root = osp.join(repo_root, true_pkg)
+    module_name = PKG2MODULENAME.get(package, package)
+    pkg_root = osp.join(repo_root, module_name)
     src_tool_root = osp.join(repo_root, 'tools')
     dst_tool_root = osp.join(pkg_root, 'tools')
     src_config_root = osp.join(repo_root, 'configs')
@@ -401,11 +403,11 @@ def install_from_repo(repo_root: str,
     if is_user_dir:
         install_cmd.append('--user')
 
+    os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
     # install mmcv with ops by default
-    if package in WHEEL_URL or os.getenv('MMCV_WITH_OPS', '1') == 1:
+    if package in WHEEL_URL or os.getenv('MMCV_WITH_OPS', '1') == '1':
         echo_warning(f'compiling {package} with "MMCV_WITH_OPS=1"')
         os.environ['MMCV_WITH_OPS'] = '1'
-        os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
 
     call_command(install_cmd)
 
