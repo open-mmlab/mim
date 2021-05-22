@@ -22,7 +22,13 @@ class MIM(click.MultiCommand):
         ns = {}
         fn = osp.join(plugin_folder, name + '.py')
         if not osp.exists(fn):
-            return None
+            matches = [
+                x for x in self.list_commands(ctx) if x.startswith(name)
+            ]
+            if not matches:
+                return None
+            elif len(matches) == 1:
+                return self.get_command(ctx, matches[0])
 
         with open(fn) as f:
             code = compile(f.read(), fn, 'exec')
