@@ -8,6 +8,7 @@ from mim.click import OptionEatAll, get_downstream_package, param2lowercase
 from mim.commands.search import get_model_info
 from mim.utils import (
     DEFAULT_CACHE_DIR,
+    PKG2MODULE,
     download_from_file,
     echo_success,
     highlighted_error,
@@ -98,7 +99,8 @@ def download(package: str,
 
         config_paths = model_info[config]['config']
         for config_path in config_paths.split(','):
-            config_path = resource_filename(package, config_path)
+            module_name = PKG2MODULE.get(package, package)
+            config_path = resource_filename(module_name, config_path)
             if not osp.exists(config_path):
                 raise ValueError(
                     highlighted_error(f'{config_path} is not found.'))

@@ -405,7 +405,7 @@ def install_from_repo(repo_root: str,
 
     os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
     # install mmcv with ops by default
-    if package in WHEEL_URL or os.getenv('MMCV_WITH_OPS', '1') == '1':
+    if package in WHEEL_URL and os.getenv('MMCV_WITH_OPS', '1') == '1':
         echo_warning(f'compiling {package} with "MMCV_WITH_OPS=1"')
         os.environ['MMCV_WITH_OPS'] = '1'
 

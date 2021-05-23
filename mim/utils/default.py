@@ -8,6 +8,8 @@ WHEEL_URL = {
     'mmcv-full':
     'https://download.openmmlab.com/mmcv/dist/{cuda_version}/'
     '{torch_version}/index.html',
+    'mmcv':
+    'https://download.openmmlab.com/mmcv/dist/cpu/{torch_version}/index.html',
 }
 RAW_GITHUB_URL = 'https://raw.githubusercontent.com/{owner}/{repo}/{branch}'
 PKG2PROJECT = {
@@ -23,9 +25,9 @@ PKG2PROJECT = {
     'mmocr': 'mmocr',
     'mmgen': 'mmgeneration',
 }
+# TODO: Should directly infer MODULE name from PKG info
 PKG2MODULE = {
     'mmcv-full': 'mmcv',
-    'mmcv': 'mmcv',
     'mmaction2': 'mmaction',
     'mmsegmentation': 'mmseg',
 }
