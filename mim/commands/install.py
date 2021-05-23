@@ -301,7 +301,7 @@ def install_dependencies(dependencies: List[List[str]],
     """Install dependencies, such as mmcls depends on mmcv.
 
     Args:
-        dependencies (list): The list of denpendency.
+        dependencies (list): The list of dependency.
         timeout (int): The socket timeout. Default: 15.
         is_yes (bool): Don’t ask for confirmation of uninstall deletions.
             Default: False.
