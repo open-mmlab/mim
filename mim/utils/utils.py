@@ -17,7 +17,7 @@ import requests
 from requests.exceptions import InvalidURL, RequestException, Timeout
 from requests.models import Response
 
-from .default import DEFAULT_URL, MMPACKAGE_PATH, PKG2MODULENAME, PKG2PROJECT
+from .default import DEFAULT_URL, MMPACKAGE_PATH, PKG2MODULE, PKG2PROJECT
 
 
 def parse_url(url: str) -> Tuple[str, str]:
@@ -152,7 +152,7 @@ def is_installed(package: str) -> Any:
     Args:
         package (str): Name of package to be checked.
     """
-    module_name = PKG2MODULENAME.get(package, package)
+    module_name = PKG2MODULE.get(package, package)
     return importlib.util.find_spec(module_name)  # type: ignore
 
 
@@ -178,7 +178,7 @@ def get_installed_version(package: str) -> str:
     Args:
         package (str): Name of package.
     """
-    module_name = PKG2MODULENAME.get(package, package)
+    module_name = PKG2MODULE.get(package, package)
 
     if not is_installed(module_name):
         raise RuntimeError(highlighted_error(f'{package} is not installed.'))
@@ -228,7 +228,7 @@ def get_commit_id(package: str) -> str:
     Args:
         package (str): Name of package.
     """
-    module_name = PKG2MODULENAME.get(package, package)
+    module_name = PKG2MODULE.get(package, package)
     module = importlib.import_module('..commit_id', f'{module_name}.subpkg')
     return module.commit_id  # type: ignore
 
@@ -243,7 +243,7 @@ def get_installed_path(package: str) -> str:
         >>> get_installed_path('mmcls')
         >>> '.../lib/python3.7/site-packages/mmcls'
     """
-    module_name = PKG2MODULENAME.get(package, package)
+    module_name = PKG2MODULE.get(package, package)
     module = importlib.import_module(module_name)
     return module.__path__[0]  # type: ignore
 
@@ -295,7 +295,7 @@ def read_installation_records() -> list:
     for pkg in pkg_resources.working_set:
         pkg_name = pkg.project_name
         if pkg_name not in seen and (pkg_name in PKG2PROJECT
-                                     or pkg_name in PKG2MODULENAME):
+                                     or pkg_name in PKG2MODULE):
             pkgs_info.append((pkg_name, pkg.version, ''))
 
     return pkgs_info

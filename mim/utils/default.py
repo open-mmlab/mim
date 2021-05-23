@@ -23,13 +23,13 @@ PKG2PROJECT = {
     'mmocr': 'mmocr',
     'mmgen': 'mmgeneration',
 }
-PKG2MODULENAME = {
+PKG2MODULE = {
     'mmcv-full': 'mmcv',
     'mmcv': 'mmcv',
     'mmaction2': 'mmaction',
     'mmsegmentation': 'mmseg',
 }
-MODULENAME2PKG = {
+MODULE2PKG = {
     'mmaction': 'mmaction2',
     'mmseg': 'mmsegmentation',
 }

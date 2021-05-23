@@ -3,7 +3,7 @@ import sys
 import click
 
 from mim.click import get_installed_package, param2lowercase
-from mim.utils import PKG2MODULENAME, call_command, remove_installation_records
+from mim.utils import PKG2MODULE, call_command, remove_installation_records
 
 
 @click.command('uninstall')
@@ -43,6 +43,6 @@ def uninstall(package: str, confirm_yes=False) -> None:
     # package in the same process, is_installed will give a wrong result
     # because importlib.import_module will search package from sys.modules
     # first.
-    sys.modules.pop(PKG2MODULENAME.get(package, package), None)
+    sys.modules.pop(PKG2MODULE.get(package, package), None)
 
     remove_installation_records(package)

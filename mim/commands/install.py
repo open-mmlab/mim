@@ -14,8 +14,8 @@ from mim.click import get_official_package, param2lowercase
 from mim.commands.uninstall import uninstall
 from mim.utils import (
     DEFAULT_URL,
-    MODULENAME2PKG,
-    PKG2MODULENAME,
+    MODULE2PKG,
+    PKG2MODULE,
     PKG2PROJECT,
     WHEEL_URL,
     call_command,
@@ -116,7 +116,7 @@ def install(package: str,
     target_pkg, target_version = split_package_version(package)
 
     # mmcv-full -> mmcv
-    # module_name = PKG2MODULENAME.get(target_pkg, target_pkg)
+    # module_name = PKG2MODULE.get(target_pkg, target_pkg)
 
     # whether install from local repo
     is_install_local_repo = osp.isdir(osp.abspath(target_pkg)) and not find_url
@@ -173,7 +173,7 @@ def install(package: str,
             raise FileNotFoundError(
                 highlighted_error(f'version.py is missed in {repo_root}'))
 
-        target_pkg = MODULENAME2PKG.get(module_name, module_name)
+        target_pkg = MODULE2PKG.get(module_name, module_name)
 
         echo_success(f'installing {target_pkg} from local repo.')
 
@@ -191,7 +191,7 @@ def install(package: str,
     else:
         # if installing from wheel failed, it will try to install package by
         # building from source if possible.
-        is_record = bool(target_pkg in PKG2MODULENAME)
+        is_record = bool(target_pkg in PKG2MODULE)
         try:
             install_from_wheel(target_pkg, target_version, find_url, timeout,
                                is_user_dir)
@@ -362,7 +362,7 @@ def install_from_repo(repo_root: str,
         if dependencies:
             install_dependencies(dependencies, timeout, is_yes, is_user_dir)
 
-    module_name = PKG2MODULENAME.get(package, package)
+    module_name = PKG2MODULE.get(package, package)
     pkg_root = osp.join(repo_root, module_name)
     src_tool_root = osp.join(repo_root, 'tools')
     dst_tool_root = osp.join(pkg_root, 'tools')
