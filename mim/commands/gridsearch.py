@@ -3,6 +3,7 @@ import itertools
 import os
 import os.path as osp
 import subprocess
+import time
 from concurrent.futures import ProcessPoolExecutor as Executor
 from typing import Optional, Tuple, Union
 
@@ -322,6 +323,7 @@ def gridsearch(
 
         cmds.append(cmd)
 
+    time.sleep(5)
     succeed_list, fail_list = [], []
     if launcher in ['none', 'pytorch']:
         for cmd, exp_name in zip(cmds, exp_names):
