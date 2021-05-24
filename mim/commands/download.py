@@ -49,7 +49,7 @@ def download(package: str,
     """Download checkpoints from url and parse configs from package.
 
     Args:
-        package (str): Name of pakcage.
+        package (str): Name of package.
         configs (List[str]): List of config ids.
         dest_root (Optional[str]): Destination directory to save checkpoint and
             config. Default: None.
