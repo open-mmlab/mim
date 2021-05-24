@@ -18,7 +18,6 @@ from mim.utils import (
     PKG2PROJECT,
     cast2lowercase,
     echo_success,
-    get_commit_id,
     get_github_url,
     get_installed_version,
     highlighted_error,
@@ -216,19 +215,10 @@ def load_metadata_from_local(package: str):
     """
     if is_installed(package):
         version = get_installed_version(package)
-        commit_id = get_commit_id(package)
         click.echo(f'local verison: {version}')
 
-        pkl_path = osp.join(DEFAULT_CACHE_DIR, f'{package}-{commit_id}.pkl')
-        if osp.exists(pkl_path):
-            with open(pkl_path, 'rb') as fr:
-                metadata = pickle.load(fr)
-        else:
-            metadata_path = resource_filename(package, 'model_zoo.yml')
-            metadata = load(metadata_path)
-
-            with open(pkl_path, 'wb') as fw:
-                pickle.dump(metadata, fw)
+        metadata_path = resource_filename(package, 'model_zoo.yml')
+        metadata = load(metadata_path)
 
         return metadata
     else:
