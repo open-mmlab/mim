@@ -236,6 +236,11 @@ def infer_find_url(package: str) -> str:
     find_url = ''
     if package in WHEEL_URL:
         torch_v, cuda_v = get_torch_cuda_version()
+
+        # x.y.z -> x.y.0
+        major, minor, *_ = torch_v.split('.')
+        torch_v = '.'.join([major, minor, '0'])
+
         if cuda_v.isdigit():
             cuda_v = f'cu{cuda_v}'
         find_url = WHEEL_URL[package].format(
