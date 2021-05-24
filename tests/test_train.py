@@ -1,5 +1,5 @@
 import os.path as osp
-import tempfile
+import shutil
 import time
 
 from click.testing import CliRunner
@@ -23,25 +23,22 @@ def setup_module():
 def test_train():
     runner = CliRunner()
 
-    with tempfile.TemporaryDirectory() as temp_root:
-        if not osp.exists(f'{temp_root}/dataset'):
-            download_from_file(dataset_url, f'{temp_root}/dataset.tar')
-            extract_tar(f'{temp_root}/dataset.tar', f'{temp_root}/')
+    if not osp.exists('/tmp/dataset'):
+        download_from_file(dataset_url, '/tmp/dataset.tar')
+        extract_tar('/tmp/dataset.tar', '/tmp/')
 
-        if not osp.exists(f'{temp_root}/config.py'):
-            download_from_file(cfg_url, f'{temp_root}/config.py')
+    if not osp.exists('/tmp/config.py'):
+        download_from_file(cfg_url, '/tmp/config.py')
 
-        # wait for the download task to complete
-        time.sleep(5)
+    # wait for the download task to complete
+    time.sleep(5)
 
-        result = runner.invoke(train, [
-            'mmcls', f'{temp_root}/config.py', '--gpus=1',
-            f'--work-dir={temp_root}'
-        ])
-        assert result.exit_code == 0
+    result = runner.invoke(
+        train, ['mmcls', '/tmp/config.py', '--gpus=1', '--work-dir=tmp'])
+    assert result.exit_code == 0
 
-        result = runner.invoke(train, [
-            'mmcls', f'{temp_root}/xxx.py', '--gpus=1',
-            f'--work-dir={temp_root}'
-        ])
-        assert result.exit_code != 0
+    result = runner.invoke(
+        train, ['mmcls', '/tmp/xxx.py', '--gpus=1', '--work-dir=tmp'])
+    assert result.exit_code != 0
+
+    shutil.rmtree('tmp')
