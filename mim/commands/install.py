@@ -236,6 +236,14 @@ def infer_find_url(package: str) -> str:
     find_url = ''
     if package in WHEEL_URL:
         torch_v, cuda_v = get_torch_cuda_version()
+
+        # In order to avoid builiding mmcv-full from source, we ignore the
+        # difference among micro version because there are usually no big
+        # changes among micro version. For example, the mmcv-full built in
+        # pytorch 1.8.0 also works on 1.8.1 or other versions.
+        major, minor, *_ = torch_v.split('.')
+        torch_v = '.'.join([major, minor, '0'])
+
         if cuda_v.isdigit():
             cuda_v = f'cu{cuda_v}'
         find_url = WHEEL_URL[package].format(
