@@ -1,5 +1,4 @@
 import os.path as osp
-import tempfile
 import time
 
 from click.testing import CliRunner
@@ -24,32 +23,31 @@ def setup_module():
 def test_test():
     runner = CliRunner()
 
-    with tempfile.TemporaryDirectory() as temp_root:
-        if not osp.exists(f'{temp_root}/dataset'):
-            download_from_file(dataset_url, f'{temp_root}/dataset.tar')
-            extract_tar(f'{temp_root}/dataset.tar', f'{temp_root}/')
+    if not osp.exists('/tmp/dataset'):
+        download_from_file(dataset_url, '/tmp/dataset.tar')
+        extract_tar('/tmp/dataset.tar', '/tmp/')
 
-        if not osp.exists(f'{temp_root}/config.py'):
-            download_from_file(cfg_url, f'{temp_root}/config.py')
+    if not osp.exists('/tmp/config.py'):
+        download_from_file(cfg_url, '/tmp/config.py')
 
-        if not osp.exists(f'{temp_root}/ckpt.pth'):
-            download_from_file(ckpt_url, f'{temp_root}/ckpt.pth')
+    if not osp.exists('/tmp/ckpt.pth'):
+        download_from_file(ckpt_url, '/tmp/ckpt.pth')
 
-        # wait for the download task to complete
-        time.sleep(5)
+    # wait for the download task to complete
+    time.sleep(5)
 
-        result = runner.invoke(test, [
-            'mmcls', f'{temp_root}/config.py', '--checkpoint',
-            f'{temp_root}/ckpt.pth', '--gpus=1', '--metrics=accuracy'
-        ])
-        assert result.exit_code == 0
-        result = runner.invoke(test, [
-            'mmcls', f'{temp_root}/xxx.py', '--checkpoint',
-            f'{temp_root}/ckpt.pth', '--gpus=1', '--metrics=accuracy'
-        ])
-        assert result.exit_code != 0
-        result = runner.invoke(test, [
-            'mmcls', f'{temp_root}/config.py', '--checkpoint',
-            f'{temp_root}/xxx.pth', '--gpus=1', '--metrics=accuracy'
-        ])
-        assert result.exit_code != 0
+    result = runner.invoke(test, [
+        'mmcls', '/tmp/config.py', '--checkpoint', '/tmp/ckpt.pth', '--gpus=1',
+        '--metrics=accuracy'
+    ])
+    assert result.exit_code == 0
+    result = runner.invoke(test, [
+        'mmcls', '/tmp/xxx.py', '--checkpoint', '/tmp/ckpt.pth', '--gpus=1',
+        '--metrics=accuracy'
+    ])
+    assert result.exit_code != 0
+    result = runner.invoke(test, [
+        'mmcls', '/tmp/config.py', '--checkpoint', '/tmp/xxx.pth', '--gpus=1',
+        '--metrics=accuracy'
+    ])
+    assert result.exit_code != 0
