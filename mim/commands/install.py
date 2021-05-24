@@ -115,9 +115,6 @@ def install(package: str,
     """
     target_pkg, target_version = split_package_version(package)
 
-    # mmcv-full -> mmcv
-    # module_name = PKG2MODULE.get(target_pkg, target_pkg)
-
     # whether install from local repo
     is_install_local_repo = osp.isdir(osp.abspath(target_pkg)) and not find_url
 
@@ -174,6 +171,8 @@ def install(package: str,
                 highlighted_error(f'version.py is missed in {repo_root}'))
 
         target_pkg = MODULE2PKG.get(module_name, module_name)
+        if target_pkg == 'mmcv' and os.getenv('MMCV_WITH_OPS', '0') == '1':
+            target_pkg = 'mmcv-full'
 
         echo_success(f'installing {target_pkg} from local repo.')
 
@@ -184,7 +183,7 @@ def install(package: str,
             is_yes=is_yes,
             is_user_dir=is_user_dir)
 
-    elif find_url and find_url.find('github.com') >= 0 or is_install_master:
+    elif find_url and find_url.find('git') >= 0 or is_install_master:
         is_record = True
         install_from_github(target_pkg, target_version, find_url, timeout,
                             is_yes, is_user_dir, is_install_master)
@@ -405,8 +404,8 @@ def install_from_repo(repo_root: str,
 
     os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
     # install mmcv with ops by default
-    if package in WHEEL_URL or os.getenv('MMCV_WITH_OPS', '0') == '1':
-        echo_warning(f'compiling {package} with "MMCV_WITH_OPS=1"')
+    if package in WHEEL_URL:
+        echo_success(f'compiling {package} with "MMCV_WITH_OPS=1"')
         os.environ['MMCV_WITH_OPS'] = '1'
 
     call_command(install_cmd)
