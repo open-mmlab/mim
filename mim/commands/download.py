@@ -61,12 +61,14 @@ def download(package: str,
 
     package, version = split_package_version(package)
     if version:
-        raise ValueError('version is not allowed, please type '
-                         '"mim download -h" to show the correct way.')
+        raise ValueError(
+            highlighted_error('version is not allowed, please type '
+                              '"mim download -h" to show the correct way.'))
 
     if not is_installed(package):
-        raise RuntimeError(f'{package} is not installed. Please install it '
-                           'first.')
+        raise RuntimeError(
+            highlighted_error(f'{package} is not installed. Please install it '
+                              'first.'))
 
     checkpoints = []
     model_info = get_model_info(
@@ -74,8 +76,9 @@ def download(package: str,
     valid_configs = model_info.keys()
     invalid_configs = set(configs) - set(valid_configs)
     if invalid_configs:
-        raise ValueError(f'Expected configs: {valid_configs}, but got '
-                         f'{invalid_configs}')
+        raise ValueError(
+            highlighted_error(f'Expected configs: {valid_configs}, but got '
+                              f'{invalid_configs}'))
 
     from mmcv import Config
 
