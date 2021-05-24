@@ -242,7 +242,7 @@ def infer_find_url(package: str) -> str:
         find_url = WHEEL_URL[package].format(
             cuda_version=cuda_v, torch_version=f'torch{torch_v}')
     elif package in PKG2PROJECT:
-        find_url = (f'{DEFAULT_URL}/{PKG2PROJECT[package]}' '.git')
+        find_url = (f'{DEFAULT_URL}/{PKG2PROJECT[package]}.git')
 
     return find_url
 
