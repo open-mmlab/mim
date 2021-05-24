@@ -406,7 +406,6 @@ def install_from_repo(repo_root: str,
     # Please refer to github.com/pytorch/pytorch/issue/37377
     os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
 
-    # install mmcv with ops by default
     if package in WHEEL_URL:
         echo_success(f'compiling {package} with "MMCV_WITH_OPS=1"')
         os.environ['MMCV_WITH_OPS'] = '1'
