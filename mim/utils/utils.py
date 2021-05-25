@@ -222,17 +222,6 @@ def is_version_equal(version1: str, version2: str) -> bool:
     return LooseVersion(version1) == LooseVersion(version2)
 
 
-def get_commit_id(package: str) -> str:
-    """Get commit id from package.
-
-    Args:
-        package (str): Name of package.
-    """
-    module_name = PKG2MODULE.get(package, package)
-    module = importlib.import_module('..commit_id', f'{module_name}.subpkg')
-    return module.commit_id  # type: ignore
-
-
 def get_installed_path(package: str) -> str:
     """Get installed path of package.
 

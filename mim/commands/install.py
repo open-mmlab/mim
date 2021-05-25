@@ -1,6 +1,5 @@
 import os
 import os.path as osp
-import subprocess
 import tempfile
 from distutils.dir_util import copy_tree
 from distutils.file_util import copy_file
@@ -394,17 +393,6 @@ def install_from_repo(repo_root: str,
             dep_cmd.append('--user')
 
         call_command(dep_cmd)
-
-    # write commit id to package
-    current_root = os.getcwd()
-    os.chdir(repo_root)  # change work dir to repo_root
-    commit_id = subprocess.check_output(
-        ['git', 'rev-parse', '--short', 'HEAD'])
-    os.chdir(current_root)
-    commit_id = str(commit_id, 'UTF-8').strip()  # type: ignore
-    commit_id_path = os.path.join(pkg_root, 'commit_id.py')
-    with open(commit_id_path, 'w') as fw:
-        fw.write(f'commit_id = "{commit_id}"')  # type: ignore
 
     install_cmd = ['python', '-m', 'pip', 'install', repo_root]
     if is_user_dir:
