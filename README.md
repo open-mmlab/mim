@@ -444,3 +444,7 @@ PYTHONPATH=$PWD:$PYTHONPATH mim train mmcls custom_net_config.py --work-dir tmp 
 ## Contributing
 
 We appreciate all contributions to improve mim. Please refer to [CONTRIBUTING.md](https://github.com/open-mmlab/mmcv/blob/master/CONTRIBUTING.md) for the contributing guideline.
+
+## License
+
+This project is released under the [Apache 2.0 license](LICENSE).
