@@ -15,6 +15,7 @@ from pandas import DataFrame
 from mim.click import OptionEatAll, get_downstream_package, param2lowercase
 from mim.utils import (
     DEFAULT_CACHE_DIR,
+    PKG2MODULE,
     PKG2PROJECT,
     cast2lowercase,
     echo_success,
@@ -30,6 +31,7 @@ abbrieviation = {
     'batch_size': 'bs',
     'epochs': 'epoch',
     'inference_time': 'fps',
+    'inference_time_(fps)': 'fps',
 }
 
 
@@ -224,7 +226,8 @@ def load_metadata_from_local(package: str):
             with open(pkl_path, 'rb') as fr:
                 metadata = pickle.load(fr)
         else:
-            metadata_path = resource_filename(package, 'model_zoo.yml')
+            module_name = PKG2MODULE.get(package, package)
+            metadata_path = resource_filename(module_name, 'model_zoo.yml')
             metadata = load(metadata_path)
 
             with open(pkl_path, 'wb') as fw:

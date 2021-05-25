@@ -23,9 +23,15 @@ PKG2PROJECT = {
     'mmocr': 'mmocr',
     'mmgen': 'mmgeneration',
 }
-PKG_ALIAS = {
+# TODO: Should directly infer MODULE name from PKG info
+PKG2MODULE = {
     'mmcv-full': 'mmcv',
-    'mmcv': 'mmcv',
+    'mmaction2': 'mmaction',
+    'mmsegmentation': 'mmseg',
+}
+MODULE2PKG = {
+    'mmaction': 'mmaction2',
+    'mmseg': 'mmsegmentation',
 }
 
 DEFAULT_CACHE_DIR = f'{os.environ["HOME"]}/.cache/mim'
