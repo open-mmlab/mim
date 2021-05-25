@@ -25,7 +25,7 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
     + from pypi
 
         ```bash
-        python -m pip install mim
+        pip install openmim
         ```
 
     + from source
