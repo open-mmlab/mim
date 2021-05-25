@@ -25,9 +25,17 @@ sys.path.insert(0, os.path.abspath('..'))
 project = 'mim'
 copyright = '2021, openmmlab'
 author = 'MIM Authors'
+version_file = '../mim/version.py'
+
+
+def get_version():
+    with open(version_file, 'r') as f:
+        exec(compile(f.read(), version_file, 'exec'))
+    return locals()['__version__']
+
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = get_version()
 
 # -- General configuration ---------------------------------------------------
 
