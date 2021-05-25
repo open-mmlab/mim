@@ -29,6 +29,7 @@ abbrieviation = {
     'batch_size': 'bs',
     'epochs': 'epoch',
     'inference_time': 'fps',
+    'inference_time_(fps)': 'fps',
 }
 
 

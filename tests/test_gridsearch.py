@@ -1,5 +1,5 @@
 import os.path as osp
-import tempfile
+import shutil
 import time
 
 from click.testing import CliRunner
@@ -22,45 +22,46 @@ def setup_module():
 
 def test_gridsearch():
     runner = CliRunner()
-    with tempfile.TemporaryDirectory() as temp_root:
-        if not osp.exists(f'/{temp_root}/dataset'):
-            download_from_file(dataset_url, f'/{temp_root}/dataset.tar')
-            extract_tar(f'{temp_root}/dataset.tar', f'{temp_root}/')
+    if not osp.exists('/tmp/dataset'):
+        download_from_file(dataset_url, '/tmp/dataset.tar')
+        extract_tar('tmp/dataset.tar', '/tmp/')
 
-        if not osp.exists(f'{temp_root}/config.py'):
-            download_from_file(cfg_url, f'{temp_root}/config.py')
+    if not osp.exists('/tmp/config.py'):
+        download_from_file(cfg_url, '/tmp/config.py')
 
-        # wait for the download task to complete
-        time.sleep(5)
+    # wait for the download task to complete
+    time.sleep(5)
 
-        args1 = [
-            'mmcls', f'{temp_root}/config.py', '--gpus=1',
-            f'--work-dir={temp_root}', '--search-args',
-            '--optimizer.lr 1e-3 1e-4'
-        ]
-        args2 = [
-            'mmcls', f'{temp_root}/config.py', '--gpus=1',
-            f'--work-dir={temp_root}', '--search-args',
-            '--optimizer.weight_decay 1e-3 1e-4'
-        ]
-        args3 = [
-            'mmcls', f'{temp_root}/xxx.py', '--gpus=1',
-            f'--work-dir={temp_root}', '--search-args',
-            '--optimizer.lr 1e-3 1e-4'
-        ]
-        args4 = [
-            'mmcls', f'{temp_root}/config.py', '--gpus=1',
-            f'--work-dir={temp_root}', '--search-args'
-        ]
+    args1 = [
+        'mmcls', '/tmp/config.py', '--gpus=1', '--work-dir=tmp',
+        '--search-args', '--optimizer.lr 1e-3 1e-4'
+    ]
+    args2 = [
+        'mmcls', '/tmp/config.py', '--gpus=1', '--work-dir=tmp',
+        '--search-args', '--optimizer.weight_decay 1e-3 1e-4'
+    ]
+    args3 = [
+        'mmcls', '/tmp/xxx.py', '--gpus=1', '--work-dir=tmp', '--search-args',
+        '--optimizer.lr 1e-3 1e-4'
+    ]
+    args4 = [
+        'mmcls', '/tmp/config.py', '--gpus=1', '--work-dir=tmp',
+        '--search-args'
+    ]
 
-        result = runner.invoke(gridsearch, args1)
-        assert result.exit_code == 0
+    result = runner.invoke(gridsearch, args1)
+    assert result.exit_code == 0
 
-        result = runner.invoke(gridsearch, args2)
-        assert result.exit_code == 0
+    result = runner.invoke(gridsearch, args2)
+    assert result.exit_code == 0
 
-        result = runner.invoke(gridsearch, args3)
-        assert result.exit_code != 0
+    result = runner.invoke(gridsearch, args3)
+    assert result.exit_code != 0
 
-        result = runner.invoke(gridsearch, args4)
-        assert result.exit_code != 0
+    result = runner.invoke(gridsearch, args4)
+    assert result.exit_code != 0
+
+    shutil.rmtree('tmp_search_optimizer.lr_0.001')
+    shutil.rmtree('tmp_search_optimizer.lr_0.0001')
+    shutil.rmtree('tmp_search_optimizer.weight_decay_0.001')
+    shutil.rmtree('tmp_search_optimizer.weight_decay_0.0001')

@@ -1,0 +1,6 @@
+Click==7.1.2
+colorama
+model-index
+pandas
+requests
+tabulate

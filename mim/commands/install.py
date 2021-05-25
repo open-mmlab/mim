@@ -13,8 +13,9 @@ from mim.click import get_official_package, param2lowercase
 from mim.commands.uninstall import uninstall
 from mim.utils import (
     DEFAULT_URL,
+    MODULE2PKG,
+    PKG2MODULE,
     PKG2PROJECT,
-    PKG_ALIAS,
     WHEEL_URL,
     call_command,
     echo_success,
@@ -113,11 +114,8 @@ def install(package: str,
     """
     target_pkg, target_version = split_package_version(package)
 
-    # mmcv-full -> mmcv
-    true_pkg = PKG_ALIAS.get(target_pkg, target_pkg)
-
     # whether install from local repo
-    is_install_local_repo = osp.isdir(osp.abspath(true_pkg)) and not find_url
+    is_install_local_repo = osp.isdir(osp.abspath(target_pkg)) and not find_url
 
     # whether install master branch from github
     is_install_master = bool(not target_version and find_url)
@@ -165,14 +163,17 @@ def install(package: str,
 
     if is_install_local_repo:
         is_record = True
-        repo_root = osp.abspath(true_pkg)
-        target_pkg, target_version = get_package_version(repo_root)
-
-        echo_success(f'installing {target_pkg} from local repo.')
-
-        if not target_pkg:
+        repo_root = osp.abspath(target_pkg)
+        module_name, target_version = get_package_version(repo_root)
+        if not module_name:
             raise FileNotFoundError(
                 highlighted_error(f'version.py is missed in {repo_root}'))
+
+        target_pkg = MODULE2PKG.get(module_name, module_name)
+        if target_pkg == 'mmcv' and os.getenv('MMCV_WITH_OPS', '0') == '1':
+            target_pkg = 'mmcv-full'
+
+        echo_success(f'installing {target_pkg} from local repo.')
 
         install_from_repo(
             repo_root,
@@ -181,14 +182,14 @@ def install(package: str,
             is_yes=is_yes,
             is_user_dir=is_user_dir)
 
-    elif find_url and find_url.find('github.com') >= 0 or is_install_master:
+    elif find_url and find_url.find('git') >= 0 or is_install_master:
         is_record = True
         install_from_github(target_pkg, target_version, find_url, timeout,
                             is_yes, is_user_dir, is_install_master)
     else:
         # if installing from wheel failed, it will try to install package by
         # building from source if possible.
-        is_record = bool(target_pkg in PKG_ALIAS)
+        is_record = bool(target_pkg in PKG2MODULE)
         try:
             install_from_wheel(target_pkg, target_version, find_url, timeout,
                                is_user_dir)
@@ -235,12 +236,20 @@ def infer_find_url(package: str) -> str:
     find_url = ''
     if package in WHEEL_URL:
         torch_v, cuda_v = get_torch_cuda_version()
+
+        # In order to avoid builiding mmcv-full from source, we ignore the
+        # difference among micro version because there are usually no big
+        # changes among micro version. For example, the mmcv-full built in
+        # pytorch 1.8.0 also works on 1.8.1 or other versions.
+        major, minor, *_ = torch_v.split('.')
+        torch_v = '.'.join([major, minor, '0'])
+
         if cuda_v.isdigit():
             cuda_v = f'cu{cuda_v}'
         find_url = WHEEL_URL[package].format(
             cuda_version=cuda_v, torch_version=f'torch{torch_v}')
     elif package in PKG2PROJECT:
-        find_url = (f'{DEFAULT_URL}/{PKG2PROJECT[package]}' '.git')
+        find_url = (f'{DEFAULT_URL}/{PKG2PROJECT[package]}.git')
 
     return find_url
 
@@ -359,8 +368,8 @@ def install_from_repo(repo_root: str,
         if dependencies:
             install_dependencies(dependencies, timeout, is_yes, is_user_dir)
 
-    true_pkg = PKG_ALIAS.get(package, package)
-    pkg_root = osp.join(repo_root, true_pkg)
+    module_name = PKG2MODULE.get(package, package)
+    pkg_root = osp.join(repo_root, module_name)
     src_tool_root = osp.join(repo_root, 'tools')
     dst_tool_root = osp.join(pkg_root, 'tools')
     src_config_root = osp.join(repo_root, 'configs')
@@ -389,11 +398,13 @@ def install_from_repo(repo_root: str,
     if is_user_dir:
         install_cmd.append('--user')
 
-    # install mmcv with ops by default
-    if package in WHEEL_URL or os.getenv('MMCV_WITH_OPS', '1') == 1:
-        echo_warning(f'compiling {package} with "MMCV_WITH_OPS=1"')
+    # The issue is caused by the import order of numpy and torch
+    # Please refer to github.com/pytorch/pytorch/issue/37377
+    os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
+
+    if package in WHEEL_URL:
+        echo_success(f'compiling {package} with "MMCV_WITH_OPS=1"')
         os.environ['MMCV_WITH_OPS'] = '1'
-        os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
 
     call_command(install_cmd)
 
