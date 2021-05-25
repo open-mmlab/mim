@@ -4,7 +4,7 @@ setup(
     name='openmim',
     version='0.1.0',
     description='MIM Install OpenMMLab packages',
-    author='OpenMMLab',
+    author='MIM Authors',
     author_email='openmmlab@gmail.com',
     packages=find_packages(),
     include_package_data=True,
