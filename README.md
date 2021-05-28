@@ -1,5 +1,9 @@
 # MIM: MIM Installs OpenMMLab Packages
 
+<link rel="stylesheet" type="text/css" href="https://github.com/asciinema/asciinema-player/releases/download/v2.6.1/asciinema-player.css" />
+<asciinema-player src="https://asciinema.org/a/416945.cast" cols="120" rows="30"></asciinema-player>
+<script src="https://github.com/asciinema/asciinema-player/releases/download/v2.6.1/asciinema-player.js"></script>
+
 MIM provides a unified API for launching and installing OpenMMLab projects and their extensions, and managing the OpenMMLab model zoo.
 
 ## Installation
