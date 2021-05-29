@@ -70,7 +70,7 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>1. install</summary>
 
-[![asciicast](https://asciinema.org/a/5fd2bzqlxz9g0a2H3tV3avJO6.svg)](https://asciinema.org/a/5fd2bzqlxz9g0a2H3tV3avJO6)
+[![asciicast](https://asciinema.org/a/416945.svg)](https://asciinema.org/a/416945)
 
 + command
 
@@ -119,7 +119,7 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>2. uninstall</summary>
 
-[![asciicast](https://asciinema.org/a/7Wps2UeQ0MeqhNAFRIRpry4k1.svg)](https://asciinema.org/a/7Wps2UeQ0MeqhNAFRIRpry4k1)
+[![asciicast](https://asciinema.org/a/416948.svg)](https://asciinema.org/a/416948)
 
 + command
 
@@ -148,7 +148,7 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>3. list</summary>
 
-[![asciicast](https://asciinema.org/a/m1EYNM1hrOy8yvjXpS4R62FRm.svg)](https://asciinema.org/a/m1EYNM1hrOy8yvjXpS4R62FRm)
+[![asciicast](https://asciinema.org/a/416949.svg)](https://asciinema.org/a/416949)
 
 + command
 
@@ -171,7 +171,7 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>4. search</summary>
 
-[![asciicast](https://asciinema.org/a/wVYllCMEUOw8PrW68g2IE5fpk.svg)](https://asciinema.org/a/wVYllCMEUOw8PrW68g2IE5fpk)
+[![asciicast](https://asciinema.org/a/416950.svg)](https://asciinema.org/a/416950)
 
 + command
 
@@ -211,7 +211,7 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>5. download</summary>
 
-[![asciicast](https://asciinema.org/a/Srg7AF7y07qx1on7i6Jmym8ay.svg)](https://asciinema.org/a/Srg7AF7y07qx1on7i6Jmym8ay)
+[![asciicast](https://asciinema.org/a/416951.svg)](https://asciinema.org/a/416951)
 
 + command
 
@@ -234,7 +234,7 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>6. train</summary>
 
-[![asciicast](https://asciinema.org/a/6PnfF3Vg8ja6RpN3gxxqqA4n8.svg)](https://asciinema.org/a/6PnfF3Vg8ja6RpN3gxxqqA4n8)
+[![asciicast](https://asciinema.org/a/416953.svg)](https://asciinema.org/a/416953)
 
 + command
 
@@ -272,7 +272,7 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>7. test</summary>
 
-[![asciicast](https://asciinema.org/a/0GZWW9b9dfR6L4PNqOlzykSkp.svg)](https://asciinema.org/a/0GZWW9b9dfR6L4PNqOlzykSkp)
+[![asciicast](https://asciinema.org/a/416955.svg)](https://asciinema.org/a/416955)
 
 + command
 
@@ -318,7 +318,7 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>8. run</summary>
 
-[![asciicast](https://asciinema.org/a/6Jh4CABs4F5kEZUGYyxcBZai1.svg)](https://asciinema.org/a/6Jh4CABs4F5kEZUGYyxcBZai1)
+[![asciicast](https://asciinema.org/a/416956.svg)](https://asciinema.org/a/416956)
 
 + command
 
@@ -363,7 +363,7 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 <details>
 <summary>9. gridsearch</summary>
 
-[![asciicast](https://asciinema.org/a/2D0rkhvaT0oM9sDvHfspdrgpM.svg)](https://asciinema.org/a/2D0rkhvaT0oM9sDvHfspdrgpM)
+[![asciicast](https://asciinema.org/a/416958.svg)](https://asciinema.org/a/416958)
 
 + command
 
