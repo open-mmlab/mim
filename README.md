@@ -374,6 +374,11 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 + command
 
     ```bash
+    # Parameter search on a single server with CPU by setting `gpus` to 0 and
+    # 'launcher' to 'none' (if applicable). The training script of the
+    # corresponding codebase will fail if it doesn't support CPU training.
+    > mim gridsearch mmcls resnet101_b16x8_cifar10.py --work-dir tmp --gpus 0 \
+        --search-args '--optimizer.lr 1e-2 1e-3'
     # Parameter search with on a single server with one GPU, search learning
     # rate
     > mim gridsearch mmcls resnet101_b16x8_cifar10.py --work-dir tmp --gpus 1 \
@@ -411,6 +416,9 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
     ```python
     from mim import gridsearch
 
+    gridsearch(repo='mmcls', config='resnet101_b16x8_cifar10.py', gpus=0,
+               search_args='--optimizer.lr 1e-2 1e-3',
+               other_args='--work-dir tmp')
     gridsearch(repo='mmcls', config='resnet101_b16x8_cifar10.py', gpus=1,
                search_args='--optimizer.lr 1e-2 1e-3',
                other_args='--work-dir tmp')
