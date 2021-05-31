@@ -24,7 +24,7 @@ def test_gridsearch():
     runner = CliRunner()
     if not osp.exists('/tmp/dataset'):
         download_from_file(dataset_url, '/tmp/dataset.tar')
-        extract_tar('tmp/dataset.tar', '/tmp/')
+        extract_tar('/tmp/dataset.tar', '/tmp/')
 
     if not osp.exists('/tmp/config.py'):
         download_from_file(cfg_url, '/tmp/config.py')
