@@ -68,6 +68,10 @@ def cli(package: str,
     Example:
 
     \b
+    # Train models on a single server with CPU by setting `gpus` to 0 and
+    # 'launcher' to 'none' (if applicable). The training script of the
+    # corresponding codebase will fail if it doesn't support CPU training.
+    > mim train mmcls resnet101_b16x8_cifar10.py --work-dir tmp --gpus 0
     # Train models on a single server with one GPU
     > mim train mmcls resnet101_b16x8_cifar10.py --work-dir tmp --gpus 1
     # Train models on a single server with 4 GPUs and pytorch distributed
@@ -189,8 +193,12 @@ def train(
     common_args = ['--launcher', launcher] + list(other_args)
 
     if launcher == 'none':
-        cmd = ['python', train_script, config, '--gpus',
-               str(gpus)] + common_args
+        if gpus:
+            cmd = ['python', train_script, config, '--gpus',
+                   str(gpus)] + common_args
+        else:
+            cmd = ['python', train_script, config, '--device', 'cpu'
+                   ] + common_args
     elif launcher == 'pytorch':
         cmd = [
             'python', '-m', 'torch.distributed.launch',

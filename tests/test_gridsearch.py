@@ -24,7 +24,7 @@ def test_gridsearch():
     runner = CliRunner()
     if not osp.exists('/tmp/dataset'):
         download_from_file(dataset_url, '/tmp/dataset.tar')
-        extract_tar('tmp/dataset.tar', '/tmp/')
+        extract_tar('/tmp/dataset.tar', '/tmp/')
 
     if not osp.exists('/tmp/config.py'):
         download_from_file(cfg_url, '/tmp/config.py')
@@ -33,19 +33,19 @@ def test_gridsearch():
     time.sleep(5)
 
     args1 = [
-        'mmcls', '/tmp/config.py', '--gpus=1', '--work-dir=tmp',
+        'mmcls', '/tmp/config.py', '--gpus=0', '--work-dir=tmp',
         '--search-args', '--optimizer.lr 1e-3 1e-4'
     ]
     args2 = [
-        'mmcls', '/tmp/config.py', '--gpus=1', '--work-dir=tmp',
+        'mmcls', '/tmp/config.py', '--gpus=0', '--work-dir=tmp',
         '--search-args', '--optimizer.weight_decay 1e-3 1e-4'
     ]
     args3 = [
-        'mmcls', '/tmp/xxx.py', '--gpus=1', '--work-dir=tmp', '--search-args',
+        'mmcls', '/tmp/xxx.py', '--gpus=0', '--work-dir=tmp', '--search-args',
         '--optimizer.lr 1e-3 1e-4'
     ]
     args4 = [
-        'mmcls', '/tmp/config.py', '--gpus=1', '--work-dir=tmp',
+        'mmcls', '/tmp/config.py', '--gpus=0', '--work-dir=tmp',
         '--search-args'
     ]
 

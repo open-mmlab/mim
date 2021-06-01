@@ -34,11 +34,11 @@ def test_train():
     time.sleep(5)
 
     result = runner.invoke(
-        train, ['mmcls', '/tmp/config.py', '--gpus=1', '--work-dir=tmp'])
+        train, ['mmcls', '/tmp/config.py', '--gpus=0', '--work-dir=tmp'])
     assert result.exit_code == 0
 
     result = runner.invoke(
-        train, ['mmcls', '/tmp/xxx.py', '--gpus=1', '--work-dir=tmp'])
+        train, ['mmcls', '/tmp/xxx.py', '--gpus=0', '--work-dir=tmp'])
     assert result.exit_code != 0
 
     shutil.rmtree('tmp')

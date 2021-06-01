@@ -39,7 +39,7 @@ def test_run():
 
     result = runner.invoke(
         run,
-        ['mmcls', 'train', '/tmp/config.py', '--gpus=1', '--work-dir=tmp'])
+        ['mmcls', 'train', '/tmp/config.py', '--device=cpu', '--work-dir=tmp'])
     assert result.exit_code == 0
     result = runner.invoke(run, [
         'mmcls', 'test', '/tmp/config.py', '/tmp/ckpt.pth',

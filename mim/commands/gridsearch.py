@@ -80,6 +80,11 @@ def cli(package: str,
     Example:
 
     \b
+    # Parameter search on a single server with CPU by setting `gpus` to 0 and
+    # 'launcher' to 'none' (if applicable). The training script of the
+    # corresponding codebase will fail if it doesn't support CPU training.
+    > mim gridsearch mmcls resnet101_b16x8_cifar10.py --work-dir tmp --gpus \
+        0 --search-args '--optimizer.lr 1e-2 1e-3'
     # Parameter search with on a single server with one GPU, search learning
     # rate
     > mim gridsearch mmcls resnet101_b16x8_cifar10.py --work-dir tmp --gpus \
@@ -304,8 +309,14 @@ def gridsearch(
         common_args = ['--launcher', launcher] + other_args_str.split()
 
         if launcher == 'none':
-            cmd = ['python', train_script, config_path, '--gpus',
-                   str(gpus)] + common_args
+            if gpus:
+                cmd = [
+                    'python', train_script, config_path, '--gpus',
+                    str(gpus)
+                ] + common_args
+            else:
+                cmd = ['python', train_script, config_path, '--device', 'cpu'
+                       ] + common_args
         elif launcher == 'pytorch':
             cmd = [
                 'python', '-m', 'torch.distributed.launch',
