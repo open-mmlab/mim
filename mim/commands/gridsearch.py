@@ -240,7 +240,10 @@ def gridsearch(
     for arg in search_args_dict:
         try:
             arg_type = type(get_config(cfg, arg))
-            search_args_dict[arg] = [eval(x) for x in search_args_dict[arg]]
+            if arg_type is not str:
+                search_args_dict[arg] = [
+                    eval(x) for x in search_args_dict[arg]
+                ]
             for val in search_args_dict[arg]:
                 assert type(val) == arg_type
         except AssertionError:
