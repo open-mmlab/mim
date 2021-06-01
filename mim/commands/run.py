@@ -28,6 +28,11 @@ from mim.utils import (
 def cli(package: str, command: str, other_args: tuple = ()) -> None:
     """Run arbitrary command of a codebase.
 
+    Note if the command you call takes config files or checkpoint paths as
+    arguments, you must use paths that do exists. We do not accept URLs or
+    config names (like resnet101_b16x8_cifar10.py) if that doesn't exist under
+    your current directory.
+
     Example:
 
     \b
