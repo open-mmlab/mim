@@ -506,3 +506,25 @@ def extract_tar(tar_path: str, dst: str) -> None:
 
     with tarfile.open(tar_path, 'r') as tar_file:
         tar_file.extractall(dst)
+
+
+def module_full_name(abbr: str) -> str:
+    """Get the full name of the module given abbreviation.
+
+    Args:
+        abbr (str): The abbreviation, should be the sub-string of one
+            (and only one) supported module.
+
+    Return:
+        str: The full name of the corresponding module. If abbr is the
+            sub-string of zero / multiple module names, return empty string.
+    """
+    supported_pkgs = [
+        PKG2MODULE[k] if k in PKG2MODULE else k for k in PKG2PROJECT
+    ]
+    supported_pkgs = list(set(supported_pkgs))
+    names = [x for x in supported_pkgs if abbr in x]
+    if len(names) == 1:
+        return names[0]
+    else:
+        return ''

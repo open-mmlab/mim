@@ -32,6 +32,7 @@ from .utils import (
     highlighted_error,
     is_installed,
     is_version_equal,
+    module_full_name,
     parse_url,
     read_installation_records,
     recursively_find,
@@ -81,5 +82,6 @@ __all__ = [
     'highlighted_error',
     'extract_tar',
     'get_release_version',
+    'module_full_name',
     'MODULE2PKG',
 ]

@@ -19,6 +19,7 @@ from mim.utils import (
     get_installed_path,
     highlighted_error,
     is_installed,
+    module_full_name,
     recursively_find,
     set_config,
     string2args,
@@ -42,22 +43,27 @@ from mim.utils import (
     default=29500,
     help=('The port used for inter-process communication '
           '(only applicable to slurm / pytorch launchers)'))
-@click.option('--gpus', type=int, default=1, help='Number of gpus to use')
 @click.option(
+    '-G', '--gpus', type=int, default=1, help='Number of gpus to use')
+@click.option(
+    '-g',
     '--gpus-per-node',
     type=int,
     help=('Number of gpus per node to use '
           '(only applicable to launcher == "slurm")'))
 @click.option(
+    '-c',
     '--cpus-per-task',
     type=int,
     default=2,
     help='Number of cpus per task (only applicable to launcher == "slurm")')
 @click.option(
+    '-p',
     '--partition',
     type=str,
     help='The partition to use (only applicable to launcher == "slurm")')
-@click.option('--max-jobs', type=int, help='Max parallel number', default=1)
+@click.option(
+    '-j', '--max-jobs', type=int, help='Max parallel number', default=1)
 @click.option(
     '--srun-args', type=str, help='Other srun arguments that might be used')
 @click.option(
@@ -177,6 +183,12 @@ def gridsearch(
         other_args (tuple, optional): Other arguments, will be passed to the
             codebase's training script. Defaults to ().
     """
+    full_name = module_full_name(package)
+    if full_name == '':
+        msg = f"Can't determine a unique package given abbreviation {package}"
+        raise ValueError(highlighted_error(msg))
+    package = full_name
+
     # If launcher == "slurm", must have following args
     if launcher == 'slurm':
         msg = ('If launcher is slurm, '

@@ -13,6 +13,7 @@ from mim.utils import (
     get_installed_path,
     highlighted_error,
     is_installed,
+    module_full_name,
     recursively_find,
 )
 
@@ -35,18 +36,22 @@ from mim.utils import (
     help=('The port used for inter-process communication (only applicable to '
           'slurm / pytorch launchers). If set to None, will randomly choose '
           'a port between 20000 and 30000. '))
-@click.option('--gpus', type=int, default=1, help='Number of gpus to use')
 @click.option(
+    '-G', '--gpus', type=int, default=1, help='Number of gpus to use')
+@click.option(
+    '-g',
     '--gpus-per-node',
     type=int,
     help=('Number of gpus per node to use '
           '(only applicable to launcher == "slurm")'))
 @click.option(
+    '-c',
     '--cpus-per-task',
     type=int,
     default=2,
     help='Number of cpus per task (only applicable to launcher == "slurm")')
 @click.option(
+    '-p',
     '--partition',
     type=str,
     help='The partition to use (only applicable to launcher == "slurm")')
@@ -139,6 +144,12 @@ def train(
         other_args (tuple, optional): Other arguments, will be passed to the
             codebase's training script. Defaults to ().
     """
+    full_name = module_full_name(package)
+    if full_name == '':
+        msg = f"Can't determine a unique package given abbreviation {package}"
+        raise ValueError(highlighted_error(msg))
+    package = full_name
+
     # If launcher == "slurm", must have following args
     if launcher == 'slurm':
         msg = ('If launcher is slurm, '
