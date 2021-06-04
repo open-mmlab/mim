@@ -24,8 +24,9 @@ from mim.utils import (
     cls=CustomCommand)
 @click.argument('package', type=str, callback=param2lowercase)
 @click.argument('command', type=str)
+@click.option('-y', '--yes', is_flag=True, help='Don’t ask for confirmation.')
 @click.argument('other_args', nargs=-1, type=click.UNPROCESSED)
-def cli(package: str, command: str, other_args: tuple = ()) -> None:
+def cli(package: str, command: str, yes: bool, other_args: tuple = ()) -> None:
     """Run arbitrary command of a codebase.
 
     Note if the command you call takes config files or checkpoint paths as
@@ -56,7 +57,7 @@ def cli(package: str, command: str, other_args: tuple = ()) -> None:
     > mim run mmcls train -h
     """
     is_success, msg = run(
-        package=package, command=command, other_args=other_args)
+        package=package, command=command, yes=yes, other_args=other_args)
 
     if is_success:
         echo_success(msg)  # type: ignore
@@ -65,8 +66,11 @@ def cli(package: str, command: str, other_args: tuple = ()) -> None:
 
 
 def run(
-    package: str, command: str,
-    other_args: tuple = ()) -> Tuple[bool, Union[str, Exception]]:
+    package: str,
+    command: str,
+    yes: bool = True,
+    other_args: tuple = ()
+) -> Tuple[bool, Union[str, Exception]]:
     """Run arbitrary command of a codebase.
 
     This command assumes the command scripts have been put into the
@@ -74,6 +78,8 @@ def run(
 
     Args:
         package (str): The codebase name.
+        command (str): The command name.
+        yes (bool): Don’t ask for confirmation. Default: True.
         other_args (tuple, optional): Other arguments, will be passed to the
             codebase's script. Defaults to ().
     """
@@ -81,7 +87,7 @@ def run(
     if not is_installed(package):
         msg = (f'The codebase {package} is not installed, '
                'do you want to install it? ')
-        if click.confirm(msg):
+        if yes or click.confirm(msg):
             click.echo(f'Installing {package}')
             cmd = ['mim', 'install', package]
             ret = subprocess.check_call(cmd)
