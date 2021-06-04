@@ -249,10 +249,13 @@ def gridsearch(
     cfg = Config.fromfile(config)
     for arg in search_args_dict:
         try:
-            arg_type = type(get_config(cfg, arg))
-            search_args_dict[arg] = [eval(x) for x in search_args_dict[arg]]
-            for val in search_args_dict[arg]:
-                assert type(val) == arg_type
+            arg_value = get_config(cfg, arg)
+            if arg_value and not isinstance(arg_value, str):
+                search_args_dict[arg] = [
+                    eval(x) for x in search_args_dict[arg]
+                ]
+                for val in search_args_dict[arg]:
+                    assert type(val) == type(arg_value)
         except AssertionError:
             msg = f'Arg {arg} not in the config file. '
             raise AssertionError(highlighted_error(msg))
