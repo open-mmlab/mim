@@ -13,6 +13,7 @@ from mim.utils import (
     get_installed_path,
     highlighted_error,
     is_installed,
+    module_full_name,
     recursively_find,
 )
 
@@ -23,7 +24,8 @@ from mim.utils import (
     cls=CustomCommand)
 @click.argument('package', type=str, callback=param2lowercase)
 @click.argument('config', type=str)
-@click.option('--checkpoint', type=str, default=None, help='checkpoint path')
+@click.option(
+    '-C', '--checkpoint', type=str, default=None, help='checkpoint path')
 @click.option(
     '--launcher',
     type=click.Choice(['none', 'pytorch', 'slurm'], case_sensitive=False),
@@ -37,20 +39,24 @@ from mim.utils import (
           'slurm / pytorch launchers). If set to None, will randomly choose '
           'a port between 20000 and 30000'))
 @click.option(
+    '-G',
     '--gpus',
     type=int,
     help='Number of gpus to use (only applicable to launcher == "slurm")')
 @click.option(
+    '-g',
     '--gpus-per-node',
     type=int,
     help=('Number of gpus per node to use '
           '(only applicable to launcher == "slurm")'))
 @click.option(
+    '-c',
     '--cpus-per-task',
     type=int,
     default=2,
     help='Number of cpus per task (only applicable to launcher == "slurm")')
 @click.option(
+    '-p',
     '--partition',
     type=str,
     help='The partition to use (only applicable to launcher == "slurm")')
@@ -156,6 +162,11 @@ def test(
         other_args (tuple, optional): Other arguments, will be passed to the
             codebase's training script. Defaults to ().
     """
+    full_name = module_full_name(package)
+    if full_name == '':
+        msg = f"Can't determine a unique package given abbreviation {package}"
+        raise ValueError(highlighted_error(msg))
+    package = full_name
 
     # `checkpoint` is a compulsory argument for all mm codebases except
     # mmtracking, so that if the codebase is not mmtracking, user must specify

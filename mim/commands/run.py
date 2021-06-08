@@ -14,6 +14,7 @@ from mim.utils import (
     get_installed_path,
     highlighted_error,
     is_installed,
+    module_full_name,
     recursively_find,
 )
 
@@ -83,6 +84,11 @@ def run(
         other_args (tuple, optional): Other arguments, will be passed to the
             codebase's script. Defaults to ().
     """
+    full_name = module_full_name(package)
+    if full_name == '':
+        msg = f"Can't determine a unique package given abbreviation {package}"
+        raise ValueError(highlighted_error(msg))
+    package = full_name
 
     if not is_installed(package):
         msg = (f'The codebase {package} is not installed, '
