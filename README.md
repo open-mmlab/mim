@@ -16,6 +16,15 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 
   You can call training scripts, testing scripts and any other scripts under the `tools` directory of a specific codebase conveniently at anywhere. Besides, you can use `gridsearch` command for vanilla hyper-parameter search. Calling scripts via MIM is more flexible and efficient (The command will be much shorter, check [abbreviation.md](docs/abbreviation.md)).
 
+## Build custom projects with MIM
+
+We provide some examples about how to build custom projects based on OpenMMLAB codebases and MIM in [MIM-Example](https://github.com/open-mmlab/mim-example). In [mmcls_custom_backbone](https://github.com/open-mmlab/mim-example/tree/master/mmcls_custom_backbone), we define a custom backbone and a classification config file that uses the backbone. To train this model, you can use the command:
+
+```python
+# The working directory is `mim-example/mmcls_custom_backbone`
+PYTHONPATH=$PWD:$PYTHONPATH mim train mmcls custom_net_config.py --work-dir tmp --gpus 1
+```
+
 ## Installation
 
 Please refer to [installation.md](docs/installation.md) for installation.
@@ -397,16 +406,6 @@ Please refer to [installation.md](docs/installation.md) for installation.
     ```
 
 </details>
-
-
-## Build custom projects with MIM
-
-We provide some examples about how to build custom projects based on OpenMMLAB codebases and MIM in [MIM-Example](https://github.com/open-mmlab/mim-example). In [mmcls_custom_backbone](https://github.com/open-mmlab/mim-example/tree/master/mmcls_custom_backbone), we define a custom backbone and a classification config file that uses the backbone. To train this model, you can use the command:
-
-```python
-# The working directory is `mim-example/mmcls_custom_backbone`
-PYTHONPATH=$PWD:$PYTHONPATH mim train mmcls custom_net_config.py --work-dir tmp --gpus 1
-```
 
 
 ## Contributing
