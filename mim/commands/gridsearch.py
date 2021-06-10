@@ -33,6 +33,7 @@ from mim.utils import (
 @click.argument('package', type=str)
 @click.argument('config', type=str)
 @click.option(
+    '-l',
     '--launcher',
     type=click.Choice(['none', 'pytorch', 'slurm'], case_sensitive=False),
     default='none',

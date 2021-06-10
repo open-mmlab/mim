@@ -27,6 +27,7 @@ from mim.utils import (
 @click.option(
     '-C', '--checkpoint', type=str, default=None, help='checkpoint path')
 @click.option(
+    '-l',
     '--launcher',
     type=click.Choice(['none', 'pytorch', 'slurm'], case_sensitive=False),
     default='none',

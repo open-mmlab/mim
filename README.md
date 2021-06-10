@@ -14,7 +14,7 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 
 - **Script Calling**
 
-  You can call training scripts, testing scripts and any other scripts under the `tools` directory of a specific codebase conveniently at anywhere. Calling scripts via MIM is more flexible and efficient (The command will be much shorter, check [abbreviation.md](docs/abbreviation.md)).
+  You can call training scripts, testing scripts and any other scripts under the `tools` directory of a specific codebase conveniently at anywhere. Besides, you can use `gridsearch` command for vanilla hyper-parameter search. Calling scripts via MIM is more flexible and efficient (The command will be much shorter, check [abbreviation.md](docs/abbreviation.md)).
 
 ## Installation
 
@@ -356,7 +356,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
     # rate and weight_decay, max parallel jobs is 2
     > mim gridsearch mmcls resnet101_b16x8_cifar10.py --work-dir tmp --gpus 8 \
         --partition partition_name --gpus-per-node 8 --launcher slurm \
-        --max-workers 2 --search-args '--optimizer.lr 1e-2 1e-3 \
+        --max-jobs 2 --search-args '--optimizer.lr 1e-2 1e-3 \
         --optimizer.weight_decay 1e-3 1e-4'
     # Print the help message of sub-command search
     > mim gridsearch -h
