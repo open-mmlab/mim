@@ -82,6 +82,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
 
 <details>
 <summary>2. uninstall</summary>
+  
 [![asciicast](https://asciinema.org/a/416948.svg)](https://asciinema.org/a/416948)
 
 + command
