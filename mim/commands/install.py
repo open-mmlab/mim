@@ -59,12 +59,19 @@ from mim.utils import (
     'is_user_dir',
     is_flag=True,
     help='Install to the Python user install directory')
+@click.option(
+    '-e',
+    '--editable',
+    'is_editable',
+    is_flag=True,
+    help='Install a package in editable mode.')
 def cli(
     package: str,
     find_url: str = '',
     timeout: int = 30,
     is_yes: bool = False,
     is_user_dir: bool = False,
+    is_editable: bool = False,
 ) -> None:
     """Install package.
 
@@ -92,14 +99,21 @@ def cli(
     # install extension based on OpenMMLab
     > mim install mmcls-project -f https://github.com/xxx/mmcls-project.git
     """
-    install(package, find_url, timeout, is_yes=is_yes, is_user_dir=is_user_dir)
+    install(
+        package,
+        find_url,
+        timeout,
+        is_yes=is_yes,
+        is_user_dir=is_user_dir,
+        is_editable=is_editable)
 
 
 def install(package: str,
             find_url: str = '',
             timeout: int = 15,
             is_yes: bool = False,
-            is_user_dir: bool = False) -> None:
+            is_user_dir: bool = False,
+            is_editable: bool = False) -> None:
     """Install a package by wheel or from github.
 
     Args:
@@ -111,6 +125,7 @@ def install(package: str,
             Default: False.
         is_usr_dir (bool): Install to the Python user install directory for
             environment variables and user configuration. Default: False.
+        is_editable (bool): Install a package in editable mode. Default: False.
     """
     target_pkg, target_version = split_package_version(package)
 
@@ -180,7 +195,8 @@ def install(package: str,
             package=target_pkg,
             timeout=timeout,
             is_yes=is_yes,
-            is_user_dir=is_user_dir)
+            is_user_dir=is_user_dir,
+            is_editable=is_editable)
 
     elif find_url and find_url.find('git') >= 0 or is_install_master:
         is_record = True
@@ -347,7 +363,8 @@ def install_from_repo(repo_root: str,
                       package: str = '',
                       timeout: int = 15,
                       is_yes: bool = False,
-                      is_user_dir: bool = False):
+                      is_user_dir: bool = False,
+                      is_editable: bool = False):
     """Install package from local repo.
 
     Args:
@@ -358,6 +375,7 @@ def install_from_repo(repo_root: str,
             Default: False.
         is_usr_dir (bool): Install to the Python user install directory for
             environment variables and user configuration. Default: False.
+        is_editable (bool): Install a package in editable mode. Default: False.
     """
     # install dependencies. For example,
     # install mmcls should install mmcv first if it is not installed or
@@ -394,7 +412,10 @@ def install_from_repo(repo_root: str,
 
         call_command(dep_cmd)
 
-    install_cmd = ['python', '-m', 'pip', 'install', repo_root]
+    install_cmd = ['python', '-m', 'pip', 'install']
+    if is_editable:
+        install_cmd.append('-e')
+    install_cmd.append(repo_root)
     if is_user_dir:
         install_cmd.append('--user')
 
