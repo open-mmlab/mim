@@ -16,6 +16,14 @@ MIM provides a unified interface for launching and installing OpenMMLab projects
 
   You can execute any script provided by all OpenMMLab codebases with unified commands. Train, test and inference become easier than ever. Besides, you can use `gridsearch` command for vanilla hyper-parameter search.
 
+## License
+
+This project is released under the [Apache 2.0 license](LICENSE).
+
+## Changelog
+
+v0.1.1 was released in 13/6/2021.
+
 ## Build custom projects with MIM
 
 We provide some examples of how to build custom projects based on OpenMMLAB codebases and MIM in [MIM-Example](https://github.com/open-mmlab/mim-example).
