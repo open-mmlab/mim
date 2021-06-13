@@ -1,6 +1,6 @@
 # MIM: MIM Installs OpenMMLab Packages
 
-MIM provides a unified API for launching and installing OpenMMLab projects and their extensions, and managing the OpenMMLab model zoo.
+MIM provides a unified interface for launching and installing OpenMMLab projects and their extensions, and managing the OpenMMLab model zoo.
 
 ## Major Features
 
@@ -8,22 +8,18 @@ MIM provides a unified API for launching and installing OpenMMLab projects and t
 
   You can use MIM to manage OpenMMLab codebases, install or uninstall them conveniently.
 
-- **Checkpoint Management**
+- **Model Management**
 
-  You can use MIM to access all checkpoints in OpenMMLab, download checkpoints, look up checkpoints that meet your need.
+  You can use MIM to manage OpenMMLab model zoo, e.g., download checkpoints by name, search checkpoints that meet specific criteria.
 
-- **Script Calling**
+- **Unified Entrypoint for Scripts**
 
-  You can call training scripts, testing scripts and any other scripts under the `tools` directory of a specific codebase conveniently at anywhere. Besides, you can use `gridsearch` command for vanilla hyper-parameter search. Calling scripts via MIM is more flexible and efficient (The command will be much shorter, check [abbreviation.md](docs/abbreviation.md)).
+  You can execute any script provided by all OpenMMLab codebases with unified commands. Train, test and inference become easier than ever. Besides, you can use `gridsearch` command for vanilla hyper-parameter search.
 
 ## Build custom projects with MIM
 
-We provide some examples about how to build custom projects based on OpenMMLAB codebases and MIM in [MIM-Example](https://github.com/open-mmlab/mim-example). In [mmcls_custom_backbone](https://github.com/open-mmlab/mim-example/tree/master/mmcls_custom_backbone), we define a custom backbone and a classification config file that uses the backbone. To train this model, you can use the command:
-
-```python
-# The working directory is `mim-example/mmcls_custom_backbone`
-PYTHONPATH=$PWD:$PYTHONPATH mim train mmcls custom_net_config.py --work-dir tmp --gpus 1
-```
+We provide some examples of how to build custom projects based on OpenMMLAB codebases and MIM in [MIM-Example](https://github.com/open-mmlab/mim-example).
+Without worrying about copying codes and scripts from existing codebases, users can focus on developing new components and MIM helps integrate and run the new project.
 
 ## Installation
 
@@ -36,7 +32,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
 
 [![asciicast](https://asciinema.org/a/416945.svg)](https://asciinema.org/a/416945)
 
-+ command
+- command
 
     ```bash
     # install latest version of mmcv-full
@@ -61,7 +57,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
     mim install mmcls-project -f https://github.com/xxx/mmcls-project.git
     ```
 
-+ api
+- api
 
     ```python
     from mim import install
@@ -84,7 +80,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
 <summary>2. uninstall</summary>
 [![asciicast](https://asciinema.org/a/416948.svg)](https://asciinema.org/a/416948)
 
-+ command
+- command
 
     ```bash
     # uninstall mmcv
@@ -94,7 +90,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
     > mim uninstall mmcls
     ```
 
-+ api
+- api
 
     ```python
     from mim import uninstall
@@ -113,14 +109,14 @@ Please refer to [installation.md](docs/installation.md) for installation.
 
 [![asciicast](https://asciinema.org/a/416949.svg)](https://asciinema.org/a/416949)
 
-+ command
+- command
 
     ```bash
     > mim list
     > mim list --all
     ```
 
-+ api
+- api
 
     ```python
     from mim import list_package
@@ -136,7 +132,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
 
 [![asciicast](https://asciinema.org/a/416950.svg)](https://asciinema.org/a/416950)
 
-+ command
+- command
 
     ```bash
     > mim search mmcls
@@ -153,7 +149,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
     > mim search mmcls --exclude-field weight paper
     ```
 
-+ api
+- api
 
     ```python
     from mim import get_model_info
@@ -176,14 +172,14 @@ Please refer to [installation.md](docs/installation.md) for installation.
 
 [![asciicast](https://asciinema.org/a/416951.svg)](https://asciinema.org/a/416951)
 
-+ command
+- command
 
     ```bash
     > mim download mmcls --config resnet18_b16x8_cifar10
     > mim download mmcls --config resnet18_b16x8_cifar10 --dest .
     ```
 
-+ api
+- api
 
     ```python
     from mim import download
@@ -199,7 +195,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
 
 [![asciicast](https://asciinema.org/a/416953.svg)](https://asciinema.org/a/416953)
 
-+ command
+- command
 
     ```bash
     # Train models on a single server with CPU by setting `gpus` to 0 and
@@ -220,7 +216,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
     > mim train mmcls -h
     ```
 
-+ api
+- api
 
     ```python
     from mim import train
@@ -243,7 +239,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
 
 [![asciicast](https://asciinema.org/a/416955.svg)](https://asciinema.org/a/416955)
 
-+ command
+- command
 
     ```bash
     # Test models on a single server with 1 GPU, report accuracy
@@ -266,7 +262,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
     > mim test mmcls -h
     ```
 
-+ api
+- api
 
     ```python
     from mim import test
@@ -289,7 +285,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
 
 [![asciicast](https://asciinema.org/a/416956.svg)](https://asciinema.org/a/416956)
 
-+ command
+- command
 
     ```bash
     # Get the Flops of a model
@@ -312,7 +308,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
     > mim run mmcls train -h
     ```
 
-+ api
+- api
 
     ``` python
     from mim import run
@@ -334,7 +330,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
 
 [![asciicast](https://asciinema.org/a/416958.svg)](https://asciinema.org/a/416958)
 
-+ command
+- command
 
     ```bash
     # Parameter search on a single server with CPU by setting `gpus` to 0 and
@@ -374,7 +370,7 @@ Please refer to [installation.md](docs/installation.md) for installation.
     > mim gridsearch mmcls -h
     ```
 
-+ api
+- api
 
     ```python
     from mim import gridsearch
