@@ -1,8 +1,7 @@
 import os
 import os.path as osp
+import shutil
 import tempfile
-from distutils.dir_util import copy_tree
-from distutils.file_util import copy_file
 from distutils.version import LooseVersion
 from pkg_resources import parse_requirements
 from typing import List
@@ -377,29 +376,57 @@ def install_from_repo(repo_root: str,
             environment variables and user configuration. Default: False.
         is_editable (bool): Install a package in editable mode. Default: False.
     """
+
+    def copy_file_to_package():
+        items = ['tools', 'configs', 'model_zoo.yml']
+        module_name = PKG2MODULE.get(package, package)
+        pkg_root = osp.join(repo_root, module_name)
+
+        for item in items:
+            src_path = osp.join(repo_root, item)
+            dst_path = osp.join(pkg_root, item)
+            if osp.exists(src_path):
+                if osp.islink(dst_path):
+                    os.unlink(dst_path)
+
+                if osp.isfile(src_path):
+                    shutil.copyfile(src_path, dst_path)
+                elif osp.isdir(src_path):
+                    if osp.exists(dst_path):
+                        shutil.rmtree(dst_path)
+                    shutil.copytree(src_path, dst_path)
+
+    def link_file_to_package():
+        # When user installs package with editable mode, we should create
+        # symlinks to package, which will synchronize the modified files.
+        items = ['tools', 'configs', 'model_zoo.yml']
+        module_name = PKG2MODULE.get(package, package)
+        pkg_root = osp.join(repo_root, module_name)
+
+        for item in items:
+            src_path = osp.join(repo_root, item)
+            dst_path = osp.join(pkg_root, item)
+            if osp.exists(src_path):
+                if osp.isfile(dst_path) or osp.islink(dst_path):
+                    os.remove(dst_path)
+                elif osp.isdir(dst_path):
+                    shutil.rmtree(dst_path)
+
+                os.symlink(src_path, dst_path)
+
+    if is_editable:
+        link_file_to_package()
+    else:
+        copy_file_to_package()
+
     # install dependencies. For example,
-    # install mmcls should install mmcv first if it is not installed or
+    # install mmcls should install mmcv-full first if it is not installed or
     # its(mmcv) verison does not match.
     mminstall_path = osp.join(repo_root, 'requirements', 'mminstall.txt')
     if osp.exists(mminstall_path):
         dependencies = parse_dependencies(mminstall_path)
         if dependencies:
             install_dependencies(dependencies, timeout, is_yes, is_user_dir)
-
-    module_name = PKG2MODULE.get(package, package)
-    pkg_root = osp.join(repo_root, module_name)
-    src_tool_root = osp.join(repo_root, 'tools')
-    dst_tool_root = osp.join(pkg_root, 'tools')
-    src_config_root = osp.join(repo_root, 'configs')
-    dst_config_root = osp.join(pkg_root, 'configs')
-    src_model_zoo_path = osp.join(repo_root, 'model_zoo.yml')
-    dst_model_zoo_path = osp.join(pkg_root, 'model_zoo.yml')
-    if osp.exists(src_tool_root):
-        copy_tree(src_tool_root, dst_tool_root)
-    if osp.exists(src_config_root):
-        copy_tree(src_config_root, dst_config_root)
-    if osp.exists(src_model_zoo_path):
-        copy_file(src_model_zoo_path, dst_model_zoo_path)
 
     third_dependencies = osp.join(repo_root, 'requirements', '/build.txt')
     if osp.exists(third_dependencies):
