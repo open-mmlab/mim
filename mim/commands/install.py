@@ -115,7 +115,11 @@ def install(package: str,
     target_pkg, target_version = split_package_version(package)
 
     # whether install from local repo
-    is_install_local_repo = osp.isdir(osp.abspath(target_pkg)) and not find_url
+    if ((package.startswith('.') or package.startswith('/'))
+            and osp.isdir(osp.abspath(target_pkg)) and not find_url):
+        is_install_local_repo = True
+    else:
+        is_install_local_repo = False
 
     # whether install master branch from github
     is_install_master = bool(not target_version and find_url)
