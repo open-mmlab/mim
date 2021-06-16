@@ -1,8 +1,7 @@
 import os
 import os.path as osp
+import shutil
 import tempfile
-from distutils.dir_util import copy_tree
-from distutils.file_util import copy_file
 from distutils.version import LooseVersion
 from pkg_resources import parse_requirements
 from typing import List
@@ -59,12 +58,19 @@ from mim.utils import (
     'is_user_dir',
     is_flag=True,
     help='Install to the Python user install directory')
+@click.option(
+    '-e',
+    '--editable',
+    'is_editable',
+    is_flag=True,
+    help='Install a package in editable mode.')
 def cli(
     package: str,
     find_url: str = '',
     timeout: int = 30,
     is_yes: bool = False,
     is_user_dir: bool = False,
+    is_editable: bool = False,
 ) -> None:
     """Install package.
 
@@ -92,14 +98,21 @@ def cli(
     # install extension based on OpenMMLab
     > mim install mmcls-project -f https://github.com/xxx/mmcls-project.git
     """
-    install(package, find_url, timeout, is_yes=is_yes, is_user_dir=is_user_dir)
+    install(
+        package,
+        find_url,
+        timeout,
+        is_yes=is_yes,
+        is_user_dir=is_user_dir,
+        is_editable=is_editable)
 
 
 def install(package: str,
             find_url: str = '',
             timeout: int = 15,
             is_yes: bool = False,
-            is_user_dir: bool = False) -> None:
+            is_user_dir: bool = False,
+            is_editable: bool = False) -> None:
     """Install a package by wheel or from github.
 
     Args:
@@ -111,6 +124,7 @@ def install(package: str,
             Default: False.
         is_usr_dir (bool): Install to the Python user install directory for
             environment variables and user configuration. Default: False.
+        is_editable (bool): Install a package in editable mode. Default: False.
     """
     target_pkg, target_version = split_package_version(package)
 
@@ -180,7 +194,8 @@ def install(package: str,
             package=target_pkg,
             timeout=timeout,
             is_yes=is_yes,
-            is_user_dir=is_user_dir)
+            is_user_dir=is_user_dir,
+            is_editable=is_editable)
 
     elif find_url and find_url.find('git') >= 0 or is_install_master:
         is_record = True
@@ -347,7 +362,8 @@ def install_from_repo(repo_root: str,
                       package: str = '',
                       timeout: int = 15,
                       is_yes: bool = False,
-                      is_user_dir: bool = False):
+                      is_user_dir: bool = False,
+                      is_editable: bool = False):
     """Install package from local repo.
 
     Args:
@@ -358,30 +374,59 @@ def install_from_repo(repo_root: str,
             Default: False.
         is_usr_dir (bool): Install to the Python user install directory for
             environment variables and user configuration. Default: False.
+        is_editable (bool): Install a package in editable mode. Default: False.
     """
+
+    def copy_file_to_package():
+        items = ['tools', 'configs', 'model_zoo.yml']
+        module_name = PKG2MODULE.get(package, package)
+        pkg_root = osp.join(repo_root, module_name)
+
+        for item in items:
+            src_path = osp.join(repo_root, item)
+            dst_path = osp.join(pkg_root, item)
+            if osp.exists(src_path):
+                if osp.islink(dst_path):
+                    os.unlink(dst_path)
+
+                if osp.isfile(src_path):
+                    shutil.copyfile(src_path, dst_path)
+                elif osp.isdir(src_path):
+                    if osp.exists(dst_path):
+                        shutil.rmtree(dst_path)
+                    shutil.copytree(src_path, dst_path)
+
+    def link_file_to_package():
+        # When user installs package with editable mode, we should create
+        # symlinks to package, which will synchronize the modified files.
+        items = ['tools', 'configs', 'model_zoo.yml']
+        module_name = PKG2MODULE.get(package, package)
+        pkg_root = osp.join(repo_root, module_name)
+
+        for item in items:
+            src_path = osp.join(repo_root, item)
+            dst_path = osp.join(pkg_root, item)
+            if osp.exists(src_path):
+                if osp.isfile(dst_path) or osp.islink(dst_path):
+                    os.remove(dst_path)
+                elif osp.isdir(dst_path):
+                    shutil.rmtree(dst_path)
+
+                os.symlink(src_path, dst_path)
+
+    if is_editable:
+        link_file_to_package()
+    else:
+        copy_file_to_package()
+
     # install dependencies. For example,
-    # install mmcls should install mmcv first if it is not installed or
+    # install mmcls should install mmcv-full first if it is not installed or
     # its(mmcv) verison does not match.
     mminstall_path = osp.join(repo_root, 'requirements', 'mminstall.txt')
     if osp.exists(mminstall_path):
         dependencies = parse_dependencies(mminstall_path)
         if dependencies:
             install_dependencies(dependencies, timeout, is_yes, is_user_dir)
-
-    module_name = PKG2MODULE.get(package, package)
-    pkg_root = osp.join(repo_root, module_name)
-    src_tool_root = osp.join(repo_root, 'tools')
-    dst_tool_root = osp.join(pkg_root, 'tools')
-    src_config_root = osp.join(repo_root, 'configs')
-    dst_config_root = osp.join(pkg_root, 'configs')
-    src_model_zoo_path = osp.join(repo_root, 'model_zoo.yml')
-    dst_model_zoo_path = osp.join(pkg_root, 'model_zoo.yml')
-    if osp.exists(src_tool_root):
-        copy_tree(src_tool_root, dst_tool_root)
-    if osp.exists(src_config_root):
-        copy_tree(src_config_root, dst_config_root)
-    if osp.exists(src_model_zoo_path):
-        copy_file(src_model_zoo_path, dst_model_zoo_path)
 
     third_dependencies = osp.join(repo_root, 'requirements', '/build.txt')
     if osp.exists(third_dependencies):
@@ -394,7 +439,10 @@ def install_from_repo(repo_root: str,
 
         call_command(dep_cmd)
 
-    install_cmd = ['python', '-m', 'pip', 'install', repo_root]
+    install_cmd = ['python', '-m', 'pip', 'install']
+    if is_editable:
+        install_cmd.append('-e')
+    install_cmd.append(repo_root)
     if is_user_dir:
         install_cmd.append('--user')
 
