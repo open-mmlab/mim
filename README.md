@@ -24,6 +24,10 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 v0.1.1 was released in 13/6/2021.
 
+## Customization
+
+You can use `.mimrc` for customization. Now we support customize default values of each sub-command. Please refer to [customization.md](docs/customization.md) for details.
+
 ## Build custom projects with MIM
 
 We provide some examples of how to build custom projects based on OpenMMLAB codebases and MIM in [MIM-Example](https://github.com/open-mmlab/mim-example).
