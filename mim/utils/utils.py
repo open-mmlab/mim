@@ -527,4 +527,4 @@ def module_full_name(abbr: str) -> str:
     if len(names) == 1:
         return names[0]
     else:
-        return ''
+        return abbr if abbr in names else ''
