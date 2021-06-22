@@ -115,9 +115,13 @@ def install(package: str,
     target_pkg, target_version = split_package_version(package)
 
     # whether install from local repo
-    if ((package.startswith('.') or package.startswith('/'))
-            and osp.isdir(osp.abspath(target_pkg)) and not find_url):
-        is_install_local_repo = True
+    if looks_like_path(target_pkg):
+        if is_installable_dir(target_pkg):
+            is_install_local_repo = True
+        else:
+            raise ValueError(
+                highlighted_error(
+                    f'{target_pkg} is not a installable directory'))
     else:
         is_install_local_repo = False
 
@@ -227,6 +231,34 @@ def install(package: str,
         write_installation_records(target_pkg, target_version, find_url)
 
     echo_success(f'Successfully installed {target_pkg}.')
+
+
+def looks_like_path(name: str) -> bool:
+    """Checks whether the string "looks like" a path on the filesystem.
+
+    This does not check whether the target actually exists, only judge from the
+    appearance.
+
+    Args:
+        name (str): The string to be checked.
+    """
+    if osp.sep in name:
+        return True
+    if osp.altsep is not None and osp.altsep in name:
+        return True
+    if name.startswith('.'):
+        return True
+    return False
+
+
+def is_installable_dir(name: str) -> bool:
+    """Is path is a directory containing setup.py."""
+    path = osp.abspath(name)
+    if osp.isdir(path):
+        setup_py = osp.join(path, 'setup.py')
+        return osp.isfile(setup_py)
+    else:
+        return False
 
 
 def infer_find_url(package: str) -> str:

@@ -64,10 +64,6 @@ def test_mmrepo_install():
         result = runner.invoke(install, ['./mmclassification', '--yes'])
         assert result.exit_code == 0
 
-        # mim install mmclassification
-        result = runner.invoke(install, ['mmclassification', '--yes'])
-        assert result.exit_code == 0
-
         os.chdir(current_root)
 
     # mim install mmcls --yes
