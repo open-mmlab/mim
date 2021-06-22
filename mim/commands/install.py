@@ -252,7 +252,11 @@ def looks_like_path(name: str) -> bool:
 
 
 def is_installable_dir(name: str) -> bool:
-    """Is path is a directory containing setup.py."""
+    """Check whether path is a directory containing setup.py.
+
+    Args:
+        name (str): The string to be checked.
+    """
     path = osp.abspath(name)
     if osp.isdir(path):
         setup_py = osp.join(path, 'setup.py')
