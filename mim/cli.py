@@ -1,11 +1,28 @@
 import difflib
 import os
 import os.path as osp
+from configparser import ConfigParser
 
 import click
 
 plugin_folder = os.path.join(os.path.dirname(__file__), 'commands')
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+
+DEFAULT_CFG = osp.join(osp.expanduser('~'), '.mimrc')
+
+
+def configure(ctx, param, filename):
+    cfg = ConfigParser()
+    cfg.read(filename)
+    ctx.default_map = {}
+    for sect in cfg.sections():
+        command_path = sect.split('.')
+        if command_path[0] != 'options':
+            continue
+        defaults = ctx.default_map
+        for cmdname in command_path[1:]:
+            defaults = defaults.setdefault(cmdname, {})
+        defaults.update(cfg[sect])
 
 
 class MIM(click.MultiCommand):
@@ -54,6 +71,15 @@ class MIM(click.MultiCommand):
 
 
 @click.command(cls=MIM, context_settings=CONTEXT_SETTINGS)
+@click.option(
+    '--user-conf',
+    type=click.Path(dir_okay=False),
+    default=DEFAULT_CFG,
+    callback=configure,
+    is_eager=True,
+    expose_value=False,
+    help='Read option defaults from the .mimrc file',
+    show_default=True)
 @click.version_option()
 def cli():
     """OpenMMLab Command Line Interface.
