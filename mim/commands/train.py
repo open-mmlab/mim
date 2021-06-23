@@ -224,6 +224,11 @@ def train(
         ] + common_args
     elif launcher == 'slurm':
         parsed_srun_args = srun_args.split() if srun_args else []
+        has_job_name = any([('--job-name' in x) or ('-J' in x)
+                            for x in parsed_srun_args])
+        if not has_job_name:
+            job_name = osp.splitext(osp.basename(config))[0]
+            parsed_srun_args.append(f'--job-name={job_name}_train')
         cmd = [
             'srun', '-p', f'{partition}', f'--gres=gpu:{gpus_per_node}',
             f'--ntasks={gpus}', f'--ntasks-per-node={gpus_per_node}',
