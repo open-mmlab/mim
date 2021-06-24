@@ -44,8 +44,12 @@ def test_download():
     checkpoints = download('mmcls', ['resnet18_b16x8_cifar10'])
     assert checkpoints == ['resnet18_b16x8_cifar10_20200823-f906fa4e.pth']
     checkpoints = download('mmcls', ['resnet18_b16x8_cifar10'])
+    checkpoints = download('mmcls', ['resnet18_b16x8_cifar10'], model_info_local=False)
+    assert checkpoints == ['resnet18_b16x8_cifar10_20200823-f906fa4e.pth']
 
     # mim download mmcls --config resnet18_b16x8_cifar10 --dest temp_root
     with tempfile.TemporaryDirectory() as temp_root:
         checkpoints = download('mmcls', ['resnet18_b16x8_cifar10'], temp_root)
+        assert checkpoints == ['resnet18_b16x8_cifar10_20200823-f906fa4e.pth']
+        checkpoints = download('mmcls', ['resnet18_b16x8_cifar10'], temp_root, model_info_local=False)
         assert checkpoints == ['resnet18_b16x8_cifar10_20200823-f906fa4e.pth']
