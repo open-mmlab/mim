@@ -76,7 +76,10 @@ def download(package: str,
 
     checkpoints = []
     model_info = get_model_info(
-        package, shown_fields=['weight', 'config'], to_dict=True, local=model_info_local)
+        package,
+        shown_fields=['weight', 'config'],
+        to_dict=True,
+        local=model_info_local)
     valid_configs = model_info.keys()
     invalid_configs = set(configs) - set(valid_configs)
     if invalid_configs:
