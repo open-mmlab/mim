@@ -46,7 +46,8 @@ def cli(package: str,
 
 def download(package: str,
              configs: List[str],
-             dest_root: Optional[str] = None) -> List[str]:
+             dest_root: Optional[str] = None,
+             model_info_local: bool = True) -> List[str]:
     """Download checkpoints from url and parse configs from package.
 
     Args:
@@ -54,6 +55,8 @@ def download(package: str,
         configs (List[str]): List of config ids.
         dest_root (Optional[str]): Destination directory to save checkpoint and
             config. Default: None.
+        model_info_local (bool): Query model info from local environment or
+            remote guthub. Default: True.
     """
     if dest_root is None:
         dest_root = DEFAULT_CACHE_DIR
@@ -73,7 +76,7 @@ def download(package: str,
 
     checkpoints = []
     model_info = get_model_info(
-        package, shown_fields=['weight', 'config'], to_dict=True)
+        package, shown_fields=['weight', 'config'], to_dict=True, local=model_info_local)
     valid_configs = model_info.keys()
     invalid_configs = set(configs) - set(valid_configs)
     if invalid_configs:
