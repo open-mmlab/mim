@@ -2,13 +2,25 @@ import difflib
 import os
 import os.path as osp
 from configparser import ConfigParser
+from distutils.version import LooseVersion
 
 import click
+
+import mim
+from mim.utils import echo_warning, get_latest_version
 
 plugin_folder = os.path.join(os.path.dirname(__file__), 'commands')
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 DEFAULT_CFG = osp.join(osp.expanduser('~'), '.mimrc')
+
+latest_version = get_latest_version('openmim')
+if LooseVersion(mim.__version__) < latest_version:
+    msg = ('==> WARNING: A newer version of openmim exists. <==\n'
+           f'current version: {mim.__version__}\n'
+           f'latest version: {latest_version}\n'
+           f'Update openmim by running "pip install --upgrade openmim"\n')
+    echo_warning(msg)
 
 
 def configure(ctx, param, filename):
