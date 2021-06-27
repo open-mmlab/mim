@@ -218,7 +218,15 @@ def load_metadata_from_local(package: str):
         version = get_installed_version(package)
         click.echo(f'local verison: {version}')
 
-        metadata_path = resource_filename(package, 'model_zoo.yml')
+        metadata_path = resource_filename(package, 'model-index.yml')
+        if not osp.exists(metadata_path):
+            metadata_path = resource_filename(package, 'model_zoo.yml')
+            if not osp.exists(metadata_path):
+                raise FileNotFoundError(
+                    highlighted_error(
+                        'current codebase version can not support "mim search '
+                        f'{package}", please upgrade your {package}.'))
+
         metadata = load(metadata_path)
 
         return metadata
@@ -264,7 +272,7 @@ def load_metadata_from_remote(package: str) -> Optional[ModelIndex]:
             if not osp.exists(metadata_path):
                 raise FileNotFoundError(
                     highlighted_error(
-                        'current version can not support "mim search '
+                        'current codebase version can not support "mim search '
                         f'{package}", please upgrade your {package}.'))
 
             metadata = load(metadata_path)
