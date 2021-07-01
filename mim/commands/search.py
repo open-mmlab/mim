@@ -218,14 +218,16 @@ def load_metadata_from_local(package: str):
         version = get_installed_version(package)
         click.echo(f'local verison: {version}')
 
+        # rename the model_zoo.yml to model-index.yml but support both of them
+        # for backward compatibility
         metadata_path = resource_filename(package, 'model-index.yml')
         if not osp.exists(metadata_path):
             metadata_path = resource_filename(package, 'model_zoo.yml')
             if not osp.exists(metadata_path):
                 raise FileNotFoundError(
                     highlighted_error(
-                        'current codebase version can not support "mim search '
-                        f'{package}", please upgrade your {package}.'))
+                        'model-index.yml or model_zoo.yml is not found, please'
+                        f' upgrade your {package} to support search command'))
 
         metadata = load(metadata_path)
 
@@ -268,12 +270,18 @@ def load_metadata_from_remote(package: str) -> Optional[ModelIndex]:
             clone_cmd.append(repo_root)
             subprocess.check_call(
                 clone_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-            metadata_path = osp.join(repo_root, 'model_zoo.yml')
+
+            # rename the model_zoo.yml to model-index.yml but support both of
+            # them for backward compatibility
+            metadata_path = resource_filename(package, 'model-index.yml')
             if not osp.exists(metadata_path):
-                raise FileNotFoundError(
-                    highlighted_error(
-                        'current codebase version can not support "mim search '
-                        f'{package}", please upgrade your {package}.'))
+                metadata_path = resource_filename(package, 'model_zoo.yml')
+                if not osp.exists(metadata_path):
+                    raise FileNotFoundError(
+                        highlighted_error(
+                            'model-index.yml or model_zoo.yml is not found, '
+                            f'please upgrade your {package} to support search '
+                            'command'))
 
             metadata = load(metadata_path)
 
