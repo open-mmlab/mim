@@ -418,7 +418,9 @@ def install_from_repo(repo_root: str,
     """
 
     def copy_file_to_package():
-        items = ['tools', 'configs', 'model_zoo.yml']
+        # rename the model_zoo.yml to model-index.yml but support both of them
+        # for backward compatibility
+        items = ['tools', 'configs', 'model_zoo.yml', 'model-index.yml']
         module_name = PKG2MODULE.get(package, package)
         pkg_root = osp.join(repo_root, module_name)
 
@@ -439,7 +441,9 @@ def install_from_repo(repo_root: str,
     def link_file_to_package():
         # When user installs package with editable mode, we should create
         # symlinks to package, which will synchronize the modified files.
-        items = ['tools', 'configs', 'model_zoo.yml']
+        # Besides, rename the model_zoo.yml to model-index.yml but support both
+        # of them for backward compatibility
+        items = ['tools', 'configs', 'model_zoo.yml', 'model-index.yml']
         module_name = PKG2MODULE.get(package, package)
         pkg_root = osp.join(repo_root, module_name)
 
