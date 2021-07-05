@@ -73,6 +73,8 @@ abbrieviation = {
 @click.option('--to-dict', 'to_dict', is_flag=True, help='Return metadata.')
 @click.option(
     '--local/--remote', default=True, help='Show local or remote packages.')
+@click.option(
+    '--display-width', type=int, default=80, help='The display width.')
 def cli(packages: List[str],
         configs: Optional[List[str]] = None,
         valid_config: bool = True,
@@ -86,7 +88,8 @@ def cli(packages: List[str],
         valid_field: bool = True,
         json_path: Optional[str] = None,
         to_dict: bool = False,
-        local: bool = True) -> Any:
+        local: bool = True,
+        display_width: int = 80) -> Any:
     """Show the information of packages.
 
     \b
@@ -128,7 +131,7 @@ def cli(packages: List[str],
             echo_success('\nvalid fields:')
             click.echo(dataframe.columns.to_list())
         elif not dataframe.empty:
-            print_df(dataframe)
+            print_df(dataframe, display_width)
         else:
             click.echo('can not find matching models.')
 
@@ -598,10 +601,11 @@ def dump2json(dataframe: DataFrame, json_path: str) -> None:
     dataframe.to_json(json_path)
 
 
-def print_df(dataframe: DataFrame) -> None:
+def print_df(dataframe: DataFrame, display_width: int) -> None:
     """Print Dataframe into terminal."""
 
     def _generate_output():
+        pd.set_option('display_width', display_width)
         for row in dataframe.iterrows():
             config_msg = click.style(f'config id: {row[0]}\n', fg='green')
             yield from [
