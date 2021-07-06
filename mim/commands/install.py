@@ -422,9 +422,12 @@ def install_from_repo(repo_root: str,
         module_name = PKG2MODULE.get(package, package)
         pkg_root = osp.join(repo_root, module_name)
 
+        if osp.exists(osp.join(pkg_root, '.mim')):
+            os.mkdir('.mim')
+
         for item in items:
             src_path = osp.join(repo_root, item)
-            dst_path = osp.join(pkg_root, item)
+            dst_path = osp.join(pkg_root, '.mim', item)
             if osp.exists(src_path):
                 if osp.islink(dst_path):
                     os.unlink(dst_path)
@@ -443,9 +446,12 @@ def install_from_repo(repo_root: str,
         module_name = PKG2MODULE.get(package, package)
         pkg_root = osp.join(repo_root, module_name)
 
+        if osp.exists(osp.join(pkg_root, '.mim')):
+            os.mkdir('.mim')
+
         for item in items:
             src_path = osp.join(repo_root, item)
-            dst_path = osp.join(pkg_root, item)
+            dst_path = osp.join(pkg_root, '.mim', item)
             if osp.exists(src_path):
                 if osp.isfile(dst_path) or osp.islink(dst_path):
                     os.remove(dst_path)
