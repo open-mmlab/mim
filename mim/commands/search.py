@@ -294,22 +294,35 @@ def load_metadata_from_remote(package: str) -> Optional[ModelIndex]:
 
 def convert2df(metadata: ModelIndex) -> DataFrame:
     """Convert metadata into DataFrame format."""
+
+    def _parse_metadata(data: dict, prefix: str = ''):
+        parsed_data = {}
+        for key, value in data.items():
+            # name = '_'.join(key.split())
+            # name = cast2lowercase(key)
+            name = abbrieviation.get(key, key)
+            name = f'{prefix}{name}'
+            if isinstance(value, str):
+                # parsed_data[name] = cast2lowercase(value)
+                parsed_data[name] = value
+            elif isinstance(value, (list, tuple)):
+                if isinstance(value[0], dict):
+                    parsed_data.update(_parse_metadata(value[0], f'{name}:'))
+                else:
+                    # parsed_data[name] = ','.join(cast2lowercase(value))
+                    parsed_data[name] = ','.join(value)
+            else:
+                parsed_data[name] = value
+
+        return parsed_data
+
     name2model = {}
     name2collection = {}
     for collection in metadata.collections:
         collection_info = {}
         data = getattr(collection.metadata, 'data', None)
         if data:
-            for key, value in data.items():
-                name = '_'.join(key.split())
-                name = cast2lowercase(name)
-                name = abbrieviation.get(name, name)
-                if isinstance(value, str):
-                    collection_info[name] = cast2lowercase(value)
-                elif isinstance(value, (list, tuple)):
-                    collection_info[name] = ','.join(cast2lowercase(value))
-                else:
-                    collection_info[name] = value
+            collection_info.update(_parse_metadata(data))
 
         paper = getattr(collection, 'paper', None)
         if paper:
@@ -328,16 +341,7 @@ def convert2df(metadata: ModelIndex) -> DataFrame:
         model_info = {}
         data = getattr(model.metadata, 'data', None)
         if data:
-            for key, value in model.metadata.data.items():
-                name = '_'.join(key.split())
-                name = cast2lowercase(name)
-                name = abbrieviation.get(name, name)
-                if isinstance(value, str):
-                    model_info[name] = cast2lowercase(value)
-                elif isinstance(value, (list, tuple)):
-                    model_info[name] = ','.join(cast2lowercase(value))
-                else:
-                    model_info[name] = value
+            model_info.update(_parse_metadata(data))
 
         results = getattr(model, 'results', None)
         for result in results:
