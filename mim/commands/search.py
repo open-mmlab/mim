@@ -28,8 +28,8 @@ from mim.utils import (
 abbrieviation = {
     'batch_size': 'bs',
     'epochs': 'epoch',
-    'inference_time': 'fps',
-    'inference_time_(fps)': 'fps',
+    'inference_time_(ms/im)': 'inference_time',
+    'training_memory_(gb)': 'training_memory'
 }
 
 
@@ -295,22 +295,25 @@ def load_metadata_from_remote(package: str) -> Optional[ModelIndex]:
 def convert2df(metadata: ModelIndex) -> DataFrame:
     """Convert metadata into DataFrame format."""
 
-    def _parse_metadata(data: dict, prefix: str = ''):
+    def _parse(data: dict):
         parsed_data = {}
         for key, value in data.items():
-            # name = '_'.join(key.split())
-            # name = cast2lowercase(key)
-            name = abbrieviation.get(key, key)
-            name = f'{prefix}{name}'
+            name = '_'.join(key.split())
+            name = cast2lowercase(name)
             if isinstance(value, str):
-                # parsed_data[name] = cast2lowercase(value)
-                parsed_data[name] = value
+                parsed_data[name] = cast2lowercase(value)
             elif isinstance(value, (list, tuple)):
+                # inference time is a list of dict like List[dict]
+                # each item of inference time represents the environment where
+                # it is tested
                 if isinstance(value[0], dict):
-                    parsed_data.update(_parse_metadata(value[0], f'{name}:'))
+                    name = 'inference_time'
+                    for i, v in enumerate(value, 1):
+                        parsed_data[f'{name}_{i}'] = ','.join(
+                            map(str,
+                                _parse(v).values()))
                 else:
-                    # parsed_data[name] = ','.join(cast2lowercase(value))
-                    parsed_data[name] = ','.join(value)
+                    parsed_data[name] = ','.join(cast2lowercase(value))
             else:
                 parsed_data[name] = value
 
@@ -322,7 +325,7 @@ def convert2df(metadata: ModelIndex) -> DataFrame:
         collection_info = {}
         data = getattr(collection.metadata, 'data', None)
         if data:
-            collection_info.update(_parse_metadata(data))
+            collection_info.update(_parse(data))
 
         paper = getattr(collection, 'paper', None)
         if paper:
@@ -341,7 +344,7 @@ def convert2df(metadata: ModelIndex) -> DataFrame:
         model_info = {}
         data = getattr(model.metadata, 'data', None)
         if data:
-            model_info.update(_parse_metadata(data))
+            model_info.update(_parse(data))
 
         results = getattr(model, 'results', None)
         for result in results:
