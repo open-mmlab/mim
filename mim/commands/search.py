@@ -570,7 +570,7 @@ def select_by(dataframe: DataFrame,
               unshown_fields: Optional[List[str]] = None) -> DataFrame:
     """Select by the fields.
 
-    when selecting some fields to be shown or be hidden, prefix is supported.
+    When selecting some fields to be shown or be hidden, prefix is supported.
     For example, shown_fields is given as ['inference', 'epoch'], the actual
     shown fields will be inference_time, inference_hardward, inference_backend,
     inference_batch_size, inference_mode, inference_resulution and epochs.
