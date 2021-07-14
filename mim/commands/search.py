@@ -25,13 +25,6 @@ from mim.utils import (
     split_package_version,
 )
 
-abbrieviation = {
-    'batch_size': 'bs',
-    'epochs': 'epoch',
-    'inference_time_(ms/im)': 'inference_time',
-    'training_memory_(gb)': 'training_memory'
-}
-
 
 @click.command('search')
 @click.argument(
@@ -98,11 +91,11 @@ def cli(packages: List[str],
         > mim search mmcls --model resnet
         > mim search mmcls --dataset cifar-10
         > mim search mmcls --valid-filed
-        > mim search mmcls --condition 'bs>45,epoch>100'
-        > mim search mmcls --condition 'bs>45 epoch>100'
-        > mim search mmcls --condition '128<bs<=256'
-        > mim search mmcls --sort bs epoch
-        > mim search mmcls --field epoch bs weight
+        > mim search mmcls --condition 'batch_size>45,epochs>100'
+        > mim search mmcls --condition 'batch_size>45 epochs>100'
+        > mim search mmcls --condition '128<batch_size<=256'
+        > mim search mmcls --sort batch_size epochs
+        > mim search mmcls --field epochs batch_size weight
         > mim search mmcls --exclude-field weight paper
     """
     packages_info = {}
@@ -295,27 +288,46 @@ def load_metadata_from_remote(package: str) -> Optional[ModelIndex]:
 def convert2df(metadata: ModelIndex) -> DataFrame:
     """Convert metadata into DataFrame format."""
 
-    def _parse(data: dict):
+    def _parse(data: dict) -> dict:
         parsed_data = {}
         for key, value in data.items():
-            name = '_'.join(key.split())
+            unit = ''
+            name = key.split()
+            if '(' in key:
+                # inference time (ms/im) will be splitted into `inference time`
+                # and (ms/im)
+                name, unit = name[0:-1], name[-1]
+            name = '_'.join(name)
             name = cast2lowercase(name)
+
             if isinstance(value, str):
                 parsed_data[name] = cast2lowercase(value)
             elif isinstance(value, (list, tuple)):
-                # inference time is a list of dict like List[dict]
-                # each item of inference time represents the environment where
-                # it is tested
                 if isinstance(value[0], dict):
-                    name = 'inference_time'
-                    for i, v in enumerate(value, 1):
-                        parsed_data[f'{name}_{i}'] = ','.join(
-                            map(str,
-                                _parse(v).values()))
+                    # inference time is a list of dict like List[dict]
+                    # each item of inference time represents the environment
+                    # where it is tested
+                    num_value = len(value)
+                    for i, _value in enumerate(value, 1):
+                        for _k, _v in _value.items():
+                            if _k == 'value':
+                                if num_value > 1:
+                                    new_name = f'inference_time_{i}{unit}'
+                                else:
+                                    new_name = f'inference_time{unit}'
+                            else:
+                                _k = '_'.join(_k.split())
+                                if num_value > 1:
+                                    new_name = f'inference_{_k}_{i}'
+                                else:
+                                    new_name = f'inference_{_k}'
+                            parsed_data[new_name] = _v
                 else:
-                    parsed_data[name] = ','.join(cast2lowercase(value))
+                    new_name = f'{name}{unit}'
+                    parsed_data[new_name] = ','.join(cast2lowercase(value))
             else:
-                parsed_data[name] = value
+                new_name = f'{name}{unit}'
+                parsed_data[new_name] = value
 
         return parsed_data
 
@@ -356,7 +368,6 @@ def convert2df(metadata: ModelIndex) -> DataFrame:
             for key, value in metrics.items():
                 name = '_'.join(key.split())
                 name = cast2lowercase(name)
-                name = abbrieviation.get(name, name)
                 model_info[f'{dataset}/{name}'] = value
 
         paper = getattr(model, 'paper', None)
@@ -468,7 +479,8 @@ def filter_by_conditions(
     and_conditions = []
     or_conditions = []
 
-    # 'fps>45,epoch>100' or 'fps>45 epoch>100' -> ['fps>40', 'epoch>100']
+    # 'inference_time>45,epoch>100' or 'inference_time>45 epoch>100' ->
+    # ['inference_time>40', 'epoch>100']
     filter_conditions = re.split(r'[ ,]+', filter_conditions)  # type: ignore
 
     valid_fields = dataframe.columns
@@ -569,6 +581,11 @@ def select_by(dataframe: DataFrame,
               unshown_fields: Optional[List[str]] = None) -> DataFrame:
     """Select by the fields.
 
+    when selecting some fields to be shown or be hidden, prefix is supported.
+    For example, shown_fields is given as ['inference', 'epoch'], the actual
+    shown fields will be inference_time, inference_hardward, inference_backend,
+    inference_batch_size, inference_mode, inference_resulution and epochs.
+
     Args:
         dataframe (DataFrame): Data to be filtered.
         shown_fields (List[str], optional): Fields to be outputted.
@@ -576,6 +593,17 @@ def select_by(dataframe: DataFrame,
         unshown_fields (List[str], optional): Fields to be hidden.
             Default: None.
     """
+
+    def _startswith(valid_fields, input_fields):
+        seen_fields = set()
+        output_fields = []
+        for valid_field in valid_fields:
+            for input_field in input_fields:
+                if valid_field.startswith(input_field):
+                    seen_fields.add(input_field)
+                    output_fields.append(valid_field)
+        return output_fields, seen_fields
+
     if shown_fields is None and unshown_fields is None:
         return dataframe
 
@@ -584,19 +612,21 @@ def select_by(dataframe: DataFrame,
             highlighted_error(
                 'shown_fields and unshown_fields must be mutually exclusive.'))
 
-    valid_fields = set(dataframe.columns)
+    valid_fields = dataframe.columns
     if shown_fields:
         shown_fields = cast2lowercase(shown_fields)
-        invalid_fields = set(shown_fields) - valid_fields  # type: ignore
+        new_shown_fields, seen_fields = _startswith(valid_fields, shown_fields)
+        invalid_fields = set(shown_fields) - seen_fields  # type: ignore
         if invalid_fields:
             raise ValueError(
                 highlighted_error(f'Expected fields: {valid_fields}, but got '
                                   f'{invalid_fields}'))
 
-        dataframe = dataframe.filter(items=shown_fields)
-
+        dataframe = dataframe.filter(items=new_shown_fields)
     else:
         unshown_fields = cast2lowercase(unshown_fields)  # type: ignore
+        new_unshown_fields, seen_fields = _startswith(valid_fields,
+                                                      unshown_fields)
         invalid_fields = set(unshown_fields) - valid_fields  # type: ignore
         if invalid_fields:
             raise ValueError(
@@ -604,7 +634,7 @@ def select_by(dataframe: DataFrame,
                                   f'{invalid_fields}'))
 
         dataframe = dataframe.drop(
-            columns=list(unshown_fields))  # type: ignore
+            columns=list(new_unshown_fields))  # type: ignore
 
     dataframe = dataframe.dropna(axis=0, how='all')
 
@@ -625,6 +655,7 @@ def print_df(dataframe: DataFrame) -> None:
     """Print Dataframe into terminal."""
 
     def _generate_output():
+        dataframe.sort_index(inplace=True, axis=1)
         for row in dataframe.iterrows():
             config_msg = click.style(f'config id: {row[0]}\n', fg='green')
             yield from [

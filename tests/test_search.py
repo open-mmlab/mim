@@ -59,30 +59,32 @@ def test_search():
     result = runner.invoke(search, ['mmcls', '--dataset', 'cifar-10'])
     assert result.exit_code == 0
 
-    # mim search mmcls --condition 'bs>45,epoch>100'
-    result = runner.invoke(search, ['mmcls', '--condition', 'bs>45,epoch>100'])
+    # mim search mmcls --condition 'batch_size>45,epochs>100'
+    result = runner.invoke(
+        search, ['mmcls', '--condition', 'batch_size>45,epochs>100'])
     assert result.exit_code == 0
 
-    # mim search mmcls --condition 'bs>45 epoch>100'
-    result = runner.invoke(search, ['mmcls', '--condition', 'bs>45 epoch>100'])
+    # mim search mmcls --condition 'batch_size>45 epochs>100'
+    result = runner.invoke(
+        search, ['mmcls', '--condition', 'batch_size>45 epochs>100'])
     assert result.exit_code == 0
 
-    # mim search mmcls --condition '128<bs<=256'
-    result = runner.invoke(search, ['mmcls', '--condition', '128<bs<=256'])
+    # mim search mmcls --condition '128<batch_size<=256'
+    result = runner.invoke(search,
+                           ['mmcls', '--condition', '128<batch_size<=256'])
     assert result.exit_code == 0
 
-    # mim search mmcls --sort epochs
-    # invalid field
-    result = runner.invoke(search, ['mmcls', '--sort', 'epochs'])
-    assert result.exit_code == 1
     # mim search mmcls --sort epoch
+    # invalid field
     result = runner.invoke(search, ['mmcls', '--sort', 'epoch'])
+    assert result.exit_code == 1
+    # mim search mmcls --sort epochs
+    result = runner.invoke(search, ['mmcls', '--sort', 'epochs'])
     assert result.exit_code == 0
 
+    # # mim search mmcls --field epoch
+    # result = runner.invoke(search, ['mmcls', '--field', 'epoch'])
+    # assert result.exit_code == 1
     # mim search mmcls --field epochs
-    # invalid field
     result = runner.invoke(search, ['mmcls', '--field', 'epochs'])
-    assert result.exit_code == 1
-    # mim search mmcls --field epoch
-    result = runner.invoke(search, ['mmcls', '--field', 'epoch'])
     assert result.exit_code == 0
