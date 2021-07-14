@@ -7,7 +7,6 @@ from pkg_resources import resource_filename
 from typing import Any, List, Optional
 
 import click
-import pandas as pd
 from modelindex.load_model_index import load
 from modelindex.models.ModelIndex import ModelIndex
 from pandas import DataFrame
@@ -19,7 +18,6 @@ from mim.utils import (
     cast2lowercase,
     echo_success,
     get_github_url,
-    get_installed_version,
     highlighted_error,
     is_installed,
     split_package_version,
@@ -208,9 +206,6 @@ def load_metadata_from_local(package: str):
         >>> metadata = load_metadata_from_local('mmcls')
     """
     if is_installed(package):
-        version = get_installed_version(package)
-        click.echo(f'local verison: {version}')
-
         # rename the model_zoo.yml to model-index.yml but support both of them
         # for backward compatibility
         metadata_path = resource_filename(package, 'model-index.yml')
@@ -307,21 +302,15 @@ def convert2df(metadata: ModelIndex) -> DataFrame:
                     # inference time is a list of dict like List[dict]
                     # each item of inference time represents the environment
                     # where it is tested
-                    num_value = len(value)
-                    for i, _value in enumerate(value, 1):
-                        for _k, _v in _value.items():
-                            if _k == 'value':
-                                if num_value > 1:
-                                    new_name = f'inference_time_{i}{unit}'
-                                else:
-                                    new_name = f'inference_time{unit}'
-                            else:
-                                _k = '_'.join(_k.split())
-                                if num_value > 1:
-                                    new_name = f'inference_{_k}_{i}'
-                                else:
-                                    new_name = f'inference_{_k}'
-                            parsed_data[new_name] = _v
+                    for _value in value:
+                        envs = [
+                            str(_value.get(env)) for env in [
+                                'hardware', 'backend', 'batch size', 'mode',
+                                'resolution'
+                            ]
+                        ]
+                        new_name = f'inference_time{unit}[{",".join(envs)}]'
+                        parsed_data[new_name] = _value.get('value')
                 else:
                     new_name = f'{name}{unit}'
                     parsed_data[new_name] = ','.join(cast2lowercase(value))
@@ -651,16 +640,42 @@ def dump2json(dataframe: DataFrame, json_path: str) -> None:
     dataframe.to_json(json_path)
 
 
-def print_df(dataframe: DataFrame) -> None:
+def print_df(dataframe: DataFrame, display_width: int = 100) -> None:
     """Print Dataframe into terminal."""
 
-    def _generate_output():
-        dataframe.sort_index(inplace=True, axis=1)
+    def _max_len(dataframe):
+        key_max_len = 0
+        value_max_len = 0
         for row in dataframe.iterrows():
-            config_msg = click.style(f'config id: {row[0]}\n', fg='green')
-            yield from [
-                config_msg, '-' * pd.get_option('display.width'),
-                f'\n{row[1].dropna().to_string()}\n'
-            ]
+            for key, value in row[1].to_dict().items():
+                key_max_len = max(key_max_len, len(key))
+                value_max_len = max(value_max_len, len(str(value)))
+        return key_max_len, value_max_len
+
+    key_max_len, value_max_len = _max_len(dataframe)
+    key_max_len += 2
+    if key_max_len + value_max_len > display_width:
+        value_max_len = display_width - key_max_len
+
+    def _table(row):
+        output = ''
+        output += '-' * (key_max_len + value_max_len)
+        output += '\n'
+        output += click.style(f'config id: {row[0]}\n', fg='green')
+        row_dict = row[1].dropna().to_dict()
+        keys = sorted(row_dict.keys())
+        for key in keys:
+            output += key.ljust(key_max_len)
+            value = str(row_dict[key])
+            if len(value) > value_max_len:
+                output += f'{value[:value_max_len-3]}...'
+            else:
+                output += value
+            output += '\n'
+        return output
+
+    def _generate_output():
+        for row in dataframe.iterrows():
+            yield _table(row)
 
     click.echo_via_pager(_generate_output())
