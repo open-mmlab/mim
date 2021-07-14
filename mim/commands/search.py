@@ -668,7 +668,10 @@ def print_df(dataframe: DataFrame, display_width: int = 100) -> None:
             output += key.ljust(key_max_len)
             value = str(row_dict[key])
             if len(value) > value_max_len:
-                output += f'{value[:value_max_len-3]}...'
+                if value_max_len > 3:
+                    output += f'{value[:value_max_len-3]}...'
+                else:
+                    output += '.' * value_max_len
             else:
                 output += value
             output += '\n'
