@@ -640,7 +640,7 @@ def dump2json(dataframe: DataFrame, json_path: str) -> None:
     dataframe.to_json(json_path)
 
 
-def print_df(dataframe: DataFrame, display_width: int = 100) -> None:
+def print_df(dataframe: DataFrame, display_width: int = 80) -> None:
     """Print Dataframe into terminal."""
 
     def _max_len(dataframe):
