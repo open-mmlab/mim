@@ -290,7 +290,7 @@ def convert2df(metadata: ModelIndex) -> DataFrame:
             name = key.split()
             if '(' in key:
                 # inference time (ms/im) will be splitted into `inference time`
-                # and (ms/im)
+                # and `(ms/im)`
                 name, unit = name[0:-1], name[-1]
             name = '_'.join(name)
             name = cast2lowercase(name)
@@ -468,8 +468,8 @@ def filter_by_conditions(
     and_conditions = []
     or_conditions = []
 
-    # 'inference_time>45,epoch>100' or 'inference_time>45 epoch>100' ->
-    # ['inference_time>40', 'epoch>100']
+    # 'inference_time>45,epoch>100' or 'inference_time>45 epoch>100' will be
+    # parsed into ['inference_time>40', 'epoch>100']
     filter_conditions = re.split(r'[ ,]+', filter_conditions)  # type: ignore
 
     valid_fields = dataframe.columns
