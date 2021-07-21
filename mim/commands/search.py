@@ -8,7 +8,6 @@ from pkg_resources import resource_filename
 from typing import Any, List, Optional
 
 import click
-import pandas as pd
 from modelindex.load_model_index import load
 from modelindex.models.ModelIndex import ModelIndex
 from pandas import DataFrame, Series
@@ -712,7 +711,6 @@ def print_df(dataframe: DataFrame, display_width: int = 80) -> None:
         return output
 
     def _generate_output():
-        pd.set_option('display.width', display_width)
         for row in dataframe.iterrows():
             yield _table(row)
 
