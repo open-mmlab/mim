@@ -1,9 +1,9 @@
 blank_issues_enabled: false
 
 contact_links:
-  - name: Common Issues
-    url: https://mim.readthedocs.io/en/latest/faq.html
+  - name: Common Issues [TBA]
+    url: https://openmim.readthedocs.io/en/latest/faq.html
     about: Check if your issue already has solutions
-  - name: MMDetection Documentation
-    url: https://mmdetection.readthedocs.io/en/latest/
+  - name: MIM Documentation
+    url: https://openmim.readthedocs.io/en/latest/
     about: Check if your question is answered in docs
