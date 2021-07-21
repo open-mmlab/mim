@@ -75,16 +75,15 @@ def test_search():
     assert result.exit_code == 0
 
     # mim search mmcls --sort epoch
-    # invalid field
     result = runner.invoke(search, ['mmcls', '--sort', 'epoch'])
-    assert result.exit_code == 1
+    assert result.exit_code == 0
     # mim search mmcls --sort epochs
     result = runner.invoke(search, ['mmcls', '--sort', 'epochs'])
     assert result.exit_code == 0
 
-    # # mim search mmcls --field epoch
-    # result = runner.invoke(search, ['mmcls', '--field', 'epoch'])
-    # assert result.exit_code == 1
+    # mim search mmcls --field epoch
+    result = runner.invoke(search, ['mmcls', '--field', 'epoch'])
+    assert result.exit_code == 0
     # mim search mmcls --field epochs
     result = runner.invoke(search, ['mmcls', '--field', 'epochs'])
     assert result.exit_code == 0

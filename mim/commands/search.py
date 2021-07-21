@@ -3,13 +3,14 @@ import pickle
 import re
 import subprocess
 import tempfile
+import typing
 from pkg_resources import resource_filename
 from typing import Any, List, Optional
 
 import click
 from modelindex.load_model_index import load
 from modelindex.models.ModelIndex import ModelIndex
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 from mim.click import OptionEatAll, get_downstream_package, param2lowercase
 from mim.utils import (
@@ -543,26 +544,48 @@ def sort_by(dataframe: DataFrame,
             ascending: bool = True) -> DataFrame:
     """Sort by the fields.
 
+    When sorting output with some fields, substring is spported. For example,
+    if sorted_fields is ['epo'], the actual sorted fieds will be ['epochs'].
+
     Args:
         dataframe (DataFrame): Data to be sorted.
         sorted_fields (List[str], optional): Sort output by sorted_fields.
             Default: None.
         ascending (bool): Sort by ascending or descending. Default: True.
     """
+
+    @typing.no_type_check
+    def _filter_field(valid_fields: Series, input_fields: List[str]):
+        matched_fields = []
+        invalid_fields = set()
+        for input_field in input_fields:
+            contain_index = valid_fields.str.contains(input_field)
+            if contain_index.any():
+                contain_fields = valid_fields[contain_index]
+                if len(contain_fields) > 2:
+                    raise ValueError(
+                        highlighted_error(
+                            f'{input_field} matchs {contain_fields}. However, '
+                            'the number of matched fields should be 1, but got'
+                            f' {len(contain_fields)}.'))
+                matched_fields.extend(contain_fields)
+            else:
+                invalid_fields.add(input_field)
+        return matched_fields, invalid_fields
+
     if sorted_fields is None:
         return dataframe
 
     sorted_fields = cast2lowercase(sorted_fields)
 
-    valid_fields = set(dataframe.columns)
-    invalid_fields = set(sorted_fields) - valid_fields  # type: ignore
+    valid_fields = dataframe.columns
+    matched_fields, invalid_fields = _filter_field(valid_fields, sorted_fields)
     if invalid_fields:
         raise ValueError(
             highlighted_error(
                 f'Expected fields: {valid_fields}, but got {invalid_fields}'))
 
-    sorted_fields = list(sorted_fields)  # type: ignore
-    return dataframe.sort_values(by=sorted_fields, ascending=ascending)
+    return dataframe.sort_values(by=matched_fields, ascending=ascending)
 
 
 def select_by(dataframe: DataFrame,
@@ -570,10 +593,9 @@ def select_by(dataframe: DataFrame,
               unshown_fields: Optional[List[str]] = None) -> DataFrame:
     """Select by the fields.
 
-    When selecting some fields to be shown or be hidden, prefix is supported.
-    For example, shown_fields is given as ['inference', 'epoch'], the actual
-    shown fields will be inference_time, inference_hardward, inference_backend,
-    inference_batch_size, inference_mode, inference_resulution and epochs.
+    When selecting some fields to be shown or be hidden, substring is spported.
+    For example, if shown_fields is ['epo'], all field contain 'epo' which will
+    be chosen. So the new shown field will be ['epochs'].
 
     Args:
         dataframe (DataFrame): Data to be filtered.
@@ -583,15 +605,25 @@ def select_by(dataframe: DataFrame,
             Default: None.
     """
 
-    def _startswith(valid_fields, input_fields):
+    @typing.no_type_check
+    def _filter_field(valid_fields: Series, input_fields: List[str]):
+        matched_fields = []
+        invalid_fields = set()
+        # record those fields which have been added to matched_fields to avoid
+        # duplicated fields. Although the seen_fields is not necessary if
+        # matched_fields is type of set, the order of matched_fields will be
+        # not consistent with the input_fields
         seen_fields = set()
-        output_fields = []
-        for valid_field in valid_fields:
-            for input_field in input_fields:
-                if valid_field.startswith(input_field):
-                    seen_fields.add(input_field)
-                    output_fields.append(valid_field)
-        return output_fields, seen_fields
+        for input_field in input_fields:
+            contain_index = valid_fields.str.contains(input_field)
+            if contain_index.any():
+                contain_fields = valid_fields[contain_index]
+                matched_fields.extend(
+                    field for field in (set(contain_fields) - seen_fields))
+                seen_fields.update(set(contain_fields))
+            else:
+                invalid_fields.add(input_field)
+        return matched_fields, invalid_fields
 
     if shown_fields is None and unshown_fields is None:
         return dataframe
@@ -604,26 +636,24 @@ def select_by(dataframe: DataFrame,
     valid_fields = dataframe.columns
     if shown_fields:
         shown_fields = cast2lowercase(shown_fields)
-        new_shown_fields, seen_fields = _startswith(valid_fields, shown_fields)
-        invalid_fields = set(shown_fields) - seen_fields  # type: ignore
+        matched_fields, invalid_fields = _filter_field(valid_fields,
+                                                       shown_fields)
         if invalid_fields:
             raise ValueError(
                 highlighted_error(f'Expected fields: {valid_fields}, but got '
                                   f'{invalid_fields}'))
 
-        dataframe = dataframe.filter(items=new_shown_fields)
+        dataframe = dataframe.filter(items=matched_fields)
     else:
         unshown_fields = cast2lowercase(unshown_fields)  # type: ignore
-        new_unshown_fields, seen_fields = _startswith(valid_fields,
-                                                      unshown_fields)
-        invalid_fields = set(unshown_fields) - valid_fields  # type: ignore
+        matched_fields, invalid_fields = _filter_field(valid_fields,
+                                                       unshown_fields)
         if invalid_fields:
             raise ValueError(
                 highlighted_error(f'Expected fields: {valid_fields}, but got '
                                   f'{invalid_fields}'))
 
-        dataframe = dataframe.drop(
-            columns=list(new_unshown_fields))  # type: ignore
+        dataframe = dataframe.drop(columns=matched_fields)
 
     dataframe = dataframe.dropna(axis=0, how='all')
 
