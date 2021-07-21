@@ -102,16 +102,22 @@ def download(package: str,
         config_paths = model_info[config]['config']
         for config_path in config_paths.split(','):
             module_name = PKG2MODULE.get(package, package)
-            config_path = resource_filename(module_name, config_path)
-            if not osp.exists(config_path):
+            # configs may be put in module_name/ or module_name/.mim/
+            possible_config_paths = [
+                resource_filename(module_name, config_path),
+                resource_filename(module_name, osp.join('.mim', config_path))
+            ]
+            for config_path in possible_config_paths:
+                if osp.exists(config_path):
+                    config_obj = Config.fromfile(config_path)
+                    saved_config_path = osp.join(dest_root, f'{config}.py')
+                    config_obj.dump(saved_config_path)
+                    echo_success(
+                        f'Successfully dumped {config}.py to {dest_root}')
+                    checkpoints.append(filename)
+                    break
+            else:
                 raise ValueError(
                     highlighted_error(f'{config_path} is not found.'))
-
-            config_obj = Config.fromfile(config_path)
-            saved_config_path = osp.join(dest_root, f'{config}.py')
-            config_obj.dump(saved_config_path)
-            echo_success(f'Successfully dumped {config}.py to {dest_root}')
-
-            checkpoints.append(filename)
 
     return checkpoints

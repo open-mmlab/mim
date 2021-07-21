@@ -238,7 +238,10 @@ def gridsearch(
             f'in codebase {package}, will use {files[0]} instead.')
         config = files[0]
 
-    train_script = osp.join(pkg_root, 'tools/train.py')
+    train_script = osp.join(pkg_root, 'tools', 'train.py')
+    # after the PR, tools will be put in package/.mim
+    if not osp.exists(train_script):
+        train_script = osp.join(pkg_root, '.mim', 'tools', 'train.py')
 
     # parsing search_args
     # the search_args looks like:
