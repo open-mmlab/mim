@@ -712,7 +712,7 @@ def print_df(dataframe: DataFrame, display_width: int = 80) -> None:
         return output
 
     def _generate_output():
-        pd.set_option('display_width', display_width)
+        pd.set_option('display.width', display_width)
         for row in dataframe.iterrows():
             yield _table(row)
 
