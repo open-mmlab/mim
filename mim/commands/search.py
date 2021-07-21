@@ -65,6 +65,8 @@ from mim.utils import (
 @click.option('--to-dict', 'to_dict', is_flag=True, help='Return metadata.')
 @click.option(
     '--local/--remote', default=True, help='Show local or remote packages.')
+@click.option(
+    '--display-width', type=int, default=80, help='The display width.')
 def cli(packages: List[str],
         configs: Optional[List[str]] = None,
         valid_config: bool = True,
@@ -78,7 +80,8 @@ def cli(packages: List[str],
         valid_field: bool = True,
         json_path: Optional[str] = None,
         to_dict: bool = False,
-        local: bool = True) -> Any:
+        local: bool = True,
+        display_width: int = 80) -> Any:
     """Show the information of packages.
 
     \b
@@ -120,7 +123,7 @@ def cli(packages: List[str],
             echo_success('\nvalid fields:')
             click.echo(dataframe.columns.to_list())
         elif not dataframe.empty:
-            print_df(dataframe)
+            print_df(dataframe, display_width)
         else:
             click.echo('can not find matching models.')
 
