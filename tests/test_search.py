@@ -35,7 +35,7 @@ def test_search():
     # mim search mmcls==0.11.0 --remote
     result = runner.invoke(search, ['mmcls==0.11.0', '--remote'])
     assert result.exit_code == 0
-    # the metafile of mmcls==0.11.0 will be saved in cache
+    # the metadata of mmcls==0.11.0 will be saved in cache
     assert osp.exists(osp.join(DEFAULT_CACHE_DIR, 'mmcls-0.11.0.pkl'))
 
     # mim search mmcls --model res
