@@ -266,7 +266,7 @@ def load_metadata_from_remote(package: str) -> Optional[ModelIndex]:
             # them for backward compatibility
             metadata_path = osp.join(repo_root, 'model-index.yml')
             if not osp.exists(metadata_path):
-                metadata_path = osp.join(repo_root, 'model-index.yml')
+                metadata_path = osp.join(repo_root, 'model_zoo.yml')
                 if not osp.exists(metadata_path):
                     raise FileNotFoundError(
                         highlighted_error(

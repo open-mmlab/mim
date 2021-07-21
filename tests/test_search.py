@@ -23,6 +23,12 @@ def test_search():
     # search master branch
     result = runner.invoke(search, ['mmcls', '--remote'])
     assert result.exit_code == 0
+    # mim search mmsegmentation --remote
+    result = runner.invoke(search, ['mmsegmentation', '--remote'])
+    assert result.exit_code == 0
+    # mim search mmaction2 --remote
+    result = runner.invoke(search, ['mmaction2', '--remote'])
+    assert result.exit_code == 0
 
     # mim search mmcls==0.11.0 --remote
     result = runner.invoke(search, ['mmcls==0.11.0', '--remote'])
