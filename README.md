@@ -154,11 +154,11 @@ Please refer to [installation.md](docs/installation.md) for installation.
     > mim search mmcls --model resnet
     > mim search mmcls --dataset cifar-10
     > mim search mmcls --valid-field
-    > mim search mmcls --condition 'bs>45,epoch>100'
-    > mim search mmcls --condition 'bs>45 epoch>100'
-    > mim search mmcls --condition '128<bs<=256'
-    > mim search mmcls --sort bs epoch
-    > mim search mmcls --field epoch bs weight
+    > mim search mmcls --condition 'batch_size>45,epochs>100'
+    > mim search mmcls --condition 'batch_size>45 epochs>100'
+    > mim search mmcls --condition '128<batch_size<=256'
+    > mim search mmcls --sort batch_size epochs
+    > mim search mmcls --field epochs batch_size weight
     > mim search mmcls --exclude-field weight paper
     ```
 
@@ -171,11 +171,11 @@ Please refer to [installation.md](docs/installation.md) for installation.
     get_model_info('mmcls==0.11.0', local=False)
     get_model_info('mmcls', models=['resnet'])
     get_model_info('mmcls', training_datasets=['cifar-10'])
-    get_model_info('mmcls', filter_conditions='bs>45,epoch>100')
-    get_model_info('mmcls', filter_conditions='bs>45 epoch>100')
-    get_model_info('mmcls', filter_conditions='128<bs<=256')
-    get_model_info('mmcls', sorted_fields=['bs', 'epoch'])
-    get_model_info('mmcls', shown_fields=['epoch', 'bs', 'weight'])
+    get_model_info('mmcls', filter_conditions='batch_size>45,epochs>100')
+    get_model_info('mmcls', filter_conditions='batch_size>45 epochs>100')
+    get_model_info('mmcls', filter_conditions='128<batch_size<=256')
+    get_model_info('mmcls', sorted_fields=['batch_size', 'epochs'])
+    get_model_info('mmcls', shown_fields=['epochs', 'batch_size', 'weight'])
     ```
 
 </details>
