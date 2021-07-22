@@ -232,9 +232,10 @@ def get_installed_path(package: str) -> str:
         >>> get_installed_path('mmcls')
         >>> '.../lib/python3.7/site-packages/mmcls'
     """
-    module_name = PKG2MODULE.get(package, package)
-    module = importlib.import_module(module_name)
-    return module.__path__[0]  # type: ignore
+    for pkg in pkg_resources.working_set:
+        if pkg.project_name == package:
+            return osp.join(pkg.location, package)
+    return ''
 
 
 def get_torch_cuda_version() -> Tuple[str, str]:

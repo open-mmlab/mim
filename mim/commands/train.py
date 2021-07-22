@@ -188,6 +188,9 @@ def train(
     pkg_root = get_installed_path(package)
 
     if not osp.exists(config):
+        config_root = osp.join(pkg_root, '.mim', 'configs')
+        if not osp.exists(config_root):
+            config_root = config_root = osp.join(pkg_root, 'configs')
         files = recursively_find(pkg_root, osp.basename(config))
 
         if len(files) == 0:
@@ -205,10 +208,10 @@ def train(
             f'in codebase {package}, will use {files[0]} instead.')
         config = files[0]
 
-    train_script = osp.join(pkg_root, 'tools', 'train.py')
     # after the PR, tools will be put in package/.mim
+    train_script = osp.join(pkg_root, '.mim', 'tools', 'train.py')
     if not osp.exists(train_script):
-        train_script = osp.join(pkg_root, '.mim', 'tools', 'train.py')
+        train_script = osp.join(pkg_root, 'tools', 'train.py')
 
     common_args = ['--launcher', launcher] + list(other_args)
 

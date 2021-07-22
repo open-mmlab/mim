@@ -1,9 +1,16 @@
+import os.path as osp
+import shutil
 import sys
 
 import click
 
 from mim.click import get_installed_package, param2lowercase
-from mim.utils import PKG2MODULE, call_command, remove_installation_records
+from mim.utils import (
+    PKG2MODULE,
+    call_command,
+    get_installed_path,
+    remove_installation_records,
+)
 
 
 @click.command('uninstall')
@@ -38,6 +45,12 @@ def uninstall(package: str, confirm_yes=False) -> None:
         uninstall_cmd.append('-y')
 
     call_command(uninstall_cmd)
+    # some files are manually copied to .mim when installing, so we should also
+    # remove those files here
+    package_root = get_installed_path(package)
+    if package_root and osp.exists(package_root):
+        shutil.rmtree(package_root)
+
     # if package is installed, importlib.import_module will import the
     # package and add it to sys.modules. However, if we uninstall the
     # package in the same process, is_installed will give a wrong result

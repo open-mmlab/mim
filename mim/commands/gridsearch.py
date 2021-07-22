@@ -222,7 +222,10 @@ def gridsearch(
     pkg_root = get_installed_path(package)
 
     if not osp.exists(config):
-        files = recursively_find(pkg_root, osp.basename(config))
+        config_root = osp.join(pkg_root, '.mim', 'configs')
+        if not osp.exists(config_root):
+            config_root = osp.join(pkg_root, 'configs')
+        files = recursively_find(config_root, osp.basename(config))
 
         if len(files) == 0:
             msg = (f"The path {config} doesn't exist and we can not "
@@ -238,10 +241,10 @@ def gridsearch(
             f'in codebase {package}, will use {files[0]} instead.')
         config = files[0]
 
-    train_script = osp.join(pkg_root, 'tools', 'train.py')
     # after the PR, tools will be put in package/.mim
+    train_script = osp.join(pkg_root, '.mim', 'tools', 'train.py')
     if not osp.exists(train_script):
-        train_script = osp.join(pkg_root, '.mim', 'tools', 'train.py')
+        train_script = osp.join(pkg_root, 'tools', 'train.py')
 
     # parsing search_args
     # the search_args looks like:
