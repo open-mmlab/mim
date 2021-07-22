@@ -3,7 +3,7 @@ import os.path as osp
 import shutil
 import tempfile
 from distutils.version import LooseVersion
-from pkg_resources import parse_requirements
+from pkg_resources import parse_requirements, resource_filename
 from typing import List
 
 import click
@@ -422,9 +422,8 @@ def install_from_repo(repo_root: str,
         # for backward compatibility
         filenames = ['tools', 'configs', 'model_zoo.yml', 'model-index.yml']
         module_name = PKG2MODULE.get(package, package)
-        pkg_root = osp.join(repo_root, module_name)
         # configs, tools and model-index.yml will be copied to package/.mim
-        mim_root = osp.join(pkg_root, '.mim')
+        mim_root = resource_filename(module_name, '.mim')
         os.makedirs(mim_root, exist_ok=True)
 
         for filename in filenames:
@@ -455,6 +454,8 @@ def install_from_repo(repo_root: str,
         for filename in filenames:
             src_path = osp.join(repo_root, filename)
             dst_path = osp.join(mim_root, filename)
+            if osp.exists(dst_path):
+                continue
             if osp.exists(src_path):
                 if osp.isfile(dst_path) or osp.islink(dst_path):
                     os.remove(dst_path)
@@ -462,11 +463,6 @@ def install_from_repo(repo_root: str,
                     shutil.rmtree(dst_path)
 
                 os.symlink(src_path, dst_path)
-
-    if is_editable:
-        link_file_to_package()
-    else:
-        copy_file_to_package()
 
     # install dependencies. For example,
     # install mmcls should install mmcv-full first if it is not installed or
@@ -504,6 +500,11 @@ def install_from_repo(repo_root: str,
         os.environ['MMCV_WITH_OPS'] = '1'
 
     call_command(install_cmd)
+
+    if is_editable:
+        link_file_to_package()
+    else:
+        copy_file_to_package()
 
 
 def install_from_github(package: str,
