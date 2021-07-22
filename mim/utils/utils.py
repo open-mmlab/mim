@@ -222,7 +222,7 @@ def is_version_equal(version1: str, version2: str) -> bool:
     return LooseVersion(version1) == LooseVersion(version2)
 
 
-def get_installed_path(package: str) -> str:
+def get_installed_path(package: str):
     """Get installed path of package.
 
     Args:
@@ -232,9 +232,12 @@ def get_installed_path(package: str) -> str:
         >>> get_installed_path('mmcls')
         >>> '.../lib/python3.7/site-packages/mmcls'
     """
-    module_name = PKG2MODULE.get(package, package)
-    module = importlib.import_module(module_name)
-    return module.__path__[0]  # type: ignore
+    if not is_installed(package):
+        raise RuntimeError(highlighted_error(f'{package} is not installed'))
+
+    for pkg in pkg_resources.working_set:
+        if pkg.project_name == package:
+            return osp.join(pkg.location, package)
 
 
 def get_torch_cuda_version() -> Tuple[str, str]:
