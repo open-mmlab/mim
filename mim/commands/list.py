@@ -38,7 +38,7 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
             the packages installed by mim. Default: False.
     """
     # refresh the pkg_resources
-    # more datail at https://github.com/pypa/setuptools/issues/373
+    # more datails at https://github.com/pypa/setuptools/issues/373
     importlib.reload(pkg_resources)
 
     pkgs_info: List[Tuple[str, ...]] = []
@@ -53,12 +53,10 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
 
                 home_page = pkg.location
                 if pkg.has_metadata('METADATA'):
-                    print(pkg.project_name, 'have metadata')
                     metadata = pkg.get_metadata('METADATA')
                     feed_parser = FeedParser()
                     feed_parser.feed(metadata)
                     home_page = feed_parser.close().get('home-page')
-                    print(home_page)
 
                 # rename the model_zoo.yml to model-index.yml but support both
                 # of them for backward compatibility
