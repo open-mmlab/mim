@@ -33,6 +33,7 @@ from .utils import (
     is_installed,
     is_version_equal,
     module_full_name,
+    package2module,
     parse_url,
     read_installation_records,
     recursively_find,
@@ -84,4 +85,5 @@ __all__ = [
     'get_release_version',
     'module_full_name',
     'MODULE2PKG',
+    'package2module',
 ]
