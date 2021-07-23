@@ -65,8 +65,6 @@ jobs:
           export PATH=${CUDA_HOME}/bin:${PATH}
       - name: Install PyTorch
         run: pip install torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html
-      - name: Upgrade Setuptools
-        run: pip install setuptools==52
       - name: Build and install
         run: rm -rf .eggs && pip install -e .
       - name: Validate the installation

@@ -66,7 +66,7 @@ def get_github_url(package: str) -> str:
 
     if not github_url:
         pkg_info = get_package_info_from_pypi(package)
-        github_url = pkg_info['home_page']
+        github_url = pkg_info['info'].get('home_page')
 
     if github_url:
         if github_url.endswith('.com'):
