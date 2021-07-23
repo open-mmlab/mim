@@ -56,8 +56,7 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
                     metadata = pkg.get_metadata('METADATA')
                     feed_parser = FeedParser()
                     feed_parser.feed(metadata)
-                    pkg_info_dict = feed_parser.close()
-                    home_page = pkg_info_dict.get('home-page')
+                    home_page = feed_parser.close().get('home-page')
 
                 # rename the model_zoo.yml to model-index.yml but support both
                 # of them for backward compatibility

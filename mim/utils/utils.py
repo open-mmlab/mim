@@ -62,8 +62,7 @@ def get_github_url(package: str) -> str:
             metadata = pkg.get_metadata('METADATA')
             feed_parser = FeedParser()
             feed_parser.feed(metadata)
-            pkg_info_dict = feed_parser.close()
-            github_url = pkg_info_dict.get('home-page')
+            github_url = feed_parser.close().get('home-page')
 
     if not github_url:
         pkg_info = get_package_info_from_pypi(package)
