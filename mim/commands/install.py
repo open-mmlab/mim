@@ -485,6 +485,8 @@ def install_from_repo(repo_root: str,
 
     install_cmd = ['python', '-m', 'pip', 'install']
     if is_editable:
+        # solving issues related to out-of-tree builds
+        # more datails at https://github.com/pypa/pip/issues/7555
         install_cmd.extend(['-e', '--use-feature=in-tree-build'])
     install_cmd.append(repo_root)
     if is_user_dir:
