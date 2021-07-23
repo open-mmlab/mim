@@ -58,6 +58,7 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
                     feed_parser = FeedParser()
                     feed_parser.feed(metadata)
                     home_page = feed_parser.close().get('home-page')
+                    print(home_page)
 
                 # rename the model_zoo.yml to model-index.yml but support both
                 # of them for backward compatibility
