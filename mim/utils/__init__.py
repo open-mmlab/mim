@@ -9,7 +9,6 @@ from .default import (
     WHEEL_URL,
 )
 from .utils import (
-    MMPACKAGE_PATH,
     args2string,
     call_command,
     cast2lowercase,
@@ -35,13 +34,10 @@ from .utils import (
     module_full_name,
     package2module,
     parse_url,
-    read_installation_records,
     recursively_find,
-    remove_installation_records,
     set_config,
     split_package_version,
     string2args,
-    write_installation_records,
 )
 
 __all__ = [
@@ -63,9 +59,6 @@ __all__ = [
     'PKG2PROJECT',
     'PKG2MODULE',
     'RAW_GITHUB_URL',
-    'read_installation_records',
-    'write_installation_records',
-    'remove_installation_records',
     'recursively_find',
     'color_echo',
     'USER',

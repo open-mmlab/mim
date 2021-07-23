@@ -9,6 +9,7 @@ import tarfile
 import typing
 from collections import defaultdict
 from distutils.version import LooseVersion
+from email.parser import FeedParser
 from pkg_resources import get_distribution, parse_version
 from typing import Any, List, Optional, Tuple, Union
 
@@ -17,7 +18,7 @@ import requests
 from requests.exceptions import InvalidURL, RequestException, Timeout
 from requests.models import Response
 
-from .default import DEFAULT_URL, MMPACKAGE_PATH, PKG2MODULE, PKG2PROJECT
+from .default import PKG2MODULE, PKG2PROJECT
 
 
 def parse_url(url: str) -> Tuple[str, str]:
@@ -54,18 +55,29 @@ def get_github_url(package: str) -> str:
         >>> get_github_url('mmcls')
         'https://github.com/open-mmlab/mmclassification.git'
     """
-    for _package, _, _url in read_installation_records():
-        if _package == package and _url != 'local':
-            github_url = _url
-            break
+    github_url = ''
+    if is_installed(package):
+        pkg = get_distribution(package)
+        if pkg.has_metadata('METADATA'):
+            metadata = pkg.get_metadata('METADATA')
+            feed_parser = FeedParser()
+            feed_parser.feed(metadata)
+            pkg_info_dict = feed_parser.close()
+            github_url = pkg_info_dict.get('home-page')
+
+    if not github_url:
+        pkg_info = get_package_info_from_pypi(package)
+        github_url = pkg_info['home_page']
+
+    if github_url:
+        if github_url.endswith('.com'):
+            github_url = github_url.replace('.com', '.git')
+        elif not github_url.endswith('.git'):
+            github_url = github_url + '.git'
+        return github_url
     else:
-        if package not in PKG2PROJECT:
-            raise ValueError(
-                highlighted_error(f'Failed to get url of {package}.'))
-
-        github_url = f'{DEFAULT_URL}/{PKG2PROJECT[package]}.git'
-
-    return github_url
+        raise ValueError(
+            highlighted_error(f'Failed to get github url of {package}.'))
 
 
 def get_content_from_url(url: str,
@@ -189,6 +201,12 @@ def get_installed_version(package: str) -> str:
     return get_distribution(package).version
 
 
+def get_package_info_from_pypi(package: str, timeout: int = 15) -> dict:
+    pkg_url = f'https://pypi.org/pypi/{package}/json'
+    response = get_content_from_url(pkg_url, timeout)
+    return response.json()
+
+
 def get_release_version(package: str, timeout: int = 15) -> List[str]:
     """Get release version from pypi.
 
@@ -198,10 +216,8 @@ def get_release_version(package: str, timeout: int = 15) -> List[str]:
         package (str): Package to get version.
         timeout (int): Set the socket timeout. Default: 15.
     """
-    pkg_url = f'https://pypi.org/pypi/{package}/json'
-    response = get_content_from_url(pkg_url, timeout)
-    content = response.json()
-    releases = content['releases']
+    pkg_info = get_package_info_from_pypi(package, timeout)
+    releases = pkg_info['releases']
     return sorted(releases, key=parse_version)
 
 
@@ -289,58 +305,6 @@ def get_torch_cuda_version() -> Tuple[str, str]:
     else:
         cuda_v = 'cpu'
     return torch_v, cuda_v
-
-
-def read_installation_records() -> list:
-    """Read installed packages from mmpackage.txt."""
-    if not osp.isfile(MMPACKAGE_PATH):
-        return []
-
-    seen = set()
-    pkgs_info = []
-    with open(MMPACKAGE_PATH, 'r') as fr:
-        for line in fr:
-            line = line.strip()
-            package, version, source = line.split(',')
-            if not is_installed(package):
-                continue
-
-            pkgs_info.append((package, version, source))
-            seen.add(package)
-
-    # handle two cases
-    # 1. install mmrepos by other ways not mim, such as pip install mmcls
-    # 2. existed mmrepos
-    for pkg in pkg_resources.working_set:
-        pkg_name = pkg.project_name
-        if pkg_name not in seen and (pkg_name in PKG2PROJECT
-                                     or pkg_name in PKG2MODULE):
-            pkgs_info.append((pkg_name, pkg.version, ''))
-
-    return pkgs_info
-
-
-def write_installation_records(package: str,
-                               version: str,
-                               source: str = '') -> None:
-    """Write installed package to mmpackage.txt."""
-    pkgs_info = read_installation_records()
-    with open(MMPACKAGE_PATH, 'w') as fw:
-        if pkgs_info:
-            for _package, _version, _source in pkgs_info:
-                if _package != package:
-                    fw.write(f'{_package},{_version},{_source}\n')
-        fw.write(f'{package},{version},{source}\n')
-
-
-def remove_installation_records(package: str) -> None:
-    """Remove package from mmpackage.txt."""
-    pkgs_info = read_installation_records()
-    if not pkgs_info:
-        with open(MMPACKAGE_PATH, 'w') as fw:
-            for _package, _version, _source in pkgs_info:
-                if _package != package:
-                    fw.write(f'{_package},{_version},{_source}\n')
 
 
 def cast2lowercase(input: Union[list, tuple, str]) -> Any:
