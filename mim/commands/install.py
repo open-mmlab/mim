@@ -485,7 +485,7 @@ def install_from_repo(repo_root: str,
 
     install_cmd = ['python', '-m', 'pip', 'install']
     if is_editable:
-        install_cmd.append('-e')
+        install_cmd.extend(['-e', '--use-feature=in-tree-build'])
     install_cmd.append(repo_root)
     if is_user_dir:
         install_cmd.append('--user')
