@@ -53,7 +53,7 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
 
                 home_page = pkg.location
                 if pkg.has_metadata('METADATA'):
-                    print('have metadata')
+                    print(pkg.project_name, 'have metadata')
                     metadata = pkg.get_metadata('METADATA')
                     feed_parser = FeedParser()
                     feed_parser.feed(metadata)
