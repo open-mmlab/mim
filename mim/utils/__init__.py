@@ -9,7 +9,6 @@ from .default import (
     WHEEL_URL,
 )
 from .utils import (
-    MMPACKAGE_PATH,
     args2string,
     call_command,
     cast2lowercase,
@@ -18,6 +17,7 @@ from .utils import (
     echo_error,
     echo_success,
     echo_warning,
+    ensure_installation,
     exit_with_error,
     extract_tar,
     get_config,
@@ -26,6 +26,7 @@ from .utils import (
     get_installed_path,
     get_installed_version,
     get_latest_version,
+    get_package_info_from_pypi,
     get_package_version,
     get_release_version,
     get_torch_cuda_version,
@@ -33,14 +34,13 @@ from .utils import (
     is_installed,
     is_version_equal,
     module_full_name,
+    package2module,
+    parse_home_page,
     parse_url,
-    read_installation_records,
     recursively_find,
-    remove_installation_records,
     set_config,
     split_package_version,
     string2args,
-    write_installation_records,
 )
 
 __all__ = [
@@ -62,9 +62,6 @@ __all__ = [
     'PKG2PROJECT',
     'PKG2MODULE',
     'RAW_GITHUB_URL',
-    'read_installation_records',
-    'write_installation_records',
-    'remove_installation_records',
     'recursively_find',
     'color_echo',
     'USER',
@@ -84,4 +81,8 @@ __all__ = [
     'get_release_version',
     'module_full_name',
     'MODULE2PKG',
+    'package2module',
+    'get_package_info_from_pypi',
+    'parse_home_page',
+    'ensure_installation',
 ]

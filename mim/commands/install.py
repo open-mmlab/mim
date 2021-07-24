@@ -29,7 +29,6 @@ from mim.utils import (
     is_version_equal,
     parse_url,
     split_package_version,
-    write_installation_records,
 )
 
 
@@ -180,11 +179,7 @@ def install(package: str,
     if not find_url:
         find_url = infer_find_url(target_pkg)
 
-    # whether to write installation records to mmpackage.txt
-    is_record = False
-
     if is_install_local_repo:
-        is_record = True
         repo_root = osp.abspath(target_pkg)
         module_name, target_version = get_package_version(repo_root)
         if not module_name:
@@ -206,13 +201,11 @@ def install(package: str,
             is_editable=is_editable)
 
     elif find_url and find_url.find('git') >= 0 or is_install_master:
-        is_record = True
         install_from_github(target_pkg, target_version, find_url, timeout,
                             is_yes, is_user_dir, is_install_master)
     else:
         # if installing from wheel failed, it will try to install package by
         # building from source if possible.
-        is_record = bool(target_pkg in PKG2MODULE)
         try:
             install_from_wheel(target_pkg, target_version, find_url, timeout,
                                is_user_dir)
@@ -236,14 +229,6 @@ def install(package: str,
                                 f'Failed to install {target_pkg}.'))
             else:
                 raise RuntimeError(highlighted_error(error))
-
-    if is_record:
-        if not target_version:
-            target_version = get_installed_version(target_pkg)
-        if is_install_local_repo:
-            find_url = 'local'
-
-        write_installation_records(target_pkg, target_version, find_url)
 
     echo_success(f'Successfully installed {target_pkg}.')
 
