@@ -1,3 +1,4 @@
+import importlib
 import pkg_resources
 from typing import List
 
@@ -36,6 +37,9 @@ def list_package(all: bool = False) -> List[List[str]]:
         all (bool): List all installed packages. If all is False, it just lists
             the packages installed by mim. Default: False.
     """
+    # refresh the pkg_resources
+    # more datails at https://github.com/pypa/setuptools/issues/373
+    importlib.reload(pkg_resources)
     if not all:
         pkgs_info = read_installation_records()
     else:

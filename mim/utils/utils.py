@@ -9,7 +9,7 @@ import tarfile
 import typing
 from collections import defaultdict
 from distutils.version import LooseVersion
-from pkg_resources import parse_version
+from pkg_resources import get_distribution, parse_version
 from typing import Any, List, Optional, Tuple, Union
 
 import click
@@ -146,14 +146,20 @@ def split_package_version(package: str) -> Tuple[str, ...]:
         return package, ''
 
 
-def is_installed(package: str) -> Any:
+def is_installed(package: str) -> bool:
     """Check package whether installed.
 
     Args:
         package (str): Name of package to be checked.
     """
-    module_name = PKG2MODULE.get(package, package)
-    return importlib.util.find_spec(module_name)  # type: ignore
+    # refresh the pkg_resources
+    # more datails at https://github.com/pypa/setuptools/issues/373
+    importlib.reload(pkg_resources)
+    try:
+        get_distribution(package)
+        return True
+    except pkg_resources.DistributionNotFound:
+        return False
 
 
 def get_package_version(repo_root: str) -> Tuple[str, str]:
@@ -178,13 +184,9 @@ def get_installed_version(package: str) -> str:
     Args:
         package (str): Name of package.
     """
-    module_name = PKG2MODULE.get(package, package)
-
-    if not is_installed(module_name):
+    if not is_installed(package):
         raise RuntimeError(highlighted_error(f'{package} is not installed.'))
-
-    module = importlib.import_module(module_name)
-    return module.__version__  # type: ignore
+    return get_distribution(package).version
 
 
 def get_release_version(package: str, timeout: int = 15) -> List[str]:
@@ -222,6 +224,24 @@ def is_version_equal(version1: str, version2: str) -> bool:
     return LooseVersion(version1) == LooseVersion(version2)
 
 
+def package2module(package: str):
+    """Infer module name from package.
+
+    Args:
+        package (str): Package to infer module name.
+    """
+    if not is_installed(package):
+        raise RuntimeError(highlighted_error(f'{package} is not installed.'))
+
+    pkg = get_distribution(package)
+    if pkg.has_metadata('top_level.txt'):
+        module_name = pkg.get_metadata('top_level.txt').split('\n')[0]
+        return module_name
+    else:
+        raise ValueError(
+            highlighted_error(f'can not infer the module name of {package}'))
+
+
 def get_installed_path(package: str) -> str:
     """Get installed path of package.
 
@@ -232,9 +252,19 @@ def get_installed_path(package: str) -> str:
         >>> get_installed_path('mmcls')
         >>> '.../lib/python3.7/site-packages/mmcls'
     """
-    module_name = PKG2MODULE.get(package, package)
-    module = importlib.import_module(module_name)
-    return module.__path__[0]  # type: ignore
+    if not is_installed(package):
+        raise RuntimeError(highlighted_error(f'{package} is not installed.'))
+
+    # if the package name is not the same as module name, module name should be
+    # inferred. For example, mmcv-full is the package name, but mmcv is module
+    # name. If we want to get the installed path of mmcv-full, we should concat
+    # the pkg.location and module name
+    pkg = get_distribution(package)
+    possible_path = osp.join(pkg.location, package)
+    if osp.exists(possible_path):
+        return possible_path
+    else:
+        return osp.join(pkg.location, package2module(package))
 
 
 def get_torch_cuda_version() -> Tuple[str, str]:
