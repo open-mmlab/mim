@@ -1,3 +1,4 @@
+import functools
 import hashlib
 import importlib
 import os
@@ -9,7 +10,8 @@ import tarfile
 import typing
 from collections import defaultdict
 from distutils.version import LooseVersion
-from pkg_resources import parse_version
+from email.parser import FeedParser
+from pkg_resources import get_distribution, parse_version
 from typing import Any, List, Optional, Tuple, Union
 
 import click
@@ -17,7 +19,7 @@ import requests
 from requests.exceptions import InvalidURL, RequestException, Timeout
 from requests.models import Response
 
-from .default import DEFAULT_URL, MMPACKAGE_PATH, PKG2MODULE, PKG2PROJECT
+from .default import PKG2MODULE, PKG2PROJECT
 
 
 def parse_url(url: str) -> Tuple[str, str]:
@@ -44,6 +46,56 @@ def parse_url(url: str) -> Tuple[str, str]:
     return username, repo
 
 
+def is_installed(package: str) -> bool:
+    """Check package whether installed.
+
+    Args:
+        package (str): Name of package to be checked.
+    """
+    # refresh the pkg_resources
+    # more datails at https://github.com/pypa/setuptools/issues/373
+    importlib.reload(pkg_resources)
+    try:
+        get_distribution(package)
+        return True
+    except pkg_resources.DistributionNotFound:
+        return False
+
+
+def ensure_installation(func):
+    """A decorator to make sure a package has been installed.
+
+    Before invoking those functions which depend on installed package, the
+    decorator makes sure the package has been installed.
+    """
+
+    @functools.wraps(func)
+    def wrapper(package):
+        if not is_installed(package):
+            raise RuntimeError(
+                highlighted_error(f'{package} is not installed.'))
+        return func(package)
+
+    return wrapper
+
+
+@ensure_installation
+def parse_home_page(package: str) -> Optional[str]:
+    """Parse home page from package metadata.
+
+    Args:
+        pakcage (str): Package to parse home page.
+    """
+    home_page = None
+    pkg = get_distribution(package)
+    if pkg.has_metadata('METADATA'):
+        metadata = pkg.get_metadata('METADATA')
+        feed_parser = FeedParser()
+        feed_parser.feed(metadata)
+        home_page = feed_parser.close().get('home-page')
+    return home_page
+
+
 def get_github_url(package: str) -> str:
     """Get github url.
 
@@ -54,18 +106,28 @@ def get_github_url(package: str) -> str:
         >>> get_github_url('mmcls')
         'https://github.com/open-mmlab/mmclassification.git'
     """
-    for _package, _, _url in read_installation_records():
-        if _package == package and _url != 'local':
-            github_url = _url
-            break
+    home_page = None
+    if is_installed(package):
+        home_page = parse_home_page(package)
+
+    if not home_page:
+        try:
+            pkg_info = get_package_info_from_pypi(package)
+            home_page = pkg_info['info'].get('home_page')
+        except Exception:
+            pass
+
+    if home_page:
+        if home_page.endswith('.git'):
+            github_url = home_page
+        elif home_page.endswith('.com'):
+            github_url = home_page.replace('.com', '.git')
+        else:
+            github_url = home_page + '.git'
+        return github_url
     else:
-        if package not in PKG2PROJECT:
-            raise ValueError(
-                highlighted_error(f'Failed to get url of {package}.'))
-
-        github_url = f'{DEFAULT_URL}/{PKG2PROJECT[package]}.git'
-
-    return github_url
+        raise ValueError(
+            highlighted_error(f'Failed to get github url of {package}.'))
 
 
 def get_content_from_url(url: str,
@@ -146,16 +208,6 @@ def split_package_version(package: str) -> Tuple[str, ...]:
         return package, ''
 
 
-def is_installed(package: str) -> Any:
-    """Check package whether installed.
-
-    Args:
-        package (str): Name of package to be checked.
-    """
-    module_name = PKG2MODULE.get(package, package)
-    return importlib.util.find_spec(module_name)  # type: ignore
-
-
 def get_package_version(repo_root: str) -> Tuple[str, str]:
     """Get package and version from local repo.
 
@@ -172,19 +224,26 @@ def get_package_version(repo_root: str) -> Tuple[str, str]:
     return '', ''
 
 
+@ensure_installation
 def get_installed_version(package: str) -> str:
     """Get the version of package from local environment.
 
     Args:
         package (str): Name of package.
     """
-    module_name = PKG2MODULE.get(package, package)
+    return get_distribution(package).version
 
-    if not is_installed(module_name):
-        raise RuntimeError(highlighted_error(f'{package} is not installed.'))
 
-    module = importlib.import_module(module_name)
-    return module.__version__  # type: ignore
+def get_package_info_from_pypi(package: str, timeout: int = 15) -> dict:
+    """Get packege information from pypi.
+
+    Args:
+        package (str): Package to get information.
+        timeout (int): Set the socket timeout. Default: 15.
+    """
+    pkg_url = f'https://pypi.org/pypi/{package}/json'
+    response = get_content_from_url(pkg_url, timeout)
+    return response.json()
 
 
 def get_release_version(package: str, timeout: int = 15) -> List[str]:
@@ -196,10 +255,8 @@ def get_release_version(package: str, timeout: int = 15) -> List[str]:
         package (str): Package to get version.
         timeout (int): Set the socket timeout. Default: 15.
     """
-    pkg_url = f'https://pypi.org/pypi/{package}/json'
-    response = get_content_from_url(pkg_url, timeout)
-    content = response.json()
-    releases = content['releases']
+    pkg_info = get_package_info_from_pypi(package, timeout)
+    releases = pkg_info['releases']
     return sorted(releases, key=parse_version)
 
 
@@ -222,6 +279,23 @@ def is_version_equal(version1: str, version2: str) -> bool:
     return LooseVersion(version1) == LooseVersion(version2)
 
 
+@ensure_installation
+def package2module(package: str):
+    """Infer module name from package.
+
+    Args:
+        package (str): Package to infer module name.
+    """
+    pkg = get_distribution(package)
+    if pkg.has_metadata('top_level.txt'):
+        module_name = pkg.get_metadata('top_level.txt').split('\n')[0]
+        return module_name
+    else:
+        raise ValueError(
+            highlighted_error(f'can not infer the module name of {package}'))
+
+
+@ensure_installation
 def get_installed_path(package: str) -> str:
     """Get installed path of package.
 
@@ -232,9 +306,16 @@ def get_installed_path(package: str) -> str:
         >>> get_installed_path('mmcls')
         >>> '.../lib/python3.7/site-packages/mmcls'
     """
-    module_name = PKG2MODULE.get(package, package)
-    module = importlib.import_module(module_name)
-    return module.__path__[0]  # type: ignore
+    # if the package name is not the same as module name, module name should be
+    # inferred. For example, mmcv-full is the package name, but mmcv is module
+    # name. If we want to get the installed path of mmcv-full, we should concat
+    # the pkg.location and module name
+    pkg = get_distribution(package)
+    possible_path = osp.join(pkg.location, package)
+    if osp.exists(possible_path):
+        return possible_path
+    else:
+        return osp.join(pkg.location, package2module(package))
 
 
 def get_torch_cuda_version() -> Tuple[str, str]:
@@ -259,58 +340,6 @@ def get_torch_cuda_version() -> Tuple[str, str]:
     else:
         cuda_v = 'cpu'
     return torch_v, cuda_v
-
-
-def read_installation_records() -> list:
-    """Read installed packages from mmpackage.txt."""
-    if not osp.isfile(MMPACKAGE_PATH):
-        return []
-
-    seen = set()
-    pkgs_info = []
-    with open(MMPACKAGE_PATH, 'r') as fr:
-        for line in fr:
-            line = line.strip()
-            package, version, source = line.split(',')
-            if not is_installed(package):
-                continue
-
-            pkgs_info.append((package, version, source))
-            seen.add(package)
-
-    # handle two cases
-    # 1. install mmrepos by other ways not mim, such as pip install mmcls
-    # 2. existed mmrepos
-    for pkg in pkg_resources.working_set:
-        pkg_name = pkg.project_name
-        if pkg_name not in seen and (pkg_name in PKG2PROJECT
-                                     or pkg_name in PKG2MODULE):
-            pkgs_info.append((pkg_name, pkg.version, ''))
-
-    return pkgs_info
-
-
-def write_installation_records(package: str,
-                               version: str,
-                               source: str = '') -> None:
-    """Write installed package to mmpackage.txt."""
-    pkgs_info = read_installation_records()
-    with open(MMPACKAGE_PATH, 'w') as fw:
-        if pkgs_info:
-            for _package, _version, _source in pkgs_info:
-                if _package != package:
-                    fw.write(f'{_package},{_version},{_source}\n')
-        fw.write(f'{package},{version},{source}\n')
-
-
-def remove_installation_records(package: str) -> None:
-    """Remove package from mmpackage.txt."""
-    pkgs_info = read_installation_records()
-    if not pkgs_info:
-        with open(MMPACKAGE_PATH, 'w') as fw:
-            for _package, _version, _source in pkgs_info:
-                if _package != package:
-                    fw.write(f'{_package},{_version},{_source}\n')
 
 
 def cast2lowercase(input: Union[list, tuple, str]) -> Any:
