@@ -6,7 +6,7 @@ from typing import List, Tuple
 import click
 from tabulate import tabulate
 
-from mim.utils import parse_home_page
+from mim.utils import get_installed_path, parse_home_page
 
 
 @click.command('list')
@@ -48,22 +48,21 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
         if all:
             pkgs_info.append((pkg_name, pkg.version))
         else:
-            if pkg.has_metadata('top_level.txt'):
-                module_name = pkg.get_metadata('top_level.txt').split('\n')[0]
-                if not module_name:
-                    continue
+            home_page = parse_home_page(pkg_name)
+            if not home_page:
+                home_page = pkg.location
 
-                home_page = parse_home_page(pkg_name)
-                if not home_page:
-                    home_page = pkg.location
-
-                # rename the model_zoo.yml to model-index.yml but support both
-                # of them for backward compatibility
-                possible_metadata_paths = [
-                    osp.join(pkg.location, module_name, 'model-index.yml'),
-                    osp.join(pkg.location, module_name, 'model_zoo.yml')
-                ]
-                if pkg_name.startswith('mmcv') or any(
-                        map(osp.exists, possible_metadata_paths)):
-                    pkgs_info.append((pkg_name, pkg.version, home_page))
+            installed_path = get_installed_path(pkg_name)
+            # rename the model_zoo.yml to model-index.yml but support both
+            # of them for backward compatibility. In addition, model-index.yml
+            # will be put in package/.mim after the PR
+            possible_metadata_paths = [
+                osp.join(installed_path, '.mim', 'model-index.yml'),
+                osp.join(installed_path, 'model-index.yml'),
+                osp.join(installed_path, '.mim', 'model_zoo.yml'),
+                osp.join(installed_path, 'model_zoo.yml')
+            ]
+            if pkg_name.startswith('mmcv') or any(
+                    map(osp.exists, possible_metadata_paths)):
+                pkgs_info.append((pkg_name, pkg.version, home_page))
     return pkgs_info

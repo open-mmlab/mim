@@ -211,8 +211,8 @@ def load_metadata_from_local(package: str):
     """
     if is_installed(package):
         # rename the model_zoo.yml to model-index.yml but support both of them
-        # for backward compatibility
-        # after the PR, model-index.yml will be put in package/.mim
+        # for backward compatibility. In addition, model-index.yml will be put
+        # in package/.mim after the PR
         installed_path = get_installed_path(package)
         possible_metadata_paths = [
             osp.join(installed_path, '.mim', 'model-index.yml'),

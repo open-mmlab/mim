@@ -36,8 +36,3 @@ def uninstall(package: str, confirm_yes=False) -> None:
         uninstall_cmd.append('-y')
 
     call_command(uninstall_cmd)
-    # some files are manually copied to .mim when installing, so we should also
-    # remove those files here
-    # package_root = get_installed_path(package)
-    # if package_root and osp.exists(package_root):
-    #     shutil.rmtree(package_root)

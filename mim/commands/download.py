@@ -1,5 +1,4 @@
 import os.path as osp
-from pkg_resources import resource_filename
 from typing import List, Optional
 
 import click
@@ -8,9 +7,9 @@ from mim.click import OptionEatAll, get_downstream_package, param2lowercase
 from mim.commands.search import get_model_info
 from mim.utils import (
     DEFAULT_CACHE_DIR,
-    PKG2MODULE,
     download_from_file,
     echo_success,
+    get_installed_path,
     highlighted_error,
     is_installed,
     split_package_version,
@@ -101,11 +100,11 @@ def download(package: str,
 
         config_paths = model_info[config]['config']
         for config_path in config_paths.split(','):
-            module_name = PKG2MODULE.get(package, package)
-            # configs may be put in module_name/ or module_name/.mim/
+            installed_path = get_installed_path(package)
+            # after the PR, configs will be put in package/.mim
             possible_config_paths = [
-                resource_filename(module_name, config_path),
-                resource_filename(module_name, osp.join('.mim', config_path))
+                osp.join(installed_path, '.mim', config_path),
+                osp.join(installed_path, config_path)
             ]
             for config_path in possible_config_paths:
                 if osp.exists(config_path):
