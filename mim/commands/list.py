@@ -55,7 +55,7 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
             installed_path = get_installed_path(pkg_name)
             # rename the model_zoo.yml to model-index.yml but support both
             # of them for backward compatibility. In addition, model-index.yml
-            # will be put in package/.mim after the PR
+            # will be put in package/.mim in PR #68
             possible_metadata_paths = [
                 osp.join(installed_path, '.mim', 'model-index.yml'),
                 osp.join(installed_path, 'model-index.yml'),

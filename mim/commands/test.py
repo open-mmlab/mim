@@ -229,7 +229,7 @@ def test(
 
     # We know that 'config' exists and is legal.
     test_script = osp.join(pkg_root, 'tools', 'test.py')
-    # after the PR, tools will be put in package/.mim
+    # tools will be put in package/.mim in PR #68
     if not osp.exists(test_script):
         test_script = osp.join(pkg_root, '.mim', 'tools', 'test.py')
 

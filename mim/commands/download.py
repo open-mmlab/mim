@@ -101,7 +101,7 @@ def download(package: str,
         config_paths = model_info[config]['config']
         for config_path in config_paths.split(','):
             installed_path = get_installed_path(package)
-            # after the PR, configs will be put in package/.mim
+            # configs will be put in package/.mim in PR #68
             possible_config_paths = [
                 osp.join(installed_path, '.mim', config_path),
                 osp.join(installed_path, config_path)
