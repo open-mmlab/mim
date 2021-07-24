@@ -379,12 +379,10 @@ def recursively_find(root: str, base_name: str) -> list:
     Return:
         Files with given base_name.
     """
-    results = list(os.walk(root))
     files = []
-    for tup in results:
-        root = tup[0]
-        if base_name in tup[2]:
-            files.append(osp.join(root, base_name))
+    for _root, _, _files in os.walk(root):
+        if base_name in _files:
+            files.append(osp.join(_root, base_name))
 
     return files
 
