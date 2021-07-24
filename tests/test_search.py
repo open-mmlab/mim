@@ -1,8 +1,10 @@
+import os.path as osp
+
 from click.testing import CliRunner
 
 from mim.commands.install import cli as install
 from mim.commands.search import cli as search
-from mim.utils import is_installed
+from mim.utils import DEFAULT_CACHE_DIR, is_installed
 
 
 def setup_module():
@@ -23,10 +25,18 @@ def test_search():
     # search master branch
     result = runner.invoke(search, ['mmcls', '--remote'])
     assert result.exit_code == 0
+    # mim search mmsegmentation --remote
+    result = runner.invoke(search, ['mmsegmentation', '--remote'])
+    assert result.exit_code == 0
+    # mim search mmaction2 --remote
+    result = runner.invoke(search, ['mmaction2', '--remote'])
+    assert result.exit_code == 0
 
     # mim search mmcls==0.11.0 --remote
     result = runner.invoke(search, ['mmcls==0.11.0', '--remote'])
     assert result.exit_code == 0
+    # the metadata of mmcls==0.11.0 will be saved in cache
+    assert osp.exists(osp.join(DEFAULT_CACHE_DIR, 'mmcls-0.11.0.pkl'))
 
     # mim search mmcls --model res
     # invali model
