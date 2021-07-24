@@ -4,7 +4,6 @@ import re
 import subprocess
 import tempfile
 import typing
-from pkg_resources import resource_filename
 from typing import Any, List, Optional
 
 import click
@@ -15,11 +14,11 @@ from pandas import DataFrame, Series
 from mim.click import OptionEatAll, get_downstream_package, param2lowercase
 from mim.utils import (
     DEFAULT_CACHE_DIR,
-    PKG2MODULE,
     PKG2PROJECT,
     cast2lowercase,
     echo_success,
     get_github_url,
+    get_installed_path,
     highlighted_error,
     is_installed,
     split_package_version,
@@ -213,15 +212,16 @@ def load_metadata_from_local(package: str):
     if is_installed(package):
         # rename the model_zoo.yml to model-index.yml but support both of them
         # for backward compatibility
-        module_name = PKG2MODULE.get(package, package)
-        metadata_path = resource_filename(module_name, 'model-index.yml')
+        installed_path = get_installed_path(package)
+        metadata_path = osp.join(installed_path, 'model-index.yml')
         if not osp.exists(metadata_path):
-            metadata_path = resource_filename(package, 'model_zoo.yml')
+            metadata_path = osp.join(installed_path, 'model_zoo.yml')
             if not osp.exists(metadata_path):
                 raise FileNotFoundError(
                     highlighted_error(
-                        'model-index.yml or model_zoo.yml is not found, please'
-                        f' upgrade your {package} to support search command'))
+                        f'{installed_path}/model-index.yml or {installed_path}'
+                        '/model_zoo.yml is not found, please upgrade your '
+                        f'{package} to support search command'))
 
         metadata = load(metadata_path)
 
