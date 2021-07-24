@@ -222,10 +222,7 @@ def gridsearch(
     pkg_root = get_installed_path(package)
 
     if not osp.exists(config):
-        config_root = osp.join(pkg_root, '.mim', 'configs')
-        if not osp.exists(config_root):
-            config_root = osp.join(pkg_root, 'configs')
-        files = recursively_find(config_root, osp.basename(config))
+        files = recursively_find(pkg_root, osp.basename(config))
 
         if len(files) == 0:
             msg = (f"The path {config} doesn't exist and we can not "
