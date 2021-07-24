@@ -1,11 +1,12 @@
 import importlib
 import os.path as osp
 import pkg_resources
-from email.parser import FeedParser
 from typing import List, Tuple
 
 import click
 from tabulate import tabulate
+
+from mim.utils import parse_home_page
 
 
 @click.command('list')
@@ -43,20 +44,18 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
 
     pkgs_info: List[Tuple[str, ...]] = []
     for pkg in pkg_resources.working_set:
+        pkg_name = pkg.project_name
         if all:
-            pkgs_info.append((pkg.project_name, pkg.version))
+            pkgs_info.append((pkg_name, pkg.version))
         else:
             if pkg.has_metadata('top_level.txt'):
                 module_name = pkg.get_metadata('top_level.txt').split('\n')[0]
                 if not module_name:
                     continue
 
-                home_page = pkg.location
-                if pkg.has_metadata('METADATA'):
-                    metadata = pkg.get_metadata('METADATA')
-                    feed_parser = FeedParser()
-                    feed_parser.feed(metadata)
-                    home_page = feed_parser.close().get('home-page')
+                home_page = parse_home_page(pkg_name)
+                if not home_page:
+                    home_page = pkg.location
 
                 # rename the model_zoo.yml to model-index.yml but support both
                 # of them for backward compatibility
@@ -64,8 +63,7 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
                     osp.join(pkg.location, module_name, 'model-index.yml'),
                     osp.join(pkg.location, module_name, 'model_zoo.yml')
                 ]
-                if pkg.project_name.startswith('mmcv') or any(
+                if pkg_name.startswith('mmcv') or any(
                         map(osp.exists, possible_metadata_paths)):
-                    pkgs_info.append(
-                        (pkg.project_name, pkg.version, home_page))
+                    pkgs_info.append((pkg_name, pkg.version, home_page))
     return pkgs_info

@@ -1,3 +1,4 @@
+import functools
 import hashlib
 import importlib
 import os
@@ -45,6 +46,56 @@ def parse_url(url: str) -> Tuple[str, str]:
     return username, repo
 
 
+def is_installed(package: str) -> bool:
+    """Check package whether installed.
+
+    Args:
+        package (str): Name of package to be checked.
+    """
+    # refresh the pkg_resources
+    # more datails at https://github.com/pypa/setuptools/issues/373
+    importlib.reload(pkg_resources)
+    try:
+        get_distribution(package)
+        return True
+    except pkg_resources.DistributionNotFound:
+        return False
+
+
+def check_installation_decorator(func):
+    """A decorator to make sure a package has been installed.
+
+    Before invoking those functions which depend on installed package, the
+    decorator makes sure the package has been installed.
+    """
+
+    @functools.wraps(func)
+    def wrapper(package):
+        if not is_installed(package):
+            raise RuntimeError(
+                highlighted_error(f'{package} is not installed.'))
+        return func(package)
+
+    return wrapper
+
+
+@check_installation_decorator
+def parse_home_page(package: str) -> Optional[str]:
+    """Parse home page from package metadata.
+
+    Args:
+        pakcage (str): Package to parse home page.
+    """
+    home_page = None
+    pkg = get_distribution(package)
+    if pkg.has_metadata('METADATA'):
+        metadata = pkg.get_metadata('METADATA')
+        feed_parser = FeedParser()
+        feed_parser.feed(metadata)
+        home_page = feed_parser.close().get('home-page')
+    return home_page
+
+
 def get_github_url(package: str) -> str:
     """Get github url.
 
@@ -55,24 +106,24 @@ def get_github_url(package: str) -> str:
         >>> get_github_url('mmcls')
         'https://github.com/open-mmlab/mmclassification.git'
     """
-    github_url = ''
+    home_page = None
     if is_installed(package):
-        pkg = get_distribution(package)
-        if pkg.has_metadata('METADATA'):
-            metadata = pkg.get_metadata('METADATA')
-            feed_parser = FeedParser()
-            feed_parser.feed(metadata)
-            github_url = feed_parser.close().get('home-page')
+        home_page = parse_home_page(package)
 
-    if not github_url:
-        pkg_info = get_package_info_from_pypi(package)
-        github_url = pkg_info['info'].get('home_page')
+    if not home_page:
+        try:
+            pkg_info = get_package_info_from_pypi(package)
+            home_page = pkg_info['info'].get('home_page')
+        except Exception:
+            pass
 
-    if github_url:
-        if github_url.endswith('.com'):
-            github_url = github_url.replace('.com', '.git')
-        elif not github_url.endswith('.git'):
-            github_url = github_url + '.git'
+    if home_page:
+        if home_page.endswith('.git'):
+            github_url = home_page
+        elif home_page.endswith('.com'):
+            github_url = home_page.replace('.com', '.git')
+        else:
+            github_url = home_page + '.git'
         return github_url
     else:
         raise ValueError(
@@ -157,22 +208,6 @@ def split_package_version(package: str) -> Tuple[str, ...]:
         return package, ''
 
 
-def is_installed(package: str) -> bool:
-    """Check package whether installed.
-
-    Args:
-        package (str): Name of package to be checked.
-    """
-    # refresh the pkg_resources
-    # more datails at https://github.com/pypa/setuptools/issues/373
-    importlib.reload(pkg_resources)
-    try:
-        get_distribution(package)
-        return True
-    except pkg_resources.DistributionNotFound:
-        return False
-
-
 def get_package_version(repo_root: str) -> Tuple[str, str]:
     """Get package and version from local repo.
 
@@ -189,18 +224,23 @@ def get_package_version(repo_root: str) -> Tuple[str, str]:
     return '', ''
 
 
+@check_installation_decorator
 def get_installed_version(package: str) -> str:
     """Get the version of package from local environment.
 
     Args:
         package (str): Name of package.
     """
-    if not is_installed(package):
-        raise RuntimeError(highlighted_error(f'{package} is not installed.'))
     return get_distribution(package).version
 
 
 def get_package_info_from_pypi(package: str, timeout: int = 15) -> dict:
+    """Get packege information from pypi.
+
+    Args:
+        package (str): Package to get information.
+        timeout (int): Set the socket timeout. Default: 15.
+    """
     pkg_url = f'https://pypi.org/pypi/{package}/json'
     response = get_content_from_url(pkg_url, timeout)
     return response.json()
@@ -239,15 +279,13 @@ def is_version_equal(version1: str, version2: str) -> bool:
     return LooseVersion(version1) == LooseVersion(version2)
 
 
+@check_installation_decorator
 def package2module(package: str):
     """Infer module name from package.
 
     Args:
         package (str): Package to infer module name.
     """
-    if not is_installed(package):
-        raise RuntimeError(highlighted_error(f'{package} is not installed.'))
-
     pkg = get_distribution(package)
     if pkg.has_metadata('top_level.txt'):
         module_name = pkg.get_metadata('top_level.txt').split('\n')[0]
@@ -257,6 +295,7 @@ def package2module(package: str):
             highlighted_error(f'can not infer the module name of {package}'))
 
 
+@check_installation_decorator
 def get_installed_path(package: str) -> str:
     """Get installed path of package.
 
@@ -267,9 +306,6 @@ def get_installed_path(package: str) -> str:
         >>> get_installed_path('mmcls')
         >>> '.../lib/python3.7/site-packages/mmcls'
     """
-    if not is_installed(package):
-        raise RuntimeError(highlighted_error(f'{package} is not installed.'))
-
     # if the package name is not the same as module name, module name should be
     # inferred. For example, mmcv-full is the package name, but mmcv is module
     # name. If we want to get the installed path of mmcv-full, we should concat
