@@ -63,7 +63,7 @@ jobs:
           export CUDA_HOME=/usr/local/cuda-${CUDA_SHORT}
           export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${CUDA_HOME}/include:${LD_LIBRARY_PATH}
           export PATH=${CUDA_HOME}/bin:${PATH}
-      - name: Install wheel
+      - name: Install wheel  # wheel is the default package of local environment but docker environment misses the packege so we manually install it
         run: pip install wheel
       - name: Install PyTorch
         run: pip install torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html

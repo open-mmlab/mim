@@ -62,7 +62,7 @@ def is_installed(package: str) -> bool:
         return False
 
 
-def check_installation_decorator(func):
+def ensure_installation(func):
     """A decorator to make sure a package has been installed.
 
     Before invoking those functions which depend on installed package, the
@@ -79,7 +79,7 @@ def check_installation_decorator(func):
     return wrapper
 
 
-@check_installation_decorator
+@ensure_installation
 def parse_home_page(package: str) -> Optional[str]:
     """Parse home page from package metadata.
 
@@ -224,7 +224,7 @@ def get_package_version(repo_root: str) -> Tuple[str, str]:
     return '', ''
 
 
-@check_installation_decorator
+@ensure_installation
 def get_installed_version(package: str) -> str:
     """Get the version of package from local environment.
 
@@ -279,7 +279,7 @@ def is_version_equal(version1: str, version2: str) -> bool:
     return LooseVersion(version1) == LooseVersion(version2)
 
 
-@check_installation_decorator
+@ensure_installation
 def package2module(package: str):
     """Infer module name from package.
 
@@ -295,7 +295,7 @@ def package2module(package: str):
             highlighted_error(f'can not infer the module name of {package}'))
 
 
-@check_installation_decorator
+@ensure_installation
 def get_installed_path(package: str) -> str:
     """Get installed path of package.
 
