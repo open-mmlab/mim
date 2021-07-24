@@ -211,21 +211,23 @@ def load_metadata_from_local(package: str):
     """
     if is_installed(package):
         # rename the model_zoo.yml to model-index.yml but support both of them
-        # for backward compatibility
+        # for backward compatibility. In addition, model-index.yml will be put
+        # in package/.mim in PR #68
         installed_path = get_installed_path(package)
-        metadata_path = osp.join(installed_path, 'model-index.yml')
-        if not osp.exists(metadata_path):
-            metadata_path = osp.join(installed_path, 'model_zoo.yml')
-            if not osp.exists(metadata_path):
-                raise FileNotFoundError(
-                    highlighted_error(
-                        f'{installed_path}/model-index.yml or {installed_path}'
-                        '/model_zoo.yml is not found, please upgrade your '
-                        f'{package} to support search command'))
-
-        metadata = load(metadata_path)
-
-        return metadata
+        possible_metadata_paths = [
+            osp.join(installed_path, '.mim', 'model-index.yml'),
+            osp.join(installed_path, 'model-index.yml'),
+            osp.join(installed_path, '.mim', 'model_zoo.yml'),
+            osp.join(installed_path, 'model_zoo.yml'),
+        ]
+        for metadata_path in possible_metadata_paths:
+            if osp.exists(metadata_path):
+                return load(metadata_path)
+        raise FileNotFoundError(
+            highlighted_error(
+                f'{installed_path}/model-index.yml or {installed_path}'
+                '/model_zoo.yml is not found, please upgrade your '
+                f'{package} to support search command'))
     else:
         raise ImportError(
             highlighted_error(
@@ -254,7 +256,7 @@ def load_metadata_from_remote(package: str) -> Optional[ModelIndex]:
     pkl_path = osp.join(DEFAULT_CACHE_DIR, f'{package}-{version}.pkl')
     if osp.exists(pkl_path):
         with open(pkl_path, 'rb') as fr:
-            metadata = pickle.load(fr)
+            return pickle.load(fr)
     else:
         clone_cmd = ['git', 'clone', github_url]
         if version:
@@ -267,23 +269,21 @@ def load_metadata_from_remote(package: str) -> Optional[ModelIndex]:
 
             # rename the model_zoo.yml to model-index.yml but support both of
             # them for backward compatibility
-            metadata_path = osp.join(repo_root, 'model-index.yml')
-            if not osp.exists(metadata_path):
-                metadata_path = osp.join(repo_root, 'model_zoo.yml')
-                if not osp.exists(metadata_path):
-                    raise FileNotFoundError(
-                        highlighted_error(
-                            'model-index.yml or model_zoo.yml is not found, '
-                            f'please upgrade your {package} to support search '
-                            'command'))
-
-            metadata = load(metadata_path)
-
-        if version:
-            with open(pkl_path, 'wb') as fw:
-                pickle.dump(metadata, fw)
-
-    return metadata
+            possible_metadata_paths = [
+                osp.join(repo_root, 'model-index.yml'),
+                osp.join(repo_root, 'model_zoo.yml'),
+            ]
+            for metadata_path in possible_metadata_paths:
+                if osp.exists(metadata_path):
+                    metadata = load(metadata_path)
+                    if version:
+                        with open(pkl_path, 'wb') as fw:
+                            pickle.dump(metadata, fw)
+                    return metadata
+            raise FileNotFoundError(
+                highlighted_error(
+                    'model-index.yml or model_zoo.yml is not found, please '
+                    f'upgrade your {package} to support search command'))
 
 
 def convert2df(metadata: ModelIndex) -> DataFrame:
