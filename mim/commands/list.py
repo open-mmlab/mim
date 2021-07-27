@@ -59,8 +59,8 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
             try:
                 # `installed_path` of some packages can not be obtained like
                 # threadpoolctl. We can ignore those packages because
-                # `mim list` just lists those packages that they have
-                # model-index.yml or model_zoo.yml file
+                # `mim list` only need to list those packages that have
+                # model-index.yml or model_zoo.yml file.
                 # more datails at https://github.com/open-mmlab/mim/issues/71
                 installed_path = get_installed_path(pkg_name)
             except Exception:
