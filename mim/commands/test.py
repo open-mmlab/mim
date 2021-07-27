@@ -222,10 +222,13 @@ def test(
                 f"The path {config} doesn't exist and we find multiple "
                 f'config files with same name in codebase {package}: {files}.')
             raise ValueError(highlighted_error(msg))
+
+        # Use realpath instead of the symbolic path in pkg/.mim
+        config_path = osp.realpath(files[0])
         click.echo(
             f"The path {config} doesn't exist but we find the config file "
-            f'in codebase {package}, will use {files[0]} instead.')
-        config = files[0]
+            f'in codebase {package}, will use {config_path} instead.')
+        config = config_path
 
     # We know that 'config' exists and is legal.
     test_script = osp.join(pkg_root, 'tools', 'test.py')
