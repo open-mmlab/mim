@@ -79,7 +79,7 @@ def ensure_installation(func):
     return wrapper
 
 
-# @ensure_installation
+@ensure_installation
 def parse_home_page(package: str) -> Optional[str]:
     """Parse home page from package metadata.
 
