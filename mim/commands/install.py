@@ -7,6 +7,7 @@ from pkg_resources import parse_requirements, resource_filename
 from typing import List
 
 import click
+import pip
 
 from mim.click import get_official_package, param2lowercase
 from mim.commands.uninstall import uninstall
@@ -475,7 +476,8 @@ def install_from_repo(repo_root: str,
     else:
         # solving issues related to out-of-tree builds
         # more datails at https://github.com/pypa/pip/issues/7555
-        install_cmd.append('--use-feature=in-tree-build')
+        if LooseVersion(pip.__version__) >= LooseVersion('21.1.1'):
+            install_cmd.append('--use-feature=in-tree-build')
     install_cmd.append(repo_root)
     if is_user_dir:
         install_cmd.append('--user')
