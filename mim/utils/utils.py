@@ -369,18 +369,19 @@ def cast2lowercase(input: Union[list, tuple, str]) -> Any:
         return outputs
 
 
-def recursively_find(root: str, base_name: str) -> list:
+def recursively_find(root: str, base_name: str, followlinks=False) -> list:
     """Recursive list a directory, return all files with a given base_name.
 
     Args:
         root (str): The root directory to list.
         base_name (str): The base_name.
+        followlinks (bool): Follow symbolic links. Defaults to False.
 
     Return:
         Files with given base_name.
     """
     files = []
-    for _root, _, _files in os.walk(root):
+    for _root, _, _files in os.walk(root, followlinks=followlinks):
         if base_name in _files:
             files.append(osp.join(_root, base_name))
 

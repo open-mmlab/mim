@@ -211,7 +211,16 @@ def test(
     pkg_root = get_installed_path(package)
 
     if not osp.exists(config):
-        files = recursively_find(pkg_root, osp.basename(config))
+        # configs is put in pkg/.mim in PR #68
+        config_root = osp.join(pkg_root, '.mim', 'configs')
+        if not osp.exists(config_root):
+            # If not pkg/.mim/config, try to search the whole pkg root.
+            config_root = pkg_root
+
+        # pkg/.mim/configs is a symbolic link to the real config folder,
+        # so we need to follow links.
+        files = recursively_find(
+            pkg_root, osp.basename(config), followlinks=True)
 
         if len(files) == 0:
             msg = (f"The path {config} doesn't exist and we can not find "
