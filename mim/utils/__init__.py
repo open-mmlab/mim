@@ -35,7 +35,6 @@ from .utils import (
     is_version_equal,
     module_full_name,
     package2module,
-    parse_home_page,
     parse_url,
     recursively_find,
     set_config,
@@ -83,6 +82,5 @@ __all__ = [
     'MODULE2PKG',
     'package2module',
     'get_package_info_from_pypi',
-    'parse_home_page',
     'ensure_installation',
 ]

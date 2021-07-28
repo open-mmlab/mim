@@ -1,12 +1,10 @@
 import importlib
-import os.path as osp
 import pkg_resources
 from typing import List, Tuple
 
 import click
+from importlib_metadata import files, metadata
 from tabulate import tabulate
-
-from mim.utils import get_installed_path, parse_home_page
 
 
 @click.command('list')
@@ -48,7 +46,7 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
         if all:
             pkgs_info.append((pkg_name, pkg.version))
         else:
-            home_page = parse_home_page(pkg_name)
+            home_page = metadata(pkg_name)['Home-page']
             if not home_page:
                 home_page = pkg.location
 
@@ -56,27 +54,11 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
                 pkgs_info.append((pkg_name, pkg.version, home_page))
                 continue
 
-            try:
-                # `installed_path` of some packages can not be obtained like
-                # threadpoolctl. We can ignore those packages because
-                # `mim list` only need to list those packages that have
-                # model-index.yml or model_zoo.yml file.
-                # more datails at https://github.com/open-mmlab/mim/issues/71
-                installed_path = get_installed_path(pkg_name)
-            except Exception:
-                continue
-
-            # rename the model_zoo.yml to model-index.yml but support both
-            # of them for backward compatibility. In addition, model-index.yml
-            # will be put in package/.mim in PR #68
-            possible_metadata_paths = [
-                osp.join(installed_path, '.mim', 'model-index.yml'),
-                osp.join(installed_path, 'model-index.yml'),
-                osp.join(installed_path, '.mim', 'model_zoo.yml'),
-                osp.join(installed_path, 'model_zoo.yml')
-            ]
-            for path in possible_metadata_paths:
-                if osp.exists(path):
+            for file in files(pkg_name):
+                # rename the model_zoo.yml to model-index.yml but support both
+                # of them for backward compatibility.
+                filename = file.locate().name
+                if filename in ['model-index.yml', 'model_zoo.yml']:
                     pkgs_info.append((pkg_name, pkg.version, home_page))
                     break
 
