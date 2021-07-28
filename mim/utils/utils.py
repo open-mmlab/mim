@@ -84,7 +84,7 @@ def parse_home_page(package: str) -> Optional[str]:
     """Parse home page from package metadata.
 
     Args:
-        pakcage (str): Package to parse home page.
+        package (str): Package to parse home page.
     """
     home_page = None
     pkg = get_distribution(package)

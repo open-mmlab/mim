@@ -52,7 +52,20 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
             if not home_page:
                 home_page = pkg.location
 
-            installed_path = get_installed_path(pkg_name)
+            if pkg_name.startswith('mmcv'):
+                pkgs_info.append((pkg_name, pkg.version, home_page))
+                continue
+
+            try:
+                # `installed_path` of some packages can not be obtained like
+                # threadpoolctl. We can ignore those packages because
+                # `mim list` only need to list those packages that have
+                # model-index.yml or model_zoo.yml file.
+                # more datails at https://github.com/open-mmlab/mim/issues/71
+                installed_path = get_installed_path(pkg_name)
+            except Exception:
+                continue
+
             # rename the model_zoo.yml to model-index.yml but support both
             # of them for backward compatibility. In addition, model-index.yml
             # will be put in package/.mim in PR #68
@@ -62,7 +75,10 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
                 osp.join(installed_path, '.mim', 'model_zoo.yml'),
                 osp.join(installed_path, 'model_zoo.yml')
             ]
-            if pkg_name.startswith('mmcv') or any(
-                    map(osp.exists, possible_metadata_paths)):
-                pkgs_info.append((pkg_name, pkg.version, home_page))
+            for path in possible_metadata_paths:
+                if osp.exists(path):
+                    pkgs_info.append((pkg_name, pkg.version, home_page))
+                    break
+
+    pkgs_info.sort(key=lambda pkg_info: pkg_info[0])
     return pkgs_info
