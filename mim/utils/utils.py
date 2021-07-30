@@ -10,12 +10,12 @@ import tarfile
 import typing
 from collections import defaultdict
 from distutils.version import LooseVersion
+from email.parser import FeedParser
 from pkg_resources import get_distribution, parse_version
 from typing import Any, List, Optional, Tuple, Union
 
 import click
 import requests
-from importlib_metadata import metadata
 from requests.exceptions import InvalidURL, RequestException, Timeout
 from requests.models import Response
 
@@ -79,6 +79,23 @@ def ensure_installation(func):
     return wrapper
 
 
+@ensure_installation
+def parse_home_page(package: str) -> Optional[str]:
+    """Parse home page from package metadata.
+
+    Args:
+        package (str): Package to parse home page.
+    """
+    home_page = None
+    pkg = get_distribution(package)
+    if pkg.has_metadata('METADATA'):
+        metadata = pkg.get_metadata('METADATA')
+        feed_parser = FeedParser()
+        feed_parser.feed(metadata)
+        home_page = feed_parser.close().get('home-page')
+    return home_page
+
+
 def get_github_url(package: str) -> str:
     """Get github url.
 
@@ -91,7 +108,7 @@ def get_github_url(package: str) -> str:
     """
     home_page = None
     if is_installed(package):
-        home_page = metadata(package)['Home-page']
+        home_page = parse_home_page(package)
 
     if not home_page:
         try:

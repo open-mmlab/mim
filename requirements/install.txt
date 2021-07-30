@@ -1,6 +1,5 @@
 Click==7.1.2
 colorama
-importlib_metadata
 model-index
 pandas
 requests

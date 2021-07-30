@@ -1,9 +1,10 @@
 import importlib
+import os.path as osp
 import pkg_resources
+from email.parser import FeedParser
 from typing import List, Tuple
 
 import click
-from importlib_metadata import files, metadata
 from tabulate import tabulate
 
 
@@ -46,19 +47,37 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
         if all:
             pkgs_info.append((pkg_name, pkg.version))
         else:
-            home_page = metadata(pkg_name)['Home-page']
-            if not home_page:
-                home_page = pkg.location
+            possible_installed_path = osp.join(pkg.location, pkg_name)
+            if not osp.exists(possible_installed_path):
+                module_name = None
+                if pkg.has_metadata('top_level.txt'):
+                    module_name = pkg.get_metadata('top_level.txt').split(
+                        '\n')[0]
+                if module_name:
+                    possible_installed_path = osp.join(pkg.location,
+                                                       module_name)
+                else:
+                    continue
+
+            home_page = pkg.location
+            if pkg.has_metadata('METADATA'):
+                metadata = pkg.get_metadata('METADATA')
+                feed_parser = FeedParser()
+                feed_parser.feed(metadata)
+                home_page = feed_parser.close().get('home-page')
 
             if pkg_name.startswith('mmcv'):
                 pkgs_info.append((pkg_name, pkg.version, home_page))
                 continue
 
-            for file in files(pkg_name):
-                # rename the model_zoo.yml to model-index.yml but support both
-                # of them for backward compatibility.
-                filename = file.locate().name
-                if filename in ['model-index.yml', 'model_zoo.yml']:
+            possible_metadata_paths = [
+                osp.join(possible_installed_path, '.mim', 'model-index.yml'),
+                osp.join(possible_installed_path, 'model-index.yml'),
+                osp.join(possible_installed_path, '.mim', 'model_zoo.yml'),
+                osp.join(possible_installed_path, 'model_zoo.yml')
+            ]
+            for path in possible_metadata_paths:
+                if osp.exists(path):
                     pkgs_info.append((pkg_name, pkg.version, home_page))
                     break
 

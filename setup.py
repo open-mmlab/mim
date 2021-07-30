@@ -35,7 +35,6 @@ setup(
         'model-index',
         'pandas',
         'tabulate',
-        'importlib_metadata',
     ],
     entry_points='''
         [console_scripts]
