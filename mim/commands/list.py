@@ -47,15 +47,14 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
         if all:
             pkgs_info.append((pkg_name, pkg.version))
         else:
-            possible_installed_path = osp.join(pkg.location, pkg_name)
-            if not osp.exists(possible_installed_path):
+            installed_path = osp.join(pkg.location, pkg_name)
+            if not osp.exists(installed_path):
                 module_name = None
                 if pkg.has_metadata('top_level.txt'):
                     module_name = pkg.get_metadata('top_level.txt').split(
                         '\n')[0]
                 if module_name:
-                    possible_installed_path = osp.join(pkg.location,
-                                                       module_name)
+                    installed_path = osp.join(pkg.location, module_name)
                 else:
                     continue
 
@@ -71,10 +70,10 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
                 continue
 
             possible_metadata_paths = [
-                osp.join(possible_installed_path, '.mim', 'model-index.yml'),
-                osp.join(possible_installed_path, 'model-index.yml'),
-                osp.join(possible_installed_path, '.mim', 'model_zoo.yml'),
-                osp.join(possible_installed_path, 'model_zoo.yml')
+                osp.join(installed_path, '.mim', 'model-index.yml'),
+                osp.join(installed_path, 'model-index.yml'),
+                osp.join(installed_path, '.mim', 'model_zoo.yml'),
+                osp.join(installed_path, 'model_zoo.yml')
             ]
             for path in possible_metadata_paths:
                 if osp.exists(path):

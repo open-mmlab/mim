@@ -83,6 +83,6 @@ __all__ = [
     'MODULE2PKG',
     'package2module',
     'get_package_info_from_pypi',
-    'ensure_installation',
     'parse_home_page',
+    'ensure_installation',
 ]
