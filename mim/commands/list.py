@@ -1,12 +1,11 @@
 import importlib
 import os.path as osp
 import pkg_resources
+from email.parser import FeedParser
 from typing import List, Tuple
 
 import click
 from tabulate import tabulate
-
-from mim.utils import get_installed_path, parse_home_page
 
 
 @click.command('list')
@@ -48,27 +47,28 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
         if all:
             pkgs_info.append((pkg_name, pkg.version))
         else:
-            home_page = parse_home_page(pkg_name)
-            if not home_page:
-                home_page = pkg.location
+            installed_path = osp.join(pkg.location, pkg_name)
+            if not osp.exists(installed_path):
+                module_name = None
+                if pkg.has_metadata('top_level.txt'):
+                    module_name = pkg.get_metadata('top_level.txt').split(
+                        '\n')[0]
+                if module_name:
+                    installed_path = osp.join(pkg.location, module_name)
+                else:
+                    continue
+
+            home_page = pkg.location
+            if pkg.has_metadata('METADATA'):
+                metadata = pkg.get_metadata('METADATA')
+                feed_parser = FeedParser()
+                feed_parser.feed(metadata)
+                home_page = feed_parser.close().get('home-page')
 
             if pkg_name.startswith('mmcv'):
                 pkgs_info.append((pkg_name, pkg.version, home_page))
                 continue
 
-            try:
-                # `installed_path` of some packages can not be obtained like
-                # threadpoolctl. We can ignore those packages because
-                # `mim list` only need to list those packages that have
-                # model-index.yml or model_zoo.yml file.
-                # more datails at https://github.com/open-mmlab/mim/issues/71
-                installed_path = get_installed_path(pkg_name)
-            except Exception:
-                continue
-
-            # rename the model_zoo.yml to model-index.yml but support both
-            # of them for backward compatibility. In addition, model-index.yml
-            # will be put in package/.mim in PR #68
             possible_metadata_paths = [
                 osp.join(installed_path, '.mim', 'model-index.yml'),
                 osp.join(installed_path, 'model-index.yml'),
