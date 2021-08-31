@@ -547,10 +547,7 @@ def module_full_name(abbr: str) -> str:
         str: The full name of the corresponding module. If abbr is the
             sub-string of zero / multiple module names, return empty string.
     """
-    supported_pkgs = [
-        PKG2MODULE[k] if k in PKG2MODULE else k for k in PKG2PROJECT
-    ]
-    supported_pkgs = list(set(supported_pkgs))
+    supported_pkgs = [k for k in PKG2PROJECT]
     names = [x for x in supported_pkgs if abbr in x]
     if len(names) == 1:
         return names[0]
