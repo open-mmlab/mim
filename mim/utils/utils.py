@@ -19,7 +19,7 @@ import requests
 from requests.exceptions import InvalidURL, RequestException, Timeout
 from requests.models import Response
 
-from .default import PKG2MODULE, PKG2PROJECT
+from .default import PKG2PROJECT
 
 
 def parse_url(url: str) -> Tuple[str, str]:
@@ -550,5 +550,6 @@ def module_full_name(abbr: str) -> str:
     names = [x for x in PKG2PROJECT if abbr in x]
     if len(names) == 1:
         return names[0]
-    else:
-        return abbr if abbr in names else ''
+    elif abbr in names or is_installed(abbr):
+        return abbr
+    return ''
