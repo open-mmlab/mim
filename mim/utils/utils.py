@@ -19,7 +19,7 @@ import requests
 from requests.exceptions import InvalidURL, RequestException, Timeout
 from requests.models import Response
 
-from .default import PKG2MODULE, PKG2PROJECT
+from .default import PKG2PROJECT
 
 
 def parse_url(url: str) -> Tuple[str, str]:
@@ -547,12 +547,9 @@ def module_full_name(abbr: str) -> str:
         str: The full name of the corresponding module. If abbr is the
             sub-string of zero / multiple module names, return empty string.
     """
-    supported_pkgs = [
-        PKG2MODULE[k] if k in PKG2MODULE else k for k in PKG2PROJECT
-    ]
-    supported_pkgs = list(set(supported_pkgs))
-    names = [x for x in supported_pkgs if abbr in x]
+    names = [x for x in PKG2PROJECT if abbr in x]
     if len(names) == 1:
         return names[0]
-    else:
-        return abbr if abbr in names else ''
+    elif abbr in names or is_installed(abbr):
+        return abbr
+    return ''
