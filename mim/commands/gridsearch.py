@@ -278,7 +278,7 @@ def gridsearch(
     for arg in search_args_dict:
         try:
             arg_value = get_config(cfg, arg)
-            if arg_value and not isinstance(arg_value, str):
+            if arg_value is not None and not isinstance(arg_value, str):
                 search_args_dict[arg] = [
                     eval(x) for x in search_args_dict[arg]
                 ]
