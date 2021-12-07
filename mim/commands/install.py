@@ -3,10 +3,11 @@ import os.path as osp
 import shutil
 import tempfile
 from distutils.version import LooseVersion
-from pkg_resources import parse_requirements
+from pkg_resources import parse_requirements, resource_filename
 from typing import List
 
 import click
+import pip
 
 from mim.click import get_official_package, param2lowercase
 from mim.commands.uninstall import uninstall
@@ -405,17 +406,18 @@ def install_from_repo(repo_root: str,
     def copy_file_to_package():
         # rename the model_zoo.yml to model-index.yml but support both of them
         # for backward compatibility
-        items = ['tools', 'configs', 'model_zoo.yml', 'model-index.yml']
+        filenames = ['tools', 'configs', 'model_zoo.yml', 'model-index.yml']
         module_name = PKG2MODULE.get(package, package)
-        pkg_root = osp.join(repo_root, module_name)
+        # configs, tools and model-index.yml will be copied to package/.mim
+        mim_root = resource_filename(module_name, '.mim')
+        os.makedirs(mim_root, exist_ok=True)
 
-        for item in items:
-            src_path = osp.join(repo_root, item)
-            dst_path = osp.join(pkg_root, item)
+        for filename in filenames:
+            src_path = osp.join(repo_root, filename)
+            dst_path = osp.join(mim_root, filename)
             if osp.exists(src_path):
                 if osp.islink(dst_path):
                     os.unlink(dst_path)
-
                 if osp.isfile(src_path):
                     shutil.copyfile(src_path, dst_path)
                 elif osp.isdir(src_path):
@@ -428,13 +430,18 @@ def install_from_repo(repo_root: str,
         # symlinks to package, which will synchronize the modified files.
         # Besides, rename the model_zoo.yml to model-index.yml but support both
         # of them for backward compatibility
-        items = ['tools', 'configs', 'model_zoo.yml', 'model-index.yml']
+        filenames = ['tools', 'configs', 'model_zoo.yml', 'model-index.yml']
         module_name = PKG2MODULE.get(package, package)
         pkg_root = osp.join(repo_root, module_name)
+        # configs, tools and model-index.yml will be linked to package/.mim
+        mim_root = osp.join(pkg_root, '.mim')
+        os.makedirs(mim_root, exist_ok=True)
 
-        for item in items:
-            src_path = osp.join(repo_root, item)
-            dst_path = osp.join(pkg_root, item)
+        for filename in filenames:
+            src_path = osp.join(repo_root, filename)
+            dst_path = osp.join(mim_root, filename)
+            if osp.exists(dst_path):
+                continue
             if osp.exists(src_path):
                 if osp.isfile(dst_path) or osp.islink(dst_path):
                     os.remove(dst_path)
@@ -442,11 +449,6 @@ def install_from_repo(repo_root: str,
                     shutil.rmtree(dst_path)
 
                 os.symlink(src_path, dst_path)
-
-    if is_editable:
-        link_file_to_package()
-    else:
-        copy_file_to_package()
 
     # install dependencies. For example,
     # install mmcls should install mmcv-full first if it is not installed or
@@ -457,7 +459,7 @@ def install_from_repo(repo_root: str,
         if dependencies:
             install_dependencies(dependencies, timeout, is_yes, is_user_dir)
 
-    third_dependencies = osp.join(repo_root, 'requirements', '/build.txt')
+    third_dependencies = osp.join(repo_root, 'requirements', 'build.txt')
     if osp.exists(third_dependencies):
         dep_cmd = [
             'python', '-m', 'pip', 'install', '-r', third_dependencies,
@@ -471,6 +473,11 @@ def install_from_repo(repo_root: str,
     install_cmd = ['python', '-m', 'pip', 'install']
     if is_editable:
         install_cmd.append('-e')
+    else:
+        # solving issues related to out-of-tree builds
+        # more datails at https://github.com/pypa/pip/issues/7555
+        if LooseVersion(pip.__version__) >= LooseVersion('21.1.1'):
+            install_cmd.append('--use-feature=in-tree-build')
     install_cmd.append(repo_root)
     if is_user_dir:
         install_cmd.append('--user')
@@ -484,6 +491,11 @@ def install_from_repo(repo_root: str,
         os.environ['MMCV_WITH_OPS'] = '1'
 
     call_command(install_cmd)
+
+    if is_editable:
+        link_file_to_package()
+    else:
+        copy_file_to_package()
 
 
 def install_from_github(package: str,

@@ -1,29 +1,23 @@
 name: build
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-      - name: Install pre-commit hook
-        run: |
-          pip install pre-commit
-          pre-commit install
-      - name: Linting
-        run: pre-commit run --all-files
-      - name: Check docstring coverage
-        run: |
-          pip install interrogate
-          interrogate -v --ignore-init-method --ignore-module --ignore-nested-functions --ignore-regex "__repr__" --fail-under 60 mim
-
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     env:
       CUDA: 10.1.105-1
       CUDA_SHORT: 10.1
@@ -63,6 +57,8 @@ jobs:
           export CUDA_HOME=/usr/local/cuda-${CUDA_SHORT}
           export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${CUDA_HOME}/include:${LD_LIBRARY_PATH}
           export PATH=${CUDA_HOME}/bin:${PATH}
+      - name: Upgrade setuptools
+        run: pip install --upgrade setuptools
       - name: Install wheel  # wheel is the default package of local environment but docker environment misses the packege so we manually install it
         run: pip install wheel
       - name: Install PyTorch

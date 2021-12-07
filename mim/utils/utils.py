@@ -19,7 +19,7 @@ import requests
 from requests.exceptions import InvalidURL, RequestException, Timeout
 from requests.models import Response
 
-from .default import PKG2MODULE, PKG2PROJECT
+from .default import PKG2PROJECT
 
 
 def parse_url(url: str) -> Tuple[str, str]:
@@ -84,7 +84,7 @@ def parse_home_page(package: str) -> Optional[str]:
     """Parse home page from package metadata.
 
     Args:
-        pakcage (str): Package to parse home page.
+        package (str): Package to parse home page.
     """
     home_page = None
     pkg = get_distribution(package)
@@ -369,22 +369,21 @@ def cast2lowercase(input: Union[list, tuple, str]) -> Any:
         return outputs
 
 
-def recursively_find(root: str, base_name: str) -> list:
+def recursively_find(root: str, base_name: str, followlinks=False) -> list:
     """Recursive list a directory, return all files with a given base_name.
 
     Args:
         root (str): The root directory to list.
         base_name (str): The base_name.
+        followlinks (bool): Follow symbolic links. Defaults to False.
 
     Return:
         Files with given base_name.
     """
-    results = list(os.walk(root))
     files = []
-    for tup in results:
-        root = tup[0]
-        if base_name in tup[2]:
-            files.append(osp.join(root, base_name))
+    for _root, _, _files in os.walk(root, followlinks=followlinks):
+        if base_name in _files:
+            files.append(osp.join(_root, base_name))
 
     return files
 
@@ -548,12 +547,9 @@ def module_full_name(abbr: str) -> str:
         str: The full name of the corresponding module. If abbr is the
             sub-string of zero / multiple module names, return empty string.
     """
-    supported_pkgs = [
-        PKG2MODULE[k] if k in PKG2MODULE else k for k in PKG2PROJECT
-    ]
-    supported_pkgs = list(set(supported_pkgs))
-    names = [x for x in supported_pkgs if abbr in x]
+    names = [x for x in PKG2PROJECT if abbr in x]
     if len(names) == 1:
         return names[0]
-    else:
-        return abbr if abbr in names else ''
+    elif abbr in names or is_installed(abbr):
+        return abbr
+    return ''

@@ -1,5 +1,4 @@
 import os.path as osp
-from pkg_resources import resource_filename
 from typing import List, Optional
 
 import click
@@ -8,9 +7,9 @@ from mim.click import OptionEatAll, get_downstream_package, param2lowercase
 from mim.commands.search import get_model_info
 from mim.utils import (
     DEFAULT_CACHE_DIR,
-    PKG2MODULE,
     download_from_file,
     echo_success,
+    get_installed_path,
     highlighted_error,
     is_installed,
     split_package_version,
@@ -101,17 +100,23 @@ def download(package: str,
 
         config_paths = model_info[config]['config']
         for config_path in config_paths.split(','):
-            module_name = PKG2MODULE.get(package, package)
-            config_path = resource_filename(module_name, config_path)
-            if not osp.exists(config_path):
+            installed_path = get_installed_path(package)
+            # configs will be put in package/.mim in PR #68
+            possible_config_paths = [
+                osp.join(installed_path, '.mim', config_path),
+                osp.join(installed_path, config_path)
+            ]
+            for config_path in possible_config_paths:
+                if osp.exists(config_path):
+                    config_obj = Config.fromfile(config_path)
+                    saved_config_path = osp.join(dest_root, f'{config}.py')
+                    config_obj.dump(saved_config_path)
+                    echo_success(
+                        f'Successfully dumped {config}.py to {dest_root}')
+                    checkpoints.append(filename)
+                    break
+            else:
                 raise ValueError(
                     highlighted_error(f'{config_path} is not found.'))
-
-            config_obj = Config.fromfile(config_path)
-            saved_config_path = osp.join(dest_root, f'{config}.py')
-            config_obj.dump(saved_config_path)
-            echo_success(f'Successfully dumped {config}.py to {dest_root}')
-
-            checkpoints.append(filename)
 
     return checkpoints

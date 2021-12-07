@@ -188,7 +188,16 @@ def train(
     pkg_root = get_installed_path(package)
 
     if not osp.exists(config):
-        files = recursively_find(pkg_root, osp.basename(config))
+        # configs is put in pkg/.mim in PR #68
+        config_root = osp.join(pkg_root, '.mim', 'configs')
+        if not osp.exists(config_root):
+            # If not pkg/.mim/config, try to search the whole pkg root.
+            config_root = pkg_root
+
+        # pkg/.mim/configs is a symbolic link to the real config folder,
+        # so we need to follow links.
+        files = recursively_find(
+            pkg_root, osp.basename(config), followlinks=True)
 
         if len(files) == 0:
             msg = (f"The path {config} doesn't exist and we can not find "
@@ -200,12 +209,17 @@ def train(
                 f'config files with same name in codebase {package}: {files}.')
             raise ValueError(highlighted_error(msg))
 
+        # Use realpath instead of the symbolic path in pkg/.mim
+        config_path = osp.realpath(files[0])
         click.echo(
             f"The path {config} doesn't exist but we find the config file "
-            f'in codebase {package}, will use {files[0]} instead.')
-        config = files[0]
+            f'in codebase {package}, will use {config_path} instead.')
+        config = config_path
 
-    train_script = osp.join(pkg_root, 'tools/train.py')
+    # tools will be put in package/.mim in PR #68
+    train_script = osp.join(pkg_root, '.mim', 'tools', 'train.py')
+    if not osp.exists(train_script):
+        train_script = osp.join(pkg_root, 'tools', 'train.py')
 
     common_args = ['--launcher', launcher] + list(other_args)
 
