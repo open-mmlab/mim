@@ -1,8 +1,8 @@
-# Customization
+## Customization
 
 You can customize MIM using the `~/.mimrc` file, which should be placed in your home directory.
 
-## Customize Default Values of MIM commands
+### Customize Default Values of MIM commands
 
 You can customize the default values of MIM commands with `~/.mimrc`:
 
