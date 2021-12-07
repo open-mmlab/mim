@@ -3,13 +3,17 @@ name: build
 on:
   push:
     paths-ignore:
-      - 'README.md'
+      - '**.md'
       - 'docs/**'
+      - '.pre-commit-config.yaml'
+      - '.readthedocs.yml'
 
   pull_request:
     paths-ignore:
-      - 'README.md'
+      - '**.md'
       - 'docs/**'
+      - '.pre-commit-config.yaml'
+      - '.readthedocs.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
