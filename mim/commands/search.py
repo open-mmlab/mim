@@ -211,21 +211,23 @@ def load_metadata_from_local(package: str):
     """
     if is_installed(package):
         # rename the model_zoo.yml to model-index.yml but support both of them
-        # for backward compatibility
+        # for backward compatibility. In addition, model-index.yml will be put
+        # in package/.mim in PR #68
         installed_path = get_installed_path(package)
-        metadata_path = osp.join(installed_path, 'model-index.yml')
-        if not osp.exists(metadata_path):
-            metadata_path = osp.join(installed_path, 'model_zoo.yml')
-            if not osp.exists(metadata_path):
-                raise FileNotFoundError(
-                    highlighted_error(
-                        f'{installed_path}/model-index.yml or {installed_path}'
-                        '/model_zoo.yml is not found, please upgrade your '
-                        f'{package} to support search command'))
-
-        metadata = load(metadata_path)
-
-        return metadata
+        possible_metadata_paths = [
+            osp.join(installed_path, '.mim', 'model-index.yml'),
+            osp.join(installed_path, 'model-index.yml'),
+            osp.join(installed_path, '.mim', 'model_zoo.yml'),
+            osp.join(installed_path, 'model_zoo.yml'),
+        ]
+        for metadata_path in possible_metadata_paths:
+            if osp.exists(metadata_path):
+                return load(metadata_path)
+        raise FileNotFoundError(
+            highlighted_error(
+                f'{installed_path}/model-index.yml or {installed_path}'
+                '/model_zoo.yml is not found, please upgrade your '
+                f'{package} to support search command'))
     else:
         raise ImportError(
             highlighted_error(
@@ -254,7 +256,7 @@ def load_metadata_from_remote(package: str) -> Optional[ModelIndex]:
     pkl_path = osp.join(DEFAULT_CACHE_DIR, f'{package}-{version}.pkl')
     if osp.exists(pkl_path):
         with open(pkl_path, 'rb') as fr:
-            metadata = pickle.load(fr)
+            return pickle.load(fr)
     else:
         clone_cmd = ['git', 'clone', github_url]
         if version:
@@ -267,23 +269,21 @@ def load_metadata_from_remote(package: str) -> Optional[ModelIndex]:
 
             # rename the model_zoo.yml to model-index.yml but support both of
             # them for backward compatibility
-            metadata_path = osp.join(repo_root, 'model-index.yml')
-            if not osp.exists(metadata_path):
-                metadata_path = osp.join(repo_root, 'model_zoo.yml')
-                if not osp.exists(metadata_path):
-                    raise FileNotFoundError(
-                        highlighted_error(
-                            'model-index.yml or model_zoo.yml is not found, '
-                            f'please upgrade your {package} to support search '
-                            'command'))
-
-            metadata = load(metadata_path)
-
-        if version:
-            with open(pkl_path, 'wb') as fw:
-                pickle.dump(metadata, fw)
-
-    return metadata
+            possible_metadata_paths = [
+                osp.join(repo_root, 'model-index.yml'),
+                osp.join(repo_root, 'model_zoo.yml'),
+            ]
+            for metadata_path in possible_metadata_paths:
+                if osp.exists(metadata_path):
+                    metadata = load(metadata_path)
+                    if version:
+                        with open(pkl_path, 'wb') as fw:
+                            pickle.dump(metadata, fw)
+                    return metadata
+            raise FileNotFoundError(
+                highlighted_error(
+                    'model-index.yml or model_zoo.yml is not found, please '
+                    f'upgrade your {package} to support search command'))
 
 
 def convert2df(metadata: ModelIndex) -> DataFrame:
@@ -564,18 +564,21 @@ def sort_by(dataframe: DataFrame,
         matched_fields = []
         invalid_fields = set()
         for input_field in input_fields:
-            contain_index = valid_fields.str.contains(input_field)
-            contain_fields = valid_fields[contain_index]
-            if len(contain_fields) == 1:
-                matched_fields.extend(contain_fields)
-            elif len(contain_fields) > 2:
-                raise ValueError(
-                    highlighted_error(
-                        f'{input_field} matchs {contain_fields}. However, '
-                        'the number of matched fields should be 1, but got'
-                        f' {len(contain_fields)}.'))
+            if any(valid_fields.isin([input_field])):
+                matched_fields.append(input_field)
             else:
-                invalid_fields.add(input_field)
+                contain_index = valid_fields.str.contains(input_field)
+                contain_fields = valid_fields[contain_index]
+                if len(contain_fields) == 1:
+                    matched_fields.extend(contain_fields)
+                elif len(contain_fields) > 2:
+                    raise ValueError(
+                        highlighted_error(
+                            f'{input_field} matchs {contain_fields}. However, '
+                            'the number of matched fields should be 1, but got'
+                            f' {len(contain_fields)}.'))
+                else:
+                    invalid_fields.add(input_field)
         return matched_fields, invalid_fields
 
     if sorted_fields is None:
@@ -620,14 +623,17 @@ def select_by(dataframe: DataFrame,
         # not consistent with the input_fields
         seen_fields = set()
         for input_field in input_fields:
-            contain_index = valid_fields.str.contains(input_field)
-            contain_fields = valid_fields[contain_index]
-            if len(contain_fields) > 0:
-                matched_fields.extend(
-                    field for field in (set(contain_fields) - seen_fields))
-                seen_fields.update(set(contain_fields))
+            if any(valid_fields.isin([input_field])):
+                matched_fields.append(input_field)
             else:
-                invalid_fields.add(input_field)
+                contain_index = valid_fields.str.contains(input_field)
+                contain_fields = valid_fields[contain_index]
+                if len(contain_fields) > 0:
+                    matched_fields.extend(
+                        field for field in (set(contain_fields) - seen_fields))
+                    seen_fields.update(set(contain_fields))
+                else:
+                    invalid_fields.add(input_field)
         return matched_fields, invalid_fields
 
     if shown_fields is None and unshown_fields is None:

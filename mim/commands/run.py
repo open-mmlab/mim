@@ -2,6 +2,7 @@
 import os
 import os.path as osp
 import subprocess
+from genericpath import exists
 from typing import Tuple, Union
 
 import click
@@ -108,8 +109,14 @@ def run(
             return False, msg
 
     pkg_root = get_installed_path(package)
-
-    prefix = osp.join(pkg_root, 'tools/')
+    possible_prefixes = [
+        osp.join(pkg_root, '.mim', 'tools/'),
+        osp.join(pkg_root, 'tools/')
+    ]
+    for possible_prefix in possible_prefixes:
+        if osp.exists(possible_prefix):
+            prefix = possible_prefix
+            break
 
     command_domain = ''
     if ':' in command:
