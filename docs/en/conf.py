@@ -18,14 +18,14 @@ import sys
 #
 import pytorch_sphinx_theme
 
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
 project = 'mim'
 copyright = '2021, openmmlab'
 author = 'MIM Authors'
-version_file = '../mim/version.py'
+version_file = '../../mim/version.py'
 
 
 def get_version():
