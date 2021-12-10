@@ -27,7 +27,7 @@ from mim.utils import (
     'configs',
     cls=OptionEatAll,
     required=True,
-    help='Config ids to download, such as resnet18_b16x8_cifar10')
+    help='Config ids to download, such as resnet18_8xb16_cifar10')
 @click.option(
     '--dest', 'dest_root', type=str, help='Destination of saving checkpoints.')
 def cli(package: str,
@@ -37,8 +37,8 @@ def cli(package: str,
 
     \b
     Example:
-        > mim download mmcls --config resnet18_b16x8_cifar10
-        > mim download mmcls --config resnet18_b16x8_cifar10 --dest .
+        > mim download mmcls --config resnet18_8xb16_cifar10
+        > mim download mmcls --config resnet18_8xb16_cifar10 --dest .
     """
     download(package, configs, dest_root)
 
