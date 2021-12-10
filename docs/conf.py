@@ -72,7 +72,7 @@ html_theme_options = {
     'menu': [
         {
             'name': 'GitHub',
-            'url': 'https://github.com/open-mmlab/mmcv'
+            'url': 'https://github.com/open-mmlab/mim'
         },
     ],
     # Specify the language of shared menu
