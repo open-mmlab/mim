@@ -26,7 +26,7 @@ v0.1.1 was released in 13/6/2021.
 
 ## Customization
 
-You can use `.mimrc` for customization. Now we support customize default values of each sub-command. Please refer to [customization.md](docs/customization.md) for details.
+You can use `.mimrc` for customization. Now we support customize default values of each sub-command. Please refer to [customization.md](docs/en/customization.md) for details.
 
 ## Build custom projects with MIM
 
@@ -35,7 +35,7 @@ Without worrying about copying codes and scripts from existing codebases, users 
 
 ## Installation
 
-Please refer to [installation.md](docs/installation.md) for installation.
+Please refer to [installation.md](docs/en/installation.md) for installation.
 
 ## Command
 
