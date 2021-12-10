@@ -150,7 +150,7 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
     ```bash
     > mim search mmcls
     > mim search mmcls==0.11.0 --remote
-    > mim search mmcls --config resnet18_b16x8_cifar10
+    > mim search mmcls --config resnet18_8xb16_cifar10
     > mim search mmcls --model resnet
     > mim search mmcls --dataset cifar-10
     > mim search mmcls --valid-field
@@ -188,8 +188,8 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
 - command
 
     ```bash
-    > mim download mmcls --config resnet18_b16x8_cifar10
-    > mim download mmcls --config resnet18_b16x8_cifar10 --dest .
+    > mim download mmcls --config resnet18_8xb16_cifar10
+    > mim download mmcls --config resnet18_8xb16_cifar10 --dest .
     ```
 
 - api
@@ -197,8 +197,8 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
     ```python
     from mim import download
 
-    download('mmcls', ['resnet18_b16x8_cifar10'])
-    download('mmcls', ['resnet18_b16x8_cifar10'], dest_dir='.')
+    download('mmcls', ['resnet18_8xb16_cifar10'])
+    download('mmcls', ['resnet18_8xb16_cifar10'], dest_dir='.')
     ```
 
 </details>
@@ -234,13 +234,13 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
     ```python
     from mim import train
 
-    train(repo='mmcls', config='resnet18_b16x8_cifar10.py', gpus=0,
+    train(repo='mmcls', config='resnet18_8xb16_cifar10.py', gpus=0,
           other_args='--work-dir tmp')
-    train(repo='mmcls', config='resnet18_b16x8_cifar10.py', gpus=1,
+    train(repo='mmcls', config='resnet18_8xb16_cifar10.py', gpus=1,
           other_args='--work-dir tmp')
-    train(repo='mmcls', config='resnet18_b16x8_cifar10.py', gpus=4,
+    train(repo='mmcls', config='resnet18_8xb16_cifar10.py', gpus=4,
           launcher='pytorch', other_args='--work-dir tmp')
-    train(repo='mmcls', config='resnet18_b16x8_cifar10.py', gpus=8,
+    train(repo='mmcls', config='resnet18_8xb16_cifar10.py', gpus=8,
           launcher='slurm', gpus_per_node=8, partition='partition_name',
           other_args='--work-dir tmp')
     ```

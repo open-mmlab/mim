@@ -22,11 +22,11 @@ def test_download():
 
     with pytest.raises(ValueError):
         # verion is not allowed
-        download('mmcls==0.11.0', ['resnet18_b16x8_cifar10'])
+        download('mmcls==0.11.0', ['resnet18_8xb16_cifar10'])
 
     with pytest.raises(RuntimeError):
         # mmcls is not installed
-        download('mmcls', ['resnet18_b16x8_cifar10'])
+        download('mmcls', ['resnet18_8xb16_cifar10'])
 
     with pytest.raises(ValueError):
         # invalid config
@@ -40,12 +40,12 @@ def test_download():
     ])
     assert result.exit_code == 0
 
-    # mim download mmcls --config resnet18_b16x8_cifar10
-    checkpoints = download('mmcls', ['resnet18_b16x8_cifar10'])
+    # mim download mmcls --config resnet18_8xb16_cifar10
+    checkpoints = download('mmcls', ['resnet18_8xb16_cifar10'])
     assert checkpoints == ['resnet18_b16x8_cifar10_20210528-bd6371c8.pth']
-    checkpoints = download('mmcls', ['resnet18_b16x8_cifar10'])
+    checkpoints = download('mmcls', ['resnet18_8xb16_cifar10'])
 
-    # mim download mmcls --config resnet18_b16x8_cifar10 --dest temp_root
+    # mim download mmcls --config resnet18_8xb16_cifar10 --dest temp_root
     with tempfile.TemporaryDirectory() as temp_root:
-        checkpoints = download('mmcls', ['resnet18_b16x8_cifar10'], temp_root)
+        checkpoints = download('mmcls', ['resnet18_8xb16_cifar10'], temp_root)
         assert checkpoints == ['resnet18_b16x8_cifar10_20210528-bd6371c8.pth']
