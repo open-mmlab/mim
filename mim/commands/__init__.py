@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from .download import download
 from .gridsearch import gridsearch
 from .install import install
