@@ -1,8 +1,8 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 # flake8: noqa
 import os
 import os.path as osp
 import subprocess
-from genericpath import exists
 from typing import Tuple, Union
 
 import click

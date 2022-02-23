@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import click
 
 from mim.click import get_installed_package, param2lowercase

@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from .autocompletion import (
     get_downstream_package,
     get_installed_package,
