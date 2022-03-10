@@ -2,6 +2,7 @@
 import os
 import os.path as osp
 import shutil
+import sys
 import tempfile
 from distutils.version import LooseVersion
 from pkg_resources import parse_requirements, resource_filename
@@ -32,6 +33,8 @@ from mim.utils import (
     parse_url,
     split_package_version,
 )
+
+PYTHON = sys.executable
 
 
 @click.command('install')
@@ -463,7 +466,7 @@ def install_from_repo(repo_root: str,
     third_dependencies = osp.join(repo_root, 'requirements', 'build.txt')
     if osp.exists(third_dependencies):
         dep_cmd = [
-            'python', '-m', 'pip', 'install', '-r', third_dependencies,
+            PYTHON, '-m', 'pip', 'install', '-r', third_dependencies,
             '--default-timeout', f'{timeout}'
         ]
         if is_user_dir:
@@ -471,7 +474,7 @@ def install_from_repo(repo_root: str,
 
         call_command(dep_cmd)
 
-    install_cmd = ['python', '-m', 'pip', 'install']
+    install_cmd = [PYTHON, '-m', 'pip', 'install']
     if is_editable:
         install_cmd.append('-e')
     else:
@@ -561,7 +564,7 @@ def install_from_wheel(package: str,
     click.echo(f'installing {package} from wheel.')
 
     install_cmd = [
-        'python', '-m', 'pip', '--default-timeout', f'{timeout}', 'install'
+        PYTHON, '-m', 'pip', '--default-timeout', f'{timeout}', 'install'
     ]
     if version:
         install_cmd.append(f'{package}=={version}')
