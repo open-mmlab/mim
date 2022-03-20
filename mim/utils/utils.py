@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import functools
 import hashlib
 import importlib
@@ -334,7 +335,7 @@ def get_torch_cuda_version() -> Tuple[str, str]:
     if '+' in torch_v:  # 1.8.1+cu111 -> 1.8.1
         torch_v = torch_v.split('+')[0]
 
-    if torch.cuda.is_available():
+    if torch.version.cuda is not None:
         # torch.version.cuda like 10.2 -> 102
         cuda_v = ''.join(torch.version.cuda.split('.'))
     else:

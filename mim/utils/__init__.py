@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from .default import (
     DEFAULT_CACHE_DIR,
     DEFAULT_URL,

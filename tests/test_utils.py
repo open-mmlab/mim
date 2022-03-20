@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from click.testing import CliRunner
 
 from mim.commands.install import cli as install

@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import os.path as osp
 import pickle
 import re
@@ -353,6 +354,7 @@ def convert2df(metadata: ModelIndex) -> DataFrame:
         if data:
             model_info.update(_parse(data))
 
+        # handle some cases, e.g., pre-trained models in mmcls.
         results = getattr(model, 'results', None)
         if results:
             for result in results:

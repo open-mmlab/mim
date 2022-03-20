@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import copy as cp
 import itertools
 import os
@@ -320,6 +321,11 @@ def gridsearch(
 
     for combination in itertools.product(*arg_values):
         cur_cfg = cp.deepcopy(cfg)
+        # `Config.__init__` does not accept a `Config` object. However,
+        # since mmcv v1.4.6, `deepcopy` a `Config` object also returns a
+        # `Config` object so we need to ensure cur_cfg is not a Config object
+        # before passing to `Config.__init__` for backward compatibility.
+        # See https://github.com/open-mmlab/mmcv/pull/1658 for more details.
         if not isinstance(cur_cfg, Config):
             cur_cfg = Config(cur_cfg)
 
