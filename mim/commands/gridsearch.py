@@ -319,7 +319,10 @@ def gridsearch(
     arg_values = [search_args_dict[k] for k in arg_names]
 
     for combination in itertools.product(*arg_values):
-        cur_cfg = Config(cp.deepcopy(cfg))
+        cur_cfg = cp.deepcopy(cfg)
+        if not isinstance(cur_cfg, Config):
+            cur_cfg = Config(cur_cfg)
+
         suffix_list = []
 
         for k, v in zip(arg_names, combination):
