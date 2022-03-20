@@ -354,7 +354,7 @@ def convert2df(metadata: ModelIndex) -> DataFrame:
         if data:
             model_info.update(_parse(data))
 
-        # handle some cases.
+        # Handle some corner cases.
         # For example, pre-trained models in mmcls does not have results field.
         results = getattr(model, 'results', None)
         if results:
