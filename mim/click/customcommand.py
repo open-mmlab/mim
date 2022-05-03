@@ -82,7 +82,7 @@ class CustomCommand(click.Command):
             if command:
                 repo_root = get_installed_path(repo)
                 files = recursively_find(
-                    osp.join(repo_root, 'tools'), command + '.py')
+                    osp.join(repo_root, '.mim', 'tools'), command + '.py')
                 if len(files) == 0:
                     exit_with_error(
                         f"The command {command} doesn't exist in codebase "
