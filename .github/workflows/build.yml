@@ -28,6 +28,9 @@ jobs:
     runs-on: ubuntu-18.04
     container:
       image: pytorch/pytorch:1.6.0-cuda10.1-cudnn7-devel
+    env:
+      LC_ALL: C.UTF-8
+      LANG: C.UTF-8
     strategy:
       matrix:
         python-version: [3.7]
