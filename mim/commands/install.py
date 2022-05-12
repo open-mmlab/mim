@@ -477,7 +477,10 @@ def install_from_repo(repo_root: str,
     else:
         # solving issues related to out-of-tree builds
         # more datails at https://github.com/pypa/pip/issues/7555
-        if LooseVersion(pip.__version__) >= LooseVersion('21.1.1'):
+        # starting from pip==21.3 in-tree builds are the default and --use-feature=in-tree-build is ignored
+        # more details at https://pip.pypa.io/en/stable/news/#id82
+        # starting from pip==22.1 --use-feature=in-tree-build raises an error
+        if LooseVersion('21.1.1') <= LooseVersion(pip.__version__) < LooseVersion('22.1'):
             install_cmd.append('--use-feature=in-tree-build')
     install_cmd.append(repo_root)
     if is_user_dir:
