@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import pytest
 import torch
 from click.testing import CliRunner
 
@@ -15,14 +16,15 @@ def setup_module():
     assert result.exit_code == 0
 
 
-def test_run(tmp_path):
-    if torch.cuda.is_available():
-        gpus = 1
-        device = 'cuda'
-    else:
-        gpus = 0
-        device = 'cpu'
-
+@pytest.mark.parametrize('device,gpus', [
+    ('cpu', 0),
+    pytest.param(
+        'cuda',
+        1,
+        marks=pytest.mark.skipif(
+            not torch.cuda.is_available(), reason='requires CUDA support')),
+])
+def test_run(device, gpus, tmp_path):
     runner = CliRunner()
     result = runner.invoke(install, ['mmcls', '--yes'])
     assert result.exit_code == 0
