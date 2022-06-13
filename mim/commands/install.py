@@ -10,6 +10,7 @@ from typing import List
 import click
 import pip
 
+from mim.click import argument as compat_argument
 from mim.click import get_official_package, param2lowercase
 from mim.commands.uninstall import uninstall
 from mim.utils import (
@@ -35,7 +36,7 @@ from mim.utils import (
 
 
 @click.command('install')
-@click.argument(
+@compat_argument(
     'package',
     type=str,
     autocompletion=get_official_package,
