@@ -5,19 +5,23 @@ from click.testing import CliRunner
 
 from mim.commands.install import cli as install
 from mim.commands.search import cli as search
-from mim.utils import DEFAULT_CACHE_DIR, is_installed
+from mim.commands.uninstall import cli as uninstall
+from mim.utils import DEFAULT_CACHE_DIR
 
 
 def setup_module():
     runner = CliRunner()
-
-    if not is_installed('mmcls'):
-        result = runner.invoke(install, ['mmcls', '--yes'])
-        assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0
 
 
 def test_search():
     runner = CliRunner()
+    result = runner.invoke(install, ['mmcls', '--yes'])
+    assert result.exit_code == 0
+
     # mim search mmcls
     result = runner.invoke(search, ['mmcls'])
     assert result.exit_code == 0
@@ -39,8 +43,15 @@ def test_search():
     # the metadata of mmcls==0.11.0 will be saved in cache
     assert osp.exists(osp.join(DEFAULT_CACHE_DIR, 'mmcls-0.11.0.pkl'))
 
+    # always test latest mmcls
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0
+
+    result = runner.invoke(install, ['mmcls', '--yes'])
+    assert result.exit_code == 0
+
     # mim search mmcls --model res
-    # invali model
+    # invalid model
     result = runner.invoke(search, ['mmcls', '--model', 'res'])
     assert result.exit_code == 1
     # mim search mmcls --model resnet
@@ -58,7 +69,7 @@ def test_search():
     assert result.exit_code == 1
     # mim search mmcls --config resnet18_b16x8_cifar10
     result = runner.invoke(search,
-                           ['mmcls', '--config', 'resnet18_b16x8_cifar10'])
+                           ['mmcls', '--config', 'resnet18_8xb16_cifar10'])
     assert result.exit_code == 0
 
     # mim search mmcls --dataset cifar-1
@@ -97,4 +108,12 @@ def test_search():
     assert result.exit_code == 0
     # mim search mmcls --field epochs
     result = runner.invoke(search, ['mmcls', '--field', 'epochs'])
+    assert result.exit_code == 0
+
+
+def teardown_module():
+    runner = CliRunner()
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0
