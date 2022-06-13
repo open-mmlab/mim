@@ -4,11 +4,6 @@ from distutils.version import LooseVersion
 import click
 
 
-def is_click_ge_8():
-    """Check if the click version is greater than or equal to 8.x."""
-    return LooseVersion(click.__version__) >= LooseVersion('8.0.0')
-
-
 def autocompletion_to_shell_complete(autocompletion):
     """Convert autocompletion to shell_complete.
 
@@ -45,7 +40,7 @@ def argument(*param_decls, **attrs):
 
     Same as ``click.argument``.
     """
-    if is_click_ge_8():
+    if LooseVersion(click.__version__) >= LooseVersion('8.0.0'):
         autocompletion = attrs.pop('autocompletion', None)
         if autocompletion is not None:
             attrs['shell_complete'] = autocompletion_to_shell_complete(
