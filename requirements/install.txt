@@ -1,4 +1,4 @@
-Click==7.1.2
+Click
 colorama
 model-index
 pandas

@@ -29,7 +29,7 @@ setup(
     include_package_data=True,
     python_requires='>=3.6',
     install_requires=[
-        'Click==7.1.2',
+        'Click',
         'colorama',
         'requests',
         'model-index',
