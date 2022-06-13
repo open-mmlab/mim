@@ -3,13 +3,17 @@
 MIM support various kinds of abbreviations, which can be used to shorten the length of commands:
 
 1. Sub-command Name: abbreviation can be used as long as its the prefix of one and only one subcommand, for example:
-   1.  `g` stands for sub-command `gridsearch`
+
+   1. `g` stands for sub-command `gridsearch`
    2. `tr` stands for sub-command `train`
+
 2. Codebase Name: abbreviation can be used as long as its the substring of one and only one codebase name, for example:
+
    1. `act` stands for codebase `mmaction`
    2. `cls` stands for codebase `mmcls`
 
 3. Abbreviation for argument / option names: defined in each sub-command, for example, for sub-command `train`:
+
    1. `-g` stands for `--gpus-per-node`
    2. `-p` stands for `--partition`
 
