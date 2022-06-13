@@ -59,8 +59,8 @@ jobs:
       - name: Install python-dev
         run: apt-get update && apt-get install -y python${{matrix.python-version}}-dev
         if: ${{matrix.python-version != '3.9'}}
-      - name: Install git
-        run: apt-get install -y git
+      - name: Install system dependencies
+        run: apt-get install -y git libgl1 libglib2.0-0
       - name: Upgrade setuptools and pip
         run: python -m pip install --upgrade setuptools pip
       - name: Install wheel  # wheel is the default package of local environment but docker environment misses the packege so we manually install it
