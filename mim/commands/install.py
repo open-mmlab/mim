@@ -321,7 +321,7 @@ def parse_dependencies(path: str) -> list:
                     highlighted_error(f'invalid max version of {package}'))
 
     dependencies = []
-    with open(path, 'r') as fr:
+    with open(path) as fr:
         for requirement in parse_requirements(fr):
             pkg_name = requirement.project_name
             min_version = ''
@@ -453,7 +453,7 @@ def install_from_repo(repo_root: str,
 
     # install dependencies. For example,
     # install mmcls should install mmcv-full first if it is not installed or
-    # its(mmcv) verison does not match.
+    # its(mmcv) version does not match.
     mminstall_path = osp.join(repo_root, 'requirements', 'mminstall.txt')
     if osp.exists(mminstall_path):
         dependencies = parse_dependencies(mminstall_path)
