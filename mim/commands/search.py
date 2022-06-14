@@ -12,9 +12,12 @@ from modelindex.load_model_index import load
 from modelindex.models.ModelIndex import ModelIndex
 from pandas import DataFrame, Series
 
-from mim.click import OptionEatAll
-from mim.click import argument as compat_argument
-from mim.click import get_downstream_package, param2lowercase
+from mim.click import (
+    OptionEatAll,
+    argument,
+    get_downstream_package,
+    param2lowercase,
+)
 from mim.utils import (
     DEFAULT_CACHE_DIR,
     PKG2PROJECT,
@@ -29,7 +32,7 @@ from mim.utils import (
 
 
 @click.command('search')
-@compat_argument(
+@argument(
     'packages',
     nargs=-1,
     type=click.STRING,

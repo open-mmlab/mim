@@ -1,13 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import click
 
-from mim.click import argument as compat_argument
-from mim.click import get_installed_package, param2lowercase
+from mim.click import argument, get_installed_package, param2lowercase
 from mim.utils import call_command
 
 
 @click.command('uninstall')
-@compat_argument(
+@argument(
     'package', autocompletion=get_installed_package, callback=param2lowercase)
 @click.option(
     '-y',
