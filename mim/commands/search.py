@@ -296,7 +296,7 @@ def convert2df(metadata: ModelIndex) -> DataFrame:
             unit = ''
             name = key.split()
             if '(' in key:
-                # inference time (ms/im) will be splitted into `inference time`
+                # inference time (ms/im) will be split into `inference time`
                 # and `(ms/im)`
                 name, unit = name[0:-1], name[-1]
             name = '_'.join(name)
@@ -553,7 +553,7 @@ def sort_by(dataframe: DataFrame,
             ascending: bool = True) -> DataFrame:
     """Sort by the fields.
 
-    When sorting output with some fields, substring is spported. For example,
+    When sorting output with some fields, substring is supported. For example,
     if sorted_fields is ['epo'], the actual sorted fieds will be ['epochs'].
 
     Args:
@@ -578,9 +578,9 @@ def sort_by(dataframe: DataFrame,
                 elif len(contain_fields) > 2:
                     raise ValueError(
                         highlighted_error(
-                            f'{input_field} matchs {contain_fields}. However, '
-                            'the number of matched fields should be 1, but got'
-                            f' {len(contain_fields)}.'))
+                            f'{input_field} matches {contain_fields}. However,'
+                            ' the number of matched fields should be 1, but '
+                            f'got {len(contain_fields)}.'))
                 else:
                     invalid_fields.add(input_field)
         return matched_fields, invalid_fields
@@ -605,9 +605,9 @@ def select_by(dataframe: DataFrame,
               unshown_fields: Optional[List[str]] = None) -> DataFrame:
     """Select by the fields.
 
-    When selecting some fields to be shown or be hidden, substring is spported.
-    For example, if shown_fields is ['epo'], all field contain 'epo' which will
-    be chosen. So the new shown field will be ['epochs'].
+    When selecting some fields to be shown or be hidden, substring is
+    supported. For example, if shown_fields is ['epo'], all field contain
+    'epo' which will be chosen. So the new shown field will be ['epochs'].
 
     Args:
         dataframe (DataFrame): Data to be filtered.
