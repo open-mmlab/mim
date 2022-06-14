@@ -1,59 +1,59 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import os.path as osp
-import shutil
-import time
-
+import pytest
+import torch
 from click.testing import CliRunner
 
 from mim.commands.install import cli as install
 from mim.commands.run import cli as run
-from mim.utils import download_from_file, extract_tar, is_installed
-
-dataset_url = 'https://download.openmmlab.com/mim/dataset.tar'
-cfg_url = 'https://download.openmmlab.com/mim/resnet18_b16x8_custom.py'
-ckpt_url = 'https://download.openmmlab.com/mim/epoch_3.pth'
+from mim.commands.uninstall import cli as uninstall
 
 
 def setup_module():
     runner = CliRunner()
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0
 
-    if not is_installed('mmcls'):
-        result = runner.invoke(install, ['mmcls', '--yes'])
-        assert result.exit_code == 0
 
-
-def test_run():
+@pytest.mark.parametrize('device,gpus', [
+    ('cpu', 0),
+    pytest.param(
+        'cuda',
+        1,
+        marks=pytest.mark.skipif(
+            not torch.cuda.is_available(), reason='requires CUDA support')),
+])
+def test_run(device, gpus, tmp_path):
     runner = CliRunner()
-
-    if not osp.exists('/tmp/dataset'):
-        download_from_file(dataset_url, '/tmp/dataset.tar')
-        extract_tar('/tmp/dataset.tar', '/tmp/')
-
-    if not osp.exists('/tmp/config.py'):
-        download_from_file(cfg_url, '/tmp/config.py')
-
-    if not osp.exists('/tmp/ckpt.pth'):
-        download_from_file(ckpt_url, '/tmp/ckpt.pth')
-
-    # wait for the download task to complete
-    time.sleep(5)
-
-    result = runner.invoke(
-        run,
-        ['mmcls', 'train', '/tmp/config.py', '--device=cpu', '--work-dir=tmp'])
+    result = runner.invoke(install, ['mmcls', '--yes'])
     assert result.exit_code == 0
+
     result = runner.invoke(run, [
-        'mmcls', 'test', '/tmp/config.py', '/tmp/ckpt.pth',
-        '--metrics=accuracy'
+        'mmcls', 'train', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',
+        f'--work-dir={tmp_path}'
     ])
     assert result.exit_code == 0
     result = runner.invoke(run, [
-        'mmcls', 'xxx', '/tmp/config.py', '/tmp/ckpt.pth', '--metrics=accuracy'
+        'mmcls', 'test', 'tests/data/lenet5_mnist.py',
+        'tests/data/epoch_1.pth', f'--device={device}', '--metrics=accuracy'
+    ])
+    assert result.exit_code == 0
+    result = runner.invoke(run, [
+        'mmcls', 'xxx', 'tests/data/lenet5_mnist.py', 'tests/data/epoch_1.pth',
+        f'--gpus={gpus}', '--metrics=accuracy'
     ])
     assert result.exit_code != 0
     result = runner.invoke(run, [
-        'mmcls', 'test', '/tmp/xxx.py', '/tmp/ckpt.pth', '--metrics=accuracy'
+        'mmcls', 'test', 'tests/data/xxx.py', 'tests/data/epoch_1.pth',
+        f'--device={device}', '--metrics=accuracy'
     ])
     assert result.exit_code != 0
 
-    shutil.rmtree('tmp')
+
+def teardown_module():
+    runner = CliRunner()
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0

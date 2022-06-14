@@ -1,53 +1,50 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import os.path as osp
-import shutil
-import time
 
+import pytest
+import torch
 from click.testing import CliRunner
 
 from mim.commands.gridsearch import cli as gridsearch
 from mim.commands.install import cli as install
-from mim.utils import download_from_file, extract_tar, is_installed
-
-dataset_url = 'https://download.openmmlab.com/mim/dataset.tar'
-cfg_url = 'https://download.openmmlab.com/mim/resnet18_b16x8_custom.py'
+from mim.commands.uninstall import cli as uninstall
 
 
 def setup_module():
     runner = CliRunner()
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0
 
-    if not is_installed('mmcls'):
-        result = runner.invoke(install, ['mmcls', '--yes'])
-        assert result.exit_code == 0
 
-
-def test_gridsearch():
+@pytest.mark.parametrize('gpus', [
+    0,
+    pytest.param(
+        1,
+        marks=pytest.mark.skipif(
+            not torch.cuda.is_available(), reason='requires CUDA support')),
+])
+def test_gridsearch(gpus, tmp_path):
     runner = CliRunner()
-    if not osp.exists('/tmp/dataset'):
-        download_from_file(dataset_url, '/tmp/dataset.tar')
-        extract_tar('/tmp/dataset.tar', '/tmp/')
-
-    if not osp.exists('/tmp/config.py'):
-        download_from_file(cfg_url, '/tmp/config.py')
-
-    # wait for the download task to complete
-    time.sleep(5)
+    result = runner.invoke(install, ['mmcls', '--yes'])
+    assert result.exit_code == 0
 
     args1 = [
-        'mmcls', '/tmp/config.py', '--gpus=0', '--work-dir=tmp',
-        '--search-args', '--optimizer.lr 1e-3 1e-4'
+        'mmcls', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',
+        f'--work-dir={tmp_path}', '--search-args', '--optimizer.lr 1e-3 1e-4'
     ]
     args2 = [
-        'mmcls', '/tmp/config.py', '--gpus=0', '--work-dir=tmp',
-        '--search-args', '--optimizer.weight_decay 1e-3 1e-4'
+        'mmcls', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',
+        f'--work-dir={tmp_path}', '--search-args',
+        '--optimizer.weight_decay 1e-3 1e-4'
     ]
     args3 = [
-        'mmcls', '/tmp/xxx.py', '--gpus=0', '--work-dir=tmp', '--search-args',
-        '--optimizer.lr 1e-3 1e-4'
+        'mmcls', 'tests/data/xxx.py', f'--gpus={gpus}',
+        f'--work-dir={tmp_path}', '--search-args', '--optimizer.lr 1e-3 1e-4'
     ]
     args4 = [
-        'mmcls', '/tmp/config.py', '--gpus=0', '--work-dir=tmp',
-        '--search-args'
+        'mmcls', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',
+        f'--work-dir={tmp_path}', '--search-args'
     ]
 
     result = runner.invoke(gridsearch, args1)
@@ -62,7 +59,10 @@ def test_gridsearch():
     result = runner.invoke(gridsearch, args4)
     assert result.exit_code != 0
 
-    shutil.rmtree('tmp_search_optimizer.lr_0.001')
-    shutil.rmtree('tmp_search_optimizer.lr_0.0001')
-    shutil.rmtree('tmp_search_optimizer.weight_decay_0.001')
-    shutil.rmtree('tmp_search_optimizer.weight_decay_0.0001')
+
+def teardown_module():
+    runner = CliRunner()
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0

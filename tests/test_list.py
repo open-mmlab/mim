@@ -3,6 +3,15 @@ from click.testing import CliRunner
 
 from mim.commands.install import cli as install
 from mim.commands.list import list_package
+from mim.commands.uninstall import cli as uninstall
+
+
+def setup_module():
+    runner = CliRunner()
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0
 
 
 def test_list():
@@ -15,3 +24,11 @@ def test_list():
               'https://github.com/open-mmlab/mmclassification')
     result = list_package()
     assert target in result
+
+
+def teardown_module():
+    runner = CliRunner()
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0
