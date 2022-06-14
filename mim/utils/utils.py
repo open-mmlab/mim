@@ -218,7 +218,7 @@ def get_package_version(repo_root: str) -> Tuple[str, str]:
     for file_name in os.listdir(repo_root):
         version_path = osp.join(repo_root, file_name, 'version.py')
         if osp.exists(version_path):
-            with open(version_path, 'r', encoding='utf-8') as f:
+            with open(version_path, encoding='utf-8') as f:
                 exec(compile(f.read(), version_path, 'exec'))
             return file_name, locals()['__version__']
 
@@ -236,7 +236,7 @@ def get_installed_version(package: str) -> str:
 
 
 def get_package_info_from_pypi(package: str, timeout: int = 15) -> dict:
-    """Get packege information from pypi.
+    """Get package information from pypi.
 
     Args:
         package (str): Package to get information.
