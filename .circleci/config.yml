@@ -9,7 +9,7 @@ jobs:
       - checkout
       - run:
           name: Configure Python
-          command: pyenv global 3.7.0
+          command: pyenv global 3.8.0
       - run:
           name: Upgrade setuptools and pip
           command: python -m pip install --upgrade setuptools pip
