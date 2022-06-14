@@ -58,7 +58,8 @@ class CustomCommand(click.Command):
             if repo and repo in repos and is_installed(repo):
                 self.name = 'train' if self.name == 'search' else self.name
                 script = osp.join(
-                    get_installed_path(repo), f'tools/{self.name}.py')
+                    get_installed_path(repo), '.mim', 'tools',
+                    f'{self.name}.py')
                 ret = subprocess.check_output(
                     ['python', '-u', script, '--help'])
                 color_echo(
@@ -98,7 +99,7 @@ class CustomCommand(click.Command):
                 click.echo(ret.decode('utf-8'))
             else:
                 repo_root = get_installed_path(repo)
-                tool_root = osp.join(repo_root, 'tools')
+                tool_root = osp.join(repo_root, '.mim', 'tools')
                 walk_list = list(os.walk(tool_root))
 
                 files = []
