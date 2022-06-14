@@ -1,6 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import tempfile
-
 import pytest
 from click.testing import CliRunner
 
@@ -11,18 +9,19 @@ from mim.commands.uninstall import cli as uninstall
 
 def setup_module():
     runner = CliRunner()
-    # mim uninstall mmcls --yes
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0
 
 
-def test_download():
+def test_download(tmp_path):
     runner = CliRunner()
     result = runner.invoke(install, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
 
     with pytest.raises(ValueError):
-        # verion is not allowed
+        # version is not allowed
         download('mmcls==0.11.0', ['resnet18_8xb16_cifar10'])
 
     with pytest.raises(RuntimeError):
@@ -46,7 +45,14 @@ def test_download():
     assert checkpoints == ['resnet18_b16x8_cifar10_20210528-bd6371c8.pth']
     checkpoints = download('mmcls', ['resnet18_8xb16_cifar10'])
 
-    # mim download mmcls --config resnet18_8xb16_cifar10 --dest temp_root
-    with tempfile.TemporaryDirectory() as temp_root:
-        checkpoints = download('mmcls', ['resnet18_8xb16_cifar10'], temp_root)
-        assert checkpoints == ['resnet18_b16x8_cifar10_20210528-bd6371c8.pth']
+    # mim download mmcls --config resnet18_8xb16_cifar10 --dest tmp_path
+    checkpoints = download('mmcls', ['resnet18_8xb16_cifar10'], tmp_path)
+    assert checkpoints == ['resnet18_b16x8_cifar10_20210528-bd6371c8.pth']
+
+
+def teardown_module():
+    runner = CliRunner()
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0

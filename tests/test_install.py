@@ -85,3 +85,9 @@ def test_mmrepo_install():
     # mim install mmcls==0.11.0 --yes
     result = runner.invoke(install, ['mmcls==0.11.0', '--yes'])
     assert result.exit_code == 0
+
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0

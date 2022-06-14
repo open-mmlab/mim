@@ -354,17 +354,20 @@ def convert2df(metadata: ModelIndex) -> DataFrame:
         if data:
             model_info.update(_parse(data))
 
+        # Handle some corner cases.
+        # For example, pre-trained models in mmcls does not have results field.
         results = getattr(model, 'results', None)
-        for result in results:
-            dataset = cast2lowercase(result.dataset)
-            metrics = getattr(result, 'metrics', None)
-            if metrics is None:
-                continue
+        if results:
+            for result in results:
+                dataset = cast2lowercase(result.dataset)
+                metrics = getattr(result, 'metrics', None)
+                if metrics is None:
+                    continue
 
-            for key, value in metrics.items():
-                name = '_'.join(key.split())
-                name = cast2lowercase(name)
-                model_info[f'{dataset}/{name}'] = value
+                for key, value in metrics.items():
+                    name = '_'.join(key.split())
+                    name = cast2lowercase(name)
+                    model_info[f'{dataset}/{name}'] = value
 
         paper = getattr(model, 'paper', None)
         if paper:
