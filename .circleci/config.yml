@@ -33,7 +33,7 @@ workflows:
   unit_tests:
     jobs:
       - hold:
-          type: approval # <<< This key-value pair will set your workflow to a status of "On Hold"
+          type: approval
       - build_cu102:
           requires:
             - hold
