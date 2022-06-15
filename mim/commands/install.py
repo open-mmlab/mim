@@ -52,6 +52,13 @@ def cli(args: Tuple[str], index_url: Optional[str] = None) -> None:
 
 
 def install(install_args: List[str], index_url: Optional[str] = None) -> Any:
+    """Install the package via pip and add 'mim' extra requirements for
+    OpenMMLab package during pip install process.
+
+    Args:
+        install_args (list): List of arguments passed to `pip install`.
+        index_url (str, optional): The pypi index url.
+    """
     # add mmcv-full find links by default
     install_args += ['-f', get_mmcv_full_find_link()]
 
