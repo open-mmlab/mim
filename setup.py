@@ -1,5 +1,6 @@
-from setuptools import find_packages, setup  # type: ignore
 import re
+from setuptools import find_packages, setup  # type: ignore
+
 
 def readme():
     with open('README.md', encoding='utf-8') as f:
