@@ -4,7 +4,7 @@ from distutils.version import LooseVersion
 import click
 
 
-def autocompletion_to_shell_complete(autocompletion):
+def autocompletion_to_shell_complete(autocompletion: Callable):
     """Convert autocompletion to shell_complete.
 
     Reference:
