@@ -11,7 +11,7 @@ def autocompletion_to_shell_complete(autocompletion: Callable):
     https://github.com/pallets/click/blob/8.0.0/src/click/core.py#L2059
 
     Args:
-        autocompletion: A function that returns custom shell completions.
+        autocompletion (callable): A function that returns custom shell completions.
             Takes ``ctx, param, incomplete`` and must return a list of string.
 
     Returns:
