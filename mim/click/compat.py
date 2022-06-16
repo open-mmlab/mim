@@ -40,6 +40,8 @@ def argument(*param_decls, **attrs):
 
     Same as ``click.argument``.
     """
+    # 'autocompletion' will be removed in Click 8.1 and its new name is
+    # 'shell_complete'.
     if LooseVersion(click.__version__) >= LooseVersion('8.0.0'):
         autocompletion = attrs.pop('autocompletion', None)
         if autocompletion is not None:
