@@ -4,7 +4,12 @@ from typing import List, Optional
 
 import click
 
-from mim.click import OptionEatAll, get_downstream_package, param2lowercase
+from mim.click import (
+    OptionEatAll,
+    argument,
+    get_downstream_package,
+    param2lowercase,
+)
 from mim.commands.search import get_model_info
 from mim.utils import (
     DEFAULT_CACHE_DIR,
@@ -18,7 +23,7 @@ from mim.utils import (
 
 
 @click.command('download')
-@click.argument(
+@argument(
     'package',
     type=str,
     autocompletion=get_downstream_package,
