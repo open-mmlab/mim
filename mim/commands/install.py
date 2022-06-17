@@ -123,7 +123,7 @@ def patch_pkg_resources_distribution(
         index_url: Optional[str] = None) -> Generator:
     """A patch for `pip._vendor.pkg_resources.Distribution`.
 
-    Since the old version of the OpenMMLab package did not add the 'mim' extra
+    Since the old version of the OpenMMLab packages did not add the 'mim' extra
     requirements to the release distribution, we need to hack the Distribution
     and manually fetch the 'mim' requirements from `mminstall.txt`.
 
