@@ -10,6 +10,7 @@ import click
 from pip._internal.commands import create_command
 
 from mim.utils import (
+    DEFAULT_CACHE_DIR,
     PKG2PROJECT,
     WHEEL_URL,
     echo_warning,
@@ -31,7 +32,18 @@ from mim.utils import (
     'This should point to a repository compliant with PEP 503 '
     '(the simple repository API) or a local directory laid out '
     'in the same format.')
-def cli(args: Tuple[str], index_url: Optional[str] = None) -> None:
+@click.option(
+    '-y',
+    '--yes',
+    'is_yes',
+    is_flag=True,
+    help='Don’t ask for confirmation of uninstall deletions.'
+    'Deprecated, will have no effect.')
+def cli(
+    args: Tuple[str],
+    index_url: Optional[str] = None,
+    is_yes: bool = False,
+) -> None:
     """Install packages.
 
     You can use `mim install` in the same way you use `pip install`!
@@ -47,17 +59,29 @@ def cli(args: Tuple[str], index_url: Optional[str] = None) -> None:
         > mim install -e <path>
         > mim install mmdet -i <url> -f <url>
         > mim install mmdet --extra-index-url <url> --trusted-host <hostname>
+
+    Here we list several commonly used options.
+    For more options, please refer to `pip install --help`.
     """
-    install(list(args), index_url=index_url)
+    if is_yes:
+        echo_warning(
+            'The `--yes` option has been deprecated, will have no effect.')
+    exit(install(list(args), index_url=index_url, is_yes=is_yes))
 
 
-def install(install_args: List[str], index_url: Optional[str] = None) -> Any:
+def install(
+    install_args: List[str],
+    index_url: Optional[str] = None,
+    is_yes: bool = False,
+) -> Any:
     """Install the package via pip and add 'mim' extra requirements for
     OpenMMLab package during pip install process.
 
     Args:
         install_args (list): List of arguments passed to `pip install`.
         index_url (str, optional): The pypi index url.
+        is_yes (bool, optional): Deprecated, will have no effect. Reserved for
+            interface compatibility only.
     """
     # add mmcv-full find links by default
     install_args += ['-f', get_mmcv_full_find_link()]
@@ -105,7 +129,7 @@ def patch_pkg_resources_distribution(
 
     Args:
         index_url (str, optional): The pypi index url that pass to
-            `get_mmdeps_from_mmpkg`.
+            `get_mmdeps_from_mmpkg_pypi`.
     """
     from pip._vendor.pkg_resources import Distribution, parse_requirements
 
@@ -118,6 +142,7 @@ def patch_pkg_resources_distribution(
 
         if 'mim' in self.extras:
             mim_extra_requires = origin_requires(self, ('mim', ))
+            filter_invalid_marker(mim_extra_requires)
             deps += mim_extra_requires
         else:
             if not hasattr(self, '_mm_deps'):
@@ -150,7 +175,7 @@ def patch_importlib_distribution(index_url: Optional[str] = None) -> Generator:
 
     Args:
         index_url (str, optional): The pypi index url that pass to
-            `get_mmdeps_from_mmpkg`.
+            `get_mminstall_from_pypi`.
     """
     from pip._internal.metadata.importlib import Distribution
     from pip._internal.metadata.importlib._dists import Requirement
@@ -165,6 +190,7 @@ def patch_importlib_distribution(index_url: Optional[str] = None) -> Generator:
         if 'mim' in self.iter_provided_extras:
             mim_extra_requires = list(
                 origin_iter_dependencies(self, ('mim', )))
+            filter_invalid_marker(mim_extra_requires)
             deps += mim_extra_requires
         else:
             if not hasattr(self, '_mm_deps'):
@@ -184,10 +210,64 @@ def patch_importlib_distribution(index_url: Optional[str] = None) -> Generator:
     return
 
 
-@typing.no_type_check
+def filter_invalid_marker(extra_requires: List) -> None:
+    """Filter out invalid marker in requirements parsed from METADATA.
+
+    More detail can be found in: https://github.com/pypa/pip/issues/11191
+
+    Args:
+        extra_requires (list): A list of Requirement parsed from distribution
+            METADATA.
+    """
+    for req in extra_requires:
+        if req.marker is None:
+            continue
+        try:
+            req.marker.evaluate()
+        except:  # noqa: E722
+            req.marker = None
+
+
 def get_mmdeps_from_mmpkg(mmpkg: str, index_url: Optional[str] = None) -> str:
     """Get 'mim' extra requirements for a given OpenMMLab package from
     `mminstall.txt`.
+
+    If there is a cached `mminstall.txt`, use the cache, otherwise download the
+    source distribution package from pypi and extract `mminstall.txt` content.
+
+    Args:
+        mmpkg (str): The OpenMMLab package name, optionally with a version
+            specifier. e.g. 'mmdet', 'mmdet==2.25.0'.
+        index_url (str, optional): The pypi index url that pass to
+            `get_mminstall_from_pypi`.
+
+    Returns:
+        (str): The text content read from `mminstall.txt`, returns an empty
+            string if anything goes wrong.
+    """
+    cache_mminstall_dir = os.path.join(DEFAULT_CACHE_DIR, 'mminstall')
+    if not os.path.exists(cache_mminstall_dir):
+        os.mkdir(cache_mminstall_dir)
+    cache_mminstall_fpath = os.path.join(cache_mminstall_dir, f'{mmpkg}.txt')
+    if os.path.exists(cache_mminstall_fpath):
+        # use cached `mminstall.txt`
+        with open(cache_mminstall_fpath) as f:
+            mminstall_content = f.read()
+        echo_warning(
+            f'Using cached `mminstall.txt` for {mmpkg}: {cache_mminstall_fpath}'  # noqa: E501
+        )
+    else:
+        # fetch `mminstall.txt` content from pypi
+        mminstall_content = get_mminstall_from_pypi(mmpkg, index_url=index_url)
+        with open(cache_mminstall_fpath, 'w') as f:
+            f.write(mminstall_content)
+    return mminstall_content
+
+
+@typing.no_type_check
+def get_mminstall_from_pypi(mmpkg: str,
+                            index_url: Optional[str] = None) -> str:
+    """Get the `mminstall.txt` content for a given OpenMMLab package from PyPi.
 
     Args:
         mmpkg (str): The OpenMMLab package name, optionally with a version
@@ -207,9 +287,9 @@ def get_mmdeps_from_mmpkg(mmpkg: str, index_url: Optional[str] = None) -> str:
             download_args += ['-i', index_url]
         status_code = create_command('download').main(download_args)
         if status_code != 0:
-            echo_warning(
-                f'pip download failed with arguments: {download_args}')
-            return ''
+            echo_warning(f'pip download failed with arguments: {download_args}'
+                         )  # noqa: E501
+            exit(status_code)
         mmpkg_tar_fpath = os.path.join(temp_dir, os.listdir(temp_dir)[0])
         with tarfile.open(mmpkg_tar_fpath) as tarf:
             mmdeps_fpath = tarf.members[0].name + '/requirements/mminstall.txt'
