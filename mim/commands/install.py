@@ -278,8 +278,8 @@ def get_mminstall_from_pypi(mmpkg: str,
             in `pip download`.
 
     Returns:
-        (str): The text content read from `mminstall.txt`, returns an empty
-            string if anything goes wrong.
+        str: The text content read from `mminstall.txt`, returns an empty
+        string if anything goes wrong.
     """
     with tempfile.TemporaryDirectory() as temp_dir:
         download_args = [
