@@ -1,6 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import sys
-
 import pytest
 import torch
 from click.testing import CliRunner
@@ -9,6 +7,7 @@ from mim.commands.install import cli as install
 from mim.commands.test import cli as test
 
 
+@pytest.mark.run(order=-1)
 @pytest.mark.parametrize('device', [
     'cpu',
     pytest.param(
@@ -16,15 +15,12 @@ from mim.commands.test import cli as test
         marks=pytest.mark.skipif(
             not torch.cuda.is_available(), reason='requires CUDA support')),
 ])
-def test_test(device, tmp_path):
-    sys.path.append(str(tmp_path))
+def test_test(device):
     runner = CliRunner()
-    result = runner.invoke(install, ['mmcls', '--yes', '-t', str(tmp_path)])
+    result = runner.invoke(install, ['mmcls', '--yes'])
     assert result.exit_code == 0
     # Since mmcv-full not in mminstall.txt of mmcls, we install mmcv-full here.
-    result = runner.invoke(
-        install,
-        ['mmcv-full', '--yes', '-t', str(tmp_path)])
+    result = runner.invoke(install, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
 
     result = runner.invoke(test, [

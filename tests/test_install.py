@@ -40,9 +40,7 @@ def test_mmcv_install(tmp_path):
     assert result.exit_code == 0
 
     # mim uninstall mmcv-full --yes
-    result = runner.invoke(
-        uninstall,
-        ['mmcv-full', '--yes', '-t', str(tmp_path)])
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
 
     # version should be less than latest version
