@@ -149,8 +149,8 @@ def patch_pkg_resources_distribution(
         else:
             if not hasattr(self, '_mm_deps'):
                 assert self.version is not None
-                mmpkg = f'{self.project_name}=={self.version}'
-                mmdeps_text = get_mmdeps_from_mmpkg(mmpkg, index_url)
+                mmdeps_text = get_mmdeps_from_mmpkg(self.project_name,
+                                                    self.version, index_url)
                 self._mm_deps = list(parse_requirements(mmdeps_text))
                 echo_warning(
                     "Get 'mim' extra requirements from `mminstall.txt` "
@@ -197,8 +197,8 @@ def patch_importlib_distribution(index_url: Optional[str] = None) -> Generator:
         else:
             if not hasattr(self, '_mm_deps'):
                 assert self.version is not None
-                mmpkg = f'{self.canonical_name}=={self.version}'
-                mmdeps_text = get_mmdeps_from_mmpkg(mmpkg, index_url)
+                mmdeps_text = get_mmdeps_from_mmpkg(self.canonical_name,
+                                                    self.version, index_url)
                 self._mm_deps = [
                     Requirement(req) for req in mmdeps_text.splitlines()
                 ]
@@ -230,7 +230,9 @@ def filter_invalid_marker(extra_requires: List) -> None:
             req.marker = None
 
 
-def get_mmdeps_from_mmpkg(mmpkg: str, index_url: Optional[str] = None) -> str:
+def get_mmdeps_from_mmpkg(mmpkg_name: str,
+                          mmpkg_version: str,
+                          index_url: Optional[str] = None) -> str:
     """Get 'mim' extra requirements for a given OpenMMLab package from
     `mminstall.txt`.
 
@@ -238,8 +240,8 @@ def get_mmdeps_from_mmpkg(mmpkg: str, index_url: Optional[str] = None) -> str:
     source distribution package from pypi and extract `mminstall.txt` content.
 
     Args:
-        mmpkg (str): The OpenMMLab package name, optionally with a version
-            specifier. e.g. 'mmdet', 'mmdet==2.25.0'.
+        mmpkg_name (str): The OpenMMLab package name.
+        mmpkg_version (str): The OpenMMLab package version.
         index_url (str, optional): The pypi index url that pass to
             `get_mminstall_from_pypi`.
 
@@ -247,6 +249,7 @@ def get_mmdeps_from_mmpkg(mmpkg: str, index_url: Optional[str] = None) -> str:
         str: The text content read from `mminstall.txt`, returns an empty
         string if anything goes wrong.
     """
+    mmpkg = f'{mmpkg_name}=={mmpkg_version}'
     cache_mminstall_dir = os.path.join(DEFAULT_CACHE_DIR, 'mminstall')
     if not os.path.exists(cache_mminstall_dir):
         os.mkdir(cache_mminstall_dir)
