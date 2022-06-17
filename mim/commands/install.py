@@ -244,8 +244,8 @@ def get_mmdeps_from_mmpkg(mmpkg: str, index_url: Optional[str] = None) -> str:
             `get_mminstall_from_pypi`.
 
     Returns:
-        (str): The text content read from `mminstall.txt`, returns an empty
-            string if anything goes wrong.
+        str: The text content read from `mminstall.txt`, returns an empty
+        string if anything goes wrong.
     """
     cache_mminstall_dir = os.path.join(DEFAULT_CACHE_DIR, 'mminstall')
     if not os.path.exists(cache_mminstall_dir):
