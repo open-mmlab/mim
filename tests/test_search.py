@@ -19,7 +19,7 @@ def setup_module():
 
 def test_search():
     runner = CliRunner()
-    result = runner.invoke(install, ['mmcls', '--yes'])
+    result = runner.invoke(install, ['mmcls', '--user', '--yes'])
     assert result.exit_code == 0
 
     # mim search mmcls
@@ -47,7 +47,7 @@ def test_search():
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0
 
-    result = runner.invoke(install, ['mmcls', '--yes'])
+    result = runner.invoke(install, ['mmcls', '--user', '--yes'])
     assert result.exit_code == 0
 
     # mim search mmcls --model res

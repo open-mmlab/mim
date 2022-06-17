@@ -16,11 +16,13 @@ def setup_module():
 
 def test_list():
     runner = CliRunner()
-    # mim install mmcls==0.12.0 --yes
-    result = runner.invoke(install, ['mmcls==0.12.0', '--yes'])
+    # mim install mmcls==0.23.0 --yes
+    result = runner.invoke(install, ['mmcls==0.23.1', '--yes'])
+    from mim.commands.install import install as install_
+    install_(['mmcls==0.23.1'])
     assert result.exit_code == 0
     # mim list
-    target = ('mmcls', '0.12.0',
+    target = ('mmcls', '0.23.1',
               'https://github.com/open-mmlab/mmclassification')
     result = list_package()
     assert target in result

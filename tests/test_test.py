@@ -25,7 +25,10 @@ def setup_module():
 ])
 def test_test(device):
     runner = CliRunner()
-    result = runner.invoke(install, ['mmcls', '--yes'])
+    result = runner.invoke(install, ['mmcls', '--user', '--yes'])
+    assert result.exit_code == 0
+    # Since mmcv-full not in mminstall.txt of mmcls, we install mmcv-full here.
+    result = runner.invoke(install, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
 
     result = runner.invoke(test, [

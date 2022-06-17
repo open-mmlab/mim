@@ -66,7 +66,9 @@ def cli(
     if is_yes:
         echo_warning(
             'The `--yes` option has been deprecated, will have no effect.')
-    exit(install(list(args), index_url=index_url, is_yes=is_yes))
+    exit_code = install(list(args), index_url=index_url, is_yes=is_yes)
+    if exit_code != 0:
+        exit(exit_code)
 
 
 def install(

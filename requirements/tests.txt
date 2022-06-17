@@ -2,3 +2,4 @@ coverage
 flake8
 interrogate
 pytest
+pytest-xdist

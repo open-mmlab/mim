@@ -16,7 +16,7 @@ def setup_module():
 
 def test_parse_home_page():
     runner = CliRunner()
-    result = runner.invoke(install, ['mmcls', '--yes'])
+    result = runner.invoke(install, ['mmcls', '--user', '--yes'])
     assert result.exit_code == 0
     assert parse_home_page(
         'mmcls') == 'https://github.com/open-mmlab/mmclassification'
@@ -26,7 +26,7 @@ def test_parse_home_page():
 
 def test_get_github_url():
     runner = CliRunner()
-    result = runner.invoke(install, ['mmcls', '--yes'])
+    result = runner.invoke(install, ['mmcls', '--user', '--yes'])
     assert result.exit_code == 0
     assert get_github_url(
         'mmcls') == 'https://github.com/open-mmlab/mmclassification.git'

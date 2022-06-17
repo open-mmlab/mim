@@ -72,7 +72,7 @@ def test_mmrepo_install():
         os.chdir(current_root)
 
     # mim install mmcls --yes
-    result = runner.invoke(install, ['mmcls', '--yes'])
+    result = runner.invoke(install, ['mmcls', '--user', '--yes'])
     assert result.exit_code == 0
 
     # mim install mmcls -f https://github.com/open-mmlab/mmclassification.git
@@ -83,7 +83,7 @@ def test_mmrepo_install():
     ])
 
     # mim install mmcls==0.11.0 --yes
-    result = runner.invoke(install, ['mmcls==0.11.0', '--yes'])
+    result = runner.invoke(install, ['mmcls==0.11.0', '--user', '--yes'])
     assert result.exit_code == 0
 
     result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
