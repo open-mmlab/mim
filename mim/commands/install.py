@@ -49,7 +49,7 @@ def cli(
     You can use `mim install` in the same way you use `pip install`!
 
     And `mim install` will **install the 'mim' extra requirements**
-    for OpenMMLab package if needed.
+    for OpenMMLab packages if needed.
 
     \b
     Example:
