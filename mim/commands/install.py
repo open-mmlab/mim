@@ -287,8 +287,7 @@ def get_mminstall_from_pypi(mmpkg: str,
             download_args += ['-i', index_url]
         status_code = create_command('download').main(download_args)
         if status_code != 0:
-            echo_warning(f'pip download failed with arguments: {download_args}'
-                         )  # noqa: E501
+            echo_warning(f'pip download failed with args: {download_args}')
             exit(status_code)
         mmpkg_tar_fpath = os.path.join(temp_dir, os.listdir(temp_dir)[0])
         with tarfile.open(mmpkg_tar_fpath) as tarf:
