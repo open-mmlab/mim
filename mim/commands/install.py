@@ -76,8 +76,8 @@ def install(
     index_url: Optional[str] = None,
     is_yes: bool = False,
 ) -> Any:
-    """Install packages via pip and add 'mim' extra requirements for
-    OpenMMLab packages during pip install process.
+    """Install packages via pip and add 'mim' extra requirements for OpenMMLab
+    packages during pip install process.
 
     Args:
         install_args (list): List of arguments passed to `pip install`.
@@ -159,10 +159,10 @@ def patch_pkg_resources_distribution(
         return deps
 
     Distribution.requires = patched_requires  # type: ignore
-    yield
-
-    Distribution.requires = origin_requires  # type: ignore
-    return
+    try:
+        yield
+    finally:
+        Distribution.requires = origin_requires  # type: ignore
 
 
 @contextmanager
@@ -206,10 +206,10 @@ def patch_importlib_distribution(index_url: Optional[str] = None) -> Generator:
         return deps
 
     Distribution.iter_dependencies = patched_iter_dependencies
-    yield
-
-    Distribution.iter_dependencies = origin_iter_dependencies
-    return
+    try:
+        yield
+    finally:
+        Distribution.iter_dependencies = origin_iter_dependencies
 
 
 def filter_invalid_marker(extra_requires: List) -> None:
