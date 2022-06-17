@@ -76,8 +76,8 @@ def install(
     index_url: Optional[str] = None,
     is_yes: bool = False,
 ) -> Any:
-    """Install the package via pip and add 'mim' extra requirements for
-    OpenMMLab package during pip install process.
+    """Install packages via pip and add 'mim' extra requirements for
+    OpenMMLab packages during pip install process.
 
     Args:
         install_args (list): List of arguments passed to `pip install`.
