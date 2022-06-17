@@ -37,7 +37,7 @@ from mim.utils import (
     '--yes',
     'is_yes',
     is_flag=True,
-    help='Don’t ask for confirmation of uninstall deletions.'
+    help="Don't ask for confirmation of uninstall deletions."
     'Deprecated, will have no effect.')
 def cli(
     args: Tuple[str],
