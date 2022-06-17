@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import sys
 
 import pytest
 import torch
@@ -6,15 +7,6 @@ from click.testing import CliRunner
 
 from mim.commands.gridsearch import cli as gridsearch
 from mim.commands.install import cli as install
-from mim.commands.uninstall import cli as uninstall
-
-
-def setup_module():
-    runner = CliRunner()
-    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
-    assert result.exit_code == 0
-    result = runner.invoke(uninstall, ['mmcls', '--yes'])
-    assert result.exit_code == 0
 
 
 @pytest.mark.parametrize('gpus', [
@@ -25,11 +17,16 @@ def setup_module():
             not torch.cuda.is_available(), reason='requires CUDA support')),
 ])
 def test_gridsearch(gpus, tmp_path):
+    sys.path.append(str(tmp_path))
     runner = CliRunner()
-    result = runner.invoke(install, ['mmcls', '--user', '--yes'])
+    result = runner.invoke(install,
+                           ['mmcls', '--user', '--yes', '-t',
+                            str(tmp_path)])
     assert result.exit_code == 0
     # Since mmcv-full not in mminstall.txt of mmcls, we install mmcv-full here.
-    result = runner.invoke(install, ['mmcv-full', '--yes'])
+    result = runner.invoke(
+        install,
+        ['mmcv-full', '--yes', '-t', str(tmp_path)])
     assert result.exit_code == 0
 
     args1 = [
@@ -61,11 +58,3 @@ def test_gridsearch(gpus, tmp_path):
 
     result = runner.invoke(gridsearch, args4)
     assert result.exit_code != 0
-
-
-def teardown_module():
-    runner = CliRunner()
-    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
-    assert result.exit_code == 0
-    result = runner.invoke(uninstall, ['mmcls', '--yes'])
-    assert result.exit_code == 0

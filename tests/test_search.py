@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os.path as osp
+import sys
 
 from click.testing import CliRunner
 
@@ -9,17 +10,10 @@ from mim.commands.uninstall import cli as uninstall
 from mim.utils import DEFAULT_CACHE_DIR
 
 
-def setup_module():
+def test_search(tmp_path):
+    sys.path.append(str(tmp_path))
     runner = CliRunner()
-    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
-    assert result.exit_code == 0
-    result = runner.invoke(uninstall, ['mmcls', '--yes'])
-    assert result.exit_code == 0
-
-
-def test_search():
-    runner = CliRunner()
-    result = runner.invoke(install, ['mmcls', '--user', '--yes'])
+    result = runner.invoke(install, ['mmcls', '--yes', '-t', str(tmp_path)])
     assert result.exit_code == 0
 
     # mim search mmcls
@@ -47,7 +41,7 @@ def test_search():
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0
 
-    result = runner.invoke(install, ['mmcls', '--user', '--yes'])
+    result = runner.invoke(install, ['mmcls', '--yes', '-t', str(tmp_path)])
     assert result.exit_code == 0
 
     # mim search mmcls --model res
@@ -112,12 +106,4 @@ def test_search():
     assert result.exit_code == 0
     # mim search mmcls --field epochs
     result = runner.invoke(search, ['mmcls', '--field', 'epochs'])
-    assert result.exit_code == 0
-
-
-def teardown_module():
-    runner = CliRunner()
-    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
-    assert result.exit_code == 0
-    result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0
