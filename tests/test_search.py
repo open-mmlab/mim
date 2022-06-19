@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os.path as osp
+import shutil
 import sys
 
 from click.testing import CliRunner
@@ -107,3 +108,5 @@ def test_search(tmp_path):
     # mim search mmcls --field epochs
     result = runner.invoke(search, ['mmcls', '--field', 'epochs'])
     assert result.exit_code == 0
+
+    shutil.rmtree(tmp_path)

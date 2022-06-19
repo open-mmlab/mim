@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import shutil
 import sys
 
 import pytest
@@ -45,3 +46,5 @@ def test_download(tmp_path):
     # mim download mmcls --config resnet18_8xb16_cifar10 --dest tmp_path
     checkpoints = download('mmcls', ['resnet18_8xb16_cifar10'], tmp_path)
     assert checkpoints == ['resnet18_b16x8_cifar10_20210528-bd6371c8.pth']
+
+    shutil.rmtree(tmp_path)

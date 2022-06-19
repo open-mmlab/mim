@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import shutil
 import sys
 
 from click.testing import CliRunner
@@ -20,3 +21,5 @@ def test_list(tmp_path):
               'https://github.com/open-mmlab/mmclassification')
     result = list_package()
     assert target in result
+
+    shutil.rmtree(tmp_path)
