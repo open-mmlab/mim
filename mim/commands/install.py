@@ -93,7 +93,7 @@ def install(
 
     patch_mm_distribution: Callable = patch_pkg_resources_distribution
     try:
-        # pip>=22.1 have two distribution backend: pkg_resources and importlib.
+        # pip>=22.1 have two distribution backends: pkg_resources and importlib.
         from pip._internal.metadata import _should_use_importlib_metadata  # type: ignore # isort: skip # noqa: E501
         if _should_use_importlib_metadata():
             patch_mm_distribution = patch_importlib_distribution
