@@ -1,7 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import os
-import shutil
-import sys
 
 import pytest
 import torch
@@ -28,15 +25,10 @@ def setup_module():
             not torch.cuda.is_available(), reason='requires CUDA support')),
 ])
 def test_gridsearch(gpus, tmp_path):
-    sys.path.append(str(tmp_path))
-    os.environ['PYTHONPATH'] = str(tmp_path)
     runner = CliRunner()
-    result = runner.invoke(install, ['mmcls', '--yes', '-t', str(tmp_path)])
+    result = runner.invoke(install, ['mmcls', '--yes'])
     assert result.exit_code == 0
-    # Since mmcv-full not in mminstall.txt of mmcls, we install mmcv-full here.
-    result = runner.invoke(
-        install,
-        ['mmcv-full', '--yes', '-t', str(tmp_path)])
+    result = runner.invoke(install, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
 
     args1 = [
