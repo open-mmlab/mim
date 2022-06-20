@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import importlib
 import os
 import tarfile
 import tempfile
@@ -7,6 +8,7 @@ from contextlib import contextmanager
 from typing import Any, Callable, Generator, List, Optional, Tuple
 
 import click
+import pip._vendor.pkg_resources
 from pip._internal.commands import create_command
 
 from mim.utils import (
@@ -67,8 +69,7 @@ def cli(
         echo_warning(
             'The `--yes` option has been deprecated, will have no effect.')
     exit_code = install(list(args), index_url=index_url, is_yes=is_yes)
-    if exit_code != 0:
-        exit(exit_code)
+    exit(exit_code)
 
 
 def install(
@@ -88,9 +89,6 @@ def install(
 
     # Reload `pip._vendor.pkg_resources` so that pip can refresh to get the
     # latest working set.
-    import importlib
-
-    import pip._vendor.pkg_resources
     importlib.reload(pip._vendor.pkg_resources)
 
     # add mmcv-full find links by default
@@ -115,7 +113,10 @@ def install(
 
     with patch_mm_distribution(index_url):
         # We can use `create_command` method since pip>=19.3 (2019/10/14).
-        return create_command('install').main(install_args)
+        status_code = create_command('install').main(install_args)
+
+    check_mim_resources()
+    return status_code
 
 
 def get_mmcv_full_find_link() -> str:
@@ -317,3 +318,28 @@ def get_mminstall_from_pypi(mmpkg: str,
             tarf.fileobj.seek(mmdeps_member.offset_data)
             mmdeps_content = tarf.fileobj.read(mmdeps_member.size).decode()
     return mmdeps_content
+
+
+def check_mim_resources() -> None:
+    """Check if the mim resource directory exists.
+
+    Newer versions of the OpenMMLab package have packaged the mim resource
+    files into the distribution package, while earlier versions do not.
+
+    If the mim resources file (aka `.mim`) do not exists, log a warning that a
+    new version needs to be installed.
+    """
+    importlib.reload(pip._vendor.pkg_resources)
+    for pkg in pip._vendor.pkg_resources.working_set:  # type: ignore
+        pkg_name = pkg.project_name
+        if pkg_name not in PKG2PROJECT or pkg_name == 'mmcv-full':
+            continue
+        if pkg.has_metadata('top_level.txt'):
+            module_name = pkg.get_metadata('top_level.txt').split('\n')[0]
+            installed_path = os.path.join(pkg.location, module_name)
+        else:
+            installed_path = os.path.join(pkg.location, pkg_name)
+        mim_resources_path = os.path.join(installed_path, '.mim')
+        if not os.path.exists(mim_resources_path):
+            echo_warning(f'mim resources not found: {mim_resources_path}, '
+                         f'you can try to install the latest {pkg_name}.')

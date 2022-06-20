@@ -28,7 +28,7 @@ def test_run(device, gpus, tmp_path):
     runner = CliRunner()
     result = runner.invoke(install, ['mmcls', '--yes'])
     assert result.exit_code == 0
-    # Since `mminstall.txt`` is not included in the distribution of
+    # Since `mminstall.txt` is not included in the distribution of
     # mmcls<=0.23.1, we need to install mmcv-full manually.
     result = runner.invoke(install, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
