@@ -88,7 +88,12 @@ def install(
     # add mmcv-full find links by default
     install_args += ['-f', get_mmcv_full_find_link()]
 
-    if index_url is not None and '-i' not in install_args:
+    index_url_opt_names = ['-i', '--index-url', '--pypi-url']
+    if any([opt_name in install_args for opt_name in index_url_opt_names]):
+        echo_warning(
+            'The index url should be passed in via the index_url parameter, '
+            'not specified in install_args via -i/--index-url/--pypi-url.')
+    if index_url is not None:
         install_args += ['-i', index_url]
 
     patch_mm_distribution: Callable = patch_pkg_resources_distribution
