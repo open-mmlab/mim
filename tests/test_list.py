@@ -1,25 +1,34 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import shutil
-import sys
-
 from click.testing import CliRunner
 
 from mim.commands.install import cli as install
 from mim.commands.list import list_package
+from mim.commands.uninstall import cli as uninstall
 
 
-def test_list(tmp_path):
-    sys.path.append(str(tmp_path))
+def setup_module():
+    runner = CliRunner()
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0
+
+
+def test_list():
     runner = CliRunner()
     # mim install mmcls==0.23.0 --yes
-    result = runner.invoke(
-        install, ['mmcls==0.23.1', '--yes', '--target',
-                  str(tmp_path)])
+    result = runner.invoke(install, ['mmcls==0.23.0', '--yes'])
     assert result.exit_code == 0
     # mim list
-    target = ('mmcls', '0.23.1',
+    target = ('mmcls', '0.23.0',
               'https://github.com/open-mmlab/mmclassification')
     result = list_package()
     assert target in result
 
-    shutil.rmtree(tmp_path)
+
+def teardown_module():
+    runner = CliRunner()
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0

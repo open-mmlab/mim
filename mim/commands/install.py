@@ -85,6 +85,14 @@ def install(
         is_yes (bool, optional): Deprecated, will have no effect. Reserved for
             interface compatibility only.
     """
+
+    # Reload `pip._vendor.pkg_resources` so that pip can refresh to get the
+    # latest working set.
+    import importlib
+
+    import pip._vendor.pkg_resources
+    importlib.reload(pip._vendor.pkg_resources)
+
     # add mmcv-full find links by default
     install_args += ['-f', get_mmcv_full_find_link()]
 

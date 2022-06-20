@@ -1,20 +1,23 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import shutil
-import sys
-
 import pytest
 from click.testing import CliRunner
 
 from mim.commands.download import download
 from mim.commands.install import cli as install
+from mim.commands.uninstall import cli as uninstall
+
+
+def setup_module():
+    runner = CliRunner()
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0
 
 
 def test_download(tmp_path):
-    sys.path.append(str(tmp_path))
     runner = CliRunner()
-    result = runner.invoke(
-        install,
-        ['mmcv-full', '--yes', '-t', str(tmp_path)])
+    result = runner.invoke(install, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
 
     with pytest.raises(ValueError):
@@ -33,8 +36,7 @@ def test_download(tmp_path):
     # mim install mmcls --yes
     result = runner.invoke(install, [
         'mmcls', '--yes', '-f',
-        'https://github.com/open-mmlab/mmclassification.git', '-t',
-        str(tmp_path)
+        'https://github.com/open-mmlab/mmclassification.git'
     ])
     assert result.exit_code == 0
 
@@ -47,4 +49,10 @@ def test_download(tmp_path):
     checkpoints = download('mmcls', ['resnet18_8xb16_cifar10'], tmp_path)
     assert checkpoints == ['resnet18_b16x8_cifar10_20210528-bd6371c8.pth']
 
-    shutil.rmtree(tmp_path)
+
+def teardown_module():
+    runner = CliRunner()
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0
