@@ -31,6 +31,8 @@ def test_train(gpus, tmp_path):
     # mmcls<=0.23.1, we need to install mmcv-full manually.
     result = runner.invoke(install, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
+    result = runner.invoke(install, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
 
     result = runner.invoke(train, [
         'mmcls', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',

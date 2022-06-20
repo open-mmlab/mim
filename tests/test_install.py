@@ -42,7 +42,7 @@ def test_mmcv_install():
     assert result.exit_code == 1
 
 
-def test_mmrepo_install():
+def test_mmrepo_install(tmp_path):
     runner = CliRunner()
 
     # install local repo
