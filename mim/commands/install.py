@@ -89,6 +89,9 @@ def install(
 
     # Reload `pip._vendor.pkg_resources` so that pip can refresh to get the
     # latest working set.
+    # In some cases, when a package is uninstalled and then installed, the
+    # working set is not updated in time, leading to the mistaken belief that
+    # the package is already installed.
     importlib.reload(pip._vendor.pkg_resources)
 
     # add mmcv-full find links by default
