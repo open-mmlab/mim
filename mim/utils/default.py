@@ -26,8 +26,6 @@ PKG2PROJECT = {
     'mmselfsup': 'mmselfsup',
     'mmrotate': 'mmrotate',
     'mmflow': 'mmflow',
-    'mmfewshot': 'mmfewshot',
-    'mmrazor': 'mmrazor',
 }
 # TODO: Should directly infer MODULE name from PKG info
 PKG2MODULE = {
