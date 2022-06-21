@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os
 import os.path as osp
+import shutil
 import subprocess
 import tempfile
 
@@ -19,6 +20,8 @@ def test_third_party():
     # mim uninstall fire --yes
     result = runner.invoke(uninstall, ['fire', '--yes'])
     assert result.exit_code == 0
+
+    shutil.rmtree(tmp_path)
 
 
 def test_mmcv_install():
@@ -40,6 +43,8 @@ def test_mmcv_install():
     # mim install mmcv-full==100.0.0 --yes
     result = runner.invoke(install, ['mmcv-full==100.0.0', '--yes'])
     assert result.exit_code == 1
+
+    shutil.rmtree(tmp_path)
 
 
 def test_mmrepo_install():
@@ -84,3 +89,5 @@ def test_mmrepo_install():
 
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0
+
+    shutil.rmtree(tmp_path)

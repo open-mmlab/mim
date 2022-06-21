@@ -1,4 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os
+import shutil
+import sys
+
 import pytest
 import torch
 from click.testing import CliRunner
@@ -25,12 +29,15 @@ def setup_module():
             not torch.cuda.is_available(), reason='requires CUDA support')),
 ])
 def test_run(device, gpus, tmp_path):
+    sys.path.append(str(tmp_path))
+    os.environ['PYTHONPATH'] = str(tmp_path)
     runner = CliRunner()
-    result = runner.invoke(install, ['mmcls', '--yes'])
+    result = runner.invoke(install, ['mmcls', '--yes', '-t', str(tmp_path)])
     assert result.exit_code == 0
-    # Since `mminstall.txt` is not included in the distribution of
-    # mmcls<=0.23.1, we need to install mmcv-full manually.
-    result = runner.invoke(install, ['mmcv-full', '--yes'])
+    # Since mmcv-full not in mminstall.txt of mmcls, we install mmcv-full here.
+    result = runner.invoke(
+        install,
+        ['mmcv-full', '--yes', '-t', str(tmp_path)])
     assert result.exit_code == 0
 
     result = runner.invoke(run, [
