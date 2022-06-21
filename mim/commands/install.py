@@ -186,7 +186,7 @@ def patch_pkg_resources_distribution(
 def patch_importlib_distribution(index_url: Optional[str] = None) -> Generator:
     """A patch for `pip._internal.metadata.importlib.Distribution`.
 
-    Since the old version of the OpenMMLab package did not add the 'mim' extra
+    Since the old version of the OpenMMLab packages did not add the 'mim' extra
     requirements to the release distribution, we need to hack the Distribution
     and manually fetch the 'mim' requirements from `mminstall.txt`.
 
@@ -232,7 +232,7 @@ def patch_importlib_distribution(index_url: Optional[str] = None) -> Generator:
 def filter_invalid_marker(extra_requires: List) -> None:
     """Filter out invalid marker in requirements parsed from METADATA.
 
-    More detail can be found in: https://github.com/pypa/pip/issues/11191
+    More detail can be found at: https://github.com/pypa/pip/issues/11191
 
     Args:
         extra_requires (list): A list of Requirement parsed from distribution
@@ -326,7 +326,7 @@ def get_mminstall_from_pypi(mmpkg: str,
 def check_mim_resources() -> None:
     """Check if the mim resource directory exists.
 
-    Newer versions of the OpenMMLab package have packaged the mim resource
+    Newer versions of the OpenMMLab packages have packaged the mim resource
     files into the distribution package, while earlier versions do not.
 
     If the mim resources file (aka `.mim`) do not exists, log a warning that a
