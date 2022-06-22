@@ -2,9 +2,9 @@
 from typing import Any, List, Tuple, Union
 
 import click
-from pip._internal.commands import create_command
 
 from mim.click import argument, get_installed_package, param2lowercase
+from mim.utils import call_command
 
 
 @click.command('uninstall')
@@ -73,4 +73,5 @@ def uninstall(uninstall_args: Union[str, List],
     for requirement_file in requirements:
         uninstall_args += ['-r', requirement_file]  # type: ignore
 
-    return create_command('uninstall').main(uninstall_args)  # type: ignore
+    pip_uninstall_cmd = ['python', '-m', 'pip', 'uninstall']
+    return call_command(pip_uninstall_cmd + uninstall_args)  # type: ignore
