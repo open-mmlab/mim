@@ -2,5 +2,6 @@ Click
 colorama
 model-index
 pandas
+pip>=19.3
 requests
 tabulate
