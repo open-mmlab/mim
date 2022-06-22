@@ -45,3 +45,15 @@ class OptionEatAll(click.Option):
                 our_parser.process = parser_process
                 break
         return retval
+
+    def type_cast_value(self, ctx, value):
+        """Convert and validate a value against the option's
+        :attr:`type`, :attr:`multiple`, and :attr:`nargs`.
+
+        Since the :attr:`type` of OptionEatAll is `STRING`, override the
+        `type_cast_value` method to prevent the return value of OptionEatAll
+        converted from a tuple to a string.
+        """
+        if value is None:
+            return () if self.multiple or self.nargs == -1 else None
+        return tuple(self.type(x, self, ctx) for x in value)

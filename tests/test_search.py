@@ -103,6 +103,10 @@ def test_search():
     result = runner.invoke(search, ['mmcls', '--sort', 'epochs'])
     assert result.exit_code == 0
 
+    # mim search mmcls --sort batch_size epochs
+    result = runner.invoke(search, ['mmcls', '--sort', 'batch_size', 'epochs'])
+    assert result.exit_code == 0
+
     # mim search mmcls --field epoch
     result = runner.invoke(search, ['mmcls', '--field', 'epoch'])
     assert result.exit_code == 0

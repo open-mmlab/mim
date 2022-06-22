@@ -144,3 +144,6 @@ data/
 *ipynb
 
 src/
+
+# vscode
+.vscode
