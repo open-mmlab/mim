@@ -1,15 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Any, Union
+from typing import Any, List, Tuple, Union
 
 import click
+from pip._internal.commands import create_command
 
 from mim.click import argument, get_installed_package, param2lowercase
-from mim.utils import call_command
 
 
 @click.command('uninstall')
 @argument(
-    'packages',
+    'args',
     autocompletion=get_installed_package,
     callback=param2lowercase,
     nargs=-1,
@@ -27,65 +27,50 @@ from mim.utils import call_command
     multiple=True,
     help='Uninstall all the packages listed in the given requirements '
     'file.  This option can be used multiple times.')
-@click.option(
-    '--root-user-action',
-    'root_user_action',
-    default='warn',
-    type=click.Choice(['warn', 'ignore']),
-    help='Action if pip is run as a root user. By default, a warning '
-    'message is shown.',
-)
-def cli(packages: tuple,
+def cli(args: Tuple,
         confirm_yes: bool = False,
-        requirements: tuple = (),
-        root_user_action: str = 'warn') -> None:
+        requirements: Tuple = ()) -> None:
     """Uninstall package.
 
     Same as `pip uninstall`.
 
+    \b
     Example:
 
         > mim uninstall mmcv-full
         > mim uninstall -y mmcv-full
         > mim uninstall mmdet mmcls
+
+    Here we list several commonly used options.
+
+    For more options, please refer to `pip uninstall --help`.
     """
-    exit_code = uninstall(packages, confirm_yes, requirements,
-                          root_user_action)
+    exit_code = uninstall(list(args), confirm_yes, requirements)
     exit(exit_code)
 
 
-def uninstall(packages: Union[str, tuple],
+def uninstall(uninstall_args: Union[str, List],
               confirm_yes: bool = True,
-              requirements: tuple = (),
-              root_user_action: str = 'warn') -> Any:
+              requirements: Tuple = ()) -> Any:
     """Uninstall package.
 
     Args:
-        packages (str or tuple): A package name or a tuple of package names to
-            uninstalled.
+        uninstall_args (str or list): A package name or a list of package names
+            to uninstalled. You can also put some `pip uninstal` options here.
         confirm_yes (bool): Don’t ask for confirmation of uninstall deletions.
             Default: True.
         requirements (tuple): A tuple of requirements files to uninstalled.
-        root_user_action (str): The action if pip is run as a root user.
-            The valid values are 'warn' and 'ignore'.
 
     Returns:
         The status code return by `pip uninstall`.
     """
-    if type(packages) is str:
-        uninstall_args = [packages]
-    else:
-        uninstall_args = list(packages)
+    if type(uninstall_args) is str:
+        uninstall_args = [uninstall_args]
 
     if confirm_yes:
-        uninstall_args.append('-y')
-
-    assert root_user_action in ('warn', 'ignore'), \
-        f"Invalid root_user_action: {root_user_action}' (from 'warn', 'ignore')"  # noqa: E501
-    uninstall_args += ['--root-user-action', root_user_action]
+        uninstall_args.append('-y')  # type: ignore
 
     for requirement_file in requirements:
-        uninstall_args += ['-r', requirement_file]
+        uninstall_args += ['-r', requirement_file]  # type: ignore
 
-    pip_uninstall_cmd = ['python', '-m', 'pip', 'uninstall']
-    return call_command(pip_uninstall_cmd + uninstall_args)  # type: ignore
+    return create_command('uninstall').main(uninstall_args)  # type: ignore
