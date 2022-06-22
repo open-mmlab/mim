@@ -1,12 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import importlib
 from typing import Any, Union
 
 import click
-import pip._vendor.pkg_resources
-from pip._internal.commands import create_command
 
 from mim.click import argument, get_installed_package, param2lowercase
+from mim.utils import call_command
 
 
 @click.command('uninstall')
@@ -74,10 +72,6 @@ def uninstall(packages: Union[str, tuple],
     Returns:
         The status code return by `pip uninstall`.
     """
-    # Reload `pip._vendor.pkg_resources` so that pip can refresh to get the
-    # latest working set.
-    importlib.reload(pip._vendor.pkg_resources)
-
     if type(packages) is str:
         uninstall_args = [packages]
     else:
@@ -93,4 +87,5 @@ def uninstall(packages: Union[str, tuple],
     for requirement_file in requirements:
         uninstall_args += ['-r', requirement_file]
 
-    return create_command('uninstall').main(uninstall_args)  # type: ignore
+    pip_uninstall_cmd = ['python', '-m', 'pip', 'uninstall']
+    return call_command(pip_uninstall_cmd + uninstall_args)  # type: ignore
