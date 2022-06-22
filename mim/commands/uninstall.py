@@ -7,7 +7,10 @@ from mim.click import argument, get_installed_package, param2lowercase
 from mim.utils import call_command
 
 
-@click.command('uninstall')
+@click.command(
+    'uninstall',
+    context_settings=dict(ignore_unknown_options=True),
+)
 @argument(
     'args',
     autocompletion=get_installed_package,
