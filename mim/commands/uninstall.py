@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import sys
 from typing import Any, List, Tuple, Union
 
 import click
@@ -76,5 +77,7 @@ def uninstall(uninstall_args: Union[str, List],
     for requirement_file in requirements:
         uninstall_args += ['-r', requirement_file]  # type: ignore
 
-    pip_uninstall_cmd = ['python', '-m', 'pip', 'uninstall']
+    # Use the pip official recommend way to invoke `pip uninstall`:
+    # https://pip.pypa.io/en/stable/user_guide/#using-pip-from-your-program
+    pip_uninstall_cmd = [sys.executable, '-m', 'pip', 'uninstall']
     return call_command(pip_uninstall_cmd + uninstall_args)  # type: ignore
