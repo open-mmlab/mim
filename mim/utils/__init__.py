@@ -9,6 +9,7 @@ from .default import (
     USER,
     WHEEL_URL,
 )
+from .progress_bars import rich_progress_bar
 from .utils import (
     args2string,
     call_command,
@@ -86,4 +87,5 @@ __all__ = [
     'get_package_info_from_pypi',
     'parse_home_page',
     'ensure_installation',
+    'rich_progress_bar',
 ]

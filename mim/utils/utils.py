@@ -21,6 +21,7 @@ from requests.exceptions import InvalidURL, RequestException, Timeout
 from requests.models import Response
 
 from .default import PKG2PROJECT
+from .progress_bars import rich_progress_bar
 
 
 def parse_url(url: str) -> Tuple[str, str]:
@@ -172,13 +173,12 @@ def download_from_file(url: str,
     size = int(response.headers.get('content-length'))
     with open(dest_path, 'wb') as fw:
         content_iter = response.iter_content(chunk_size=1024)
-        with click.progressbar(content_iter, length=size / 1024) as chunks:
-            for chunk in chunks:
-                if chunk:
-                    fw.write(chunk)
-                    fw.flush()
-                    if hash_prefix is not None:
-                        sha256.update(chunk)
+        for chunk in rich_progress_bar(content_iter, size=size):
+            if chunk:
+                fw.write(chunk)
+                fw.flush()
+                if hash_prefix is not None:
+                    sha256.update(chunk)
 
     if hash_prefix is not None:
         digest = sha256.hexdigest()
