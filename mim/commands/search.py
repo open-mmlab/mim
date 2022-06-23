@@ -396,7 +396,7 @@ def convert2df(metadata: ModelIndex) -> DataFrame:
                 model_info['config'] = ','.join(config)
 
         collection_name = getattr(model, 'in_collection', None)
-        if collection_name:
+        if collection_name and collection_name in name2collection:
             model_info['model'] = cast2lowercase(collection_name)
             for key, value in name2collection[collection_name].items():
                 model_info.setdefault(key, value)
