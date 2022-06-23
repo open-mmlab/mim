@@ -89,6 +89,7 @@ jobs:
           env_vars: OS,PYTHON
           name: codecov-umbrella
           fail_ci_if_error: false
+
   test_windows:
     runs-on: windows-latest
     strategy:
@@ -131,3 +132,30 @@ jobs:
           env_vars: OS,PYTHON
           name: codecov-umbrella
           fail_ci_if_error: false
+
+  test_macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        torch: [1.8.0, 1.9.0]
+        include:
+          - torch: 1.8.0
+            torchvision: 0.9.0
+          - torch: 1.9.0
+            torchvision: 0.10.0
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: Install PyTorch
+        run: pip install torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} --no-cache-dir
+      - name: Build and install
+        run: pip install -e .
+      - name: Validate the installation
+        run: python -c "import mim"
+      - name: Install unittest dependencies
+        run: pip install -r requirements/tests.txt
+      - name: Run unittests
+        run: pytest tests/
