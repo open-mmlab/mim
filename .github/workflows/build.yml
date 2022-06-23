@@ -106,10 +106,6 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Upgrade setuptools
-        run: pip install --upgrade setuptools
-      - name: Install wheel  # wheel is the default package of local environment but docker environment misses the package so we manually install it
-        run: pip install wheel
       - name: Install PyTorch
         run: pip install torch==${{matrix.torch}}+cpu torchvision==${{matrix.torchvision}}+cpu -f https://download.pytorch.org/whl/torch_stable.html
       - name: Build and install
