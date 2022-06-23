@@ -68,14 +68,14 @@ def uninstall(uninstall_args: Union[str, List],
     Returns:
         The status code return by `pip uninstall`.
     """
-    if type(uninstall_args) is str:
+    if isinstance(uninstall_args, str):
         uninstall_args = [uninstall_args]
 
     if confirm_yes:
-        uninstall_args.append('-y')  # type: ignore
+        uninstall_args.append('-y')
 
     for requirement_file in requirements:
-        uninstall_args += ['-r', requirement_file]  # type: ignore
+        uninstall_args += ['-r', requirement_file]
 
     # Use the pip official recommend way to invoke `pip uninstall`:
     # https://pip.pypa.io/en/stable/user_guide/#using-pip-from-your-program
