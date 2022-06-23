@@ -118,9 +118,10 @@ jobs:
         run: python -c "import mim"
       - name: Install unittest dependencies
         run: pip install -r requirements/tests.txt
-      - name: Run unittests and generate coverage report
+      - name: Run unittests
+        run: coverage run --branch --source=mim -m pytest tests/
+      - name: Generate coverage report
         run: |
-          coverage run --branch --source=mim -m pytest tests/
           coverage xml
           coverage report -m
       - name: Upload coverage to Codecov
