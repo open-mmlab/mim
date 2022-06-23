@@ -1,580 +1,348 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import importlib
 import os
-import os.path as osp
-import shutil
+import tarfile
 import tempfile
-from distutils.version import LooseVersion
-from pkg_resources import parse_requirements, resource_filename
-from typing import List
+import typing
+from contextlib import contextmanager
+from typing import Any, Callable, Generator, List, Optional, Tuple
 
 import click
-import pip
+import pip._vendor.pkg_resources
+from pip._internal.commands import create_command
 
-from mim.click import argument, get_official_package, param2lowercase
-from mim.commands.uninstall import uninstall
 from mim.utils import (
-    DEFAULT_URL,
-    MODULE2PKG,
-    PKG2MODULE,
+    DEFAULT_CACHE_DIR,
     PKG2PROJECT,
     WHEEL_URL,
-    call_command,
-    echo_success,
     echo_warning,
-    get_installed_version,
-    get_latest_version,
-    get_package_version,
-    get_release_version,
     get_torch_cuda_version,
-    highlighted_error,
-    is_installed,
-    is_version_equal,
-    parse_url,
-    split_package_version,
 )
 
 
-@click.command('install')
-@argument(
-    'package',
-    type=str,
-    autocompletion=get_official_package,
-    callback=param2lowercase)
+@click.command(
+    'install',
+    context_settings=dict(ignore_unknown_options=True),
+)
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
 @click.option(
-    '-f', '--find', 'find_url', type=str, help='Url for finding package.')
-@click.option(
-    '--default-timeout',
-    'timeout',
-    type=int,
-    default=45,
-    help='Set the socket timeout (default 15 seconds).')
+    '-i',
+    '--index-url',
+    '--pypi-url',
+    'index_url',
+    help='Base URL of the Python Package Index (default %default). '
+    'This should point to a repository compliant with PEP 503 '
+    '(the simple repository API) or a local directory laid out '
+    'in the same format.')
 @click.option(
     '-y',
     '--yes',
     'is_yes',
     is_flag=True,
-    help='Don’t ask for confirmation of uninstall deletions.')
-@click.option(
-    '--user',
-    'is_user_dir',
-    is_flag=True,
-    help='Install to the Python user install directory')
-@click.option(
-    '-e',
-    '--editable',
-    'is_editable',
-    is_flag=True,
-    help='Install a package in editable mode.')
+    help="Don't ask for confirmation of uninstall deletions."
+    'Deprecated, will have no effect.')
 def cli(
-    package: str,
-    find_url: str = '',
-    timeout: int = 30,
+    args: Tuple[str],
+    index_url: Optional[str] = None,
     is_yes: bool = False,
-    is_user_dir: bool = False,
-    is_editable: bool = False,
 ) -> None:
-    """Install package.
+    """Install packages.
 
-    Example:
+    You can use `mim install` in the same way you use `pip install`!
+
+    And `mim install` will **install the 'mim' extra requirements**
+    for OpenMMLab packages if needed.
 
     \b
-    # install latest version of mmcv-full
-    > mim install mmcv-full  # wheel
-    # install 1.3.1
-    > mim install mmcv-full==1.3.1
-    # install master branch
-    > mim install mmcv-full -f https://github.com/open-mmlab/mmcv.git
+    Example:
+        > mim install mmdet mmcls
+        > mim install git+https://github.com/open-mmlab/mmdetection.git
+        > mim install -r requirements.txt
+        > mim install -e <path>
+        > mim install mmdet -i <url> -f <url>
+        > mim install mmdet --extra-index-url <url> --trusted-host <hostname>
 
-    # install latest version of mmcls
-    > mim install mmcls
-    # install 0.11.0
-    > mim install mmcls==0.11.0  # v0.11.0
-    # install master branch
-    > mim install mmcls -f https://github.com/open-mmlab/mmclassification.git
-    # install local repo
-    > git clone https://github.com/open-mmlab/mmclassification.git
-    > cd mmclassification
-    > mim install .
-
-    # install extension based on OpenMMLab
-    > mim install mmcls-project -f https://github.com/xxx/mmcls-project.git
+    Here we list several commonly used options.
+    For more options, please refer to `pip install --help`.
     """
-    install(
-        package,
-        find_url,
-        timeout,
-        is_yes=is_yes,
-        is_user_dir=is_user_dir,
-        is_editable=is_editable)
+    if is_yes:
+        echo_warning(
+            'The `--yes` option has been deprecated, will have no effect.')
+    exit_code = install(list(args), index_url=index_url, is_yes=is_yes)
+    exit(exit_code)
 
 
-def install(package: str,
-            find_url: str = '',
-            timeout: int = 15,
-            is_yes: bool = False,
-            is_user_dir: bool = False,
-            is_editable: bool = False) -> None:
-    """Install a package by wheel or from github.
+def install(
+    install_args: List[str],
+    index_url: Optional[str] = None,
+    is_yes: bool = False,
+) -> Any:
+    """Install packages via pip and add 'mim' extra requirements for OpenMMLab
+    packages during pip install process.
 
     Args:
-        package (str): The name of installed package, such as mmcls.
-        find_url (str): Url for finding package. If finding is not provided,
-            program will infer the find_url as much as possible. Default: ''.
-        timeout (int): The socket timeout. Default: 15.
-        is_yes (bool): Don’t ask for confirmation of uninstall deletions.
-            Default: False.
-        is_usr_dir (bool): Install to the Python user install directory for
-            environment variables and user configuration. Default: False.
-        is_editable (bool): Install a package in editable mode. Default: False.
+        install_args (list): List of arguments passed to `pip install`.
+        index_url (str, optional): The pypi index url.
+        is_yes (bool, optional): Deprecated, will have no effect. Reserved for
+            interface compatibility only.
     """
-    target_pkg, target_version = split_package_version(package)
 
-    # whether install from local repo
-    if looks_like_path(target_pkg):
-        if is_installable_dir(target_pkg):
-            is_install_local_repo = True
-        else:
-            raise ValueError(
-                highlighted_error(
-                    f'{target_pkg} is not a installable directory'))
-    else:
-        is_install_local_repo = False
+    # Reload `pip._vendor.pkg_resources` so that pip can refresh to get the
+    # latest working set.
+    # In some cases, when a package is uninstalled and then installed, the
+    # working set is not updated in time, leading to the mistaken belief that
+    # the package is already installed.
+    importlib.reload(pip._vendor.pkg_resources)
 
-    # whether install master branch from github
-    is_install_master = bool(not target_version and find_url)
+    # add mmcv-full find links by default
+    install_args += ['-f', get_mmcv_full_find_link()]
 
-    # get target version
-    if target_pkg in PKG2PROJECT:
-        latest_version = get_latest_version(target_pkg, timeout)
-        if target_version:
-            if LooseVersion(target_version) > LooseVersion(latest_version):
-                error_msg = (f'target_version=={target_version} should not be'
-                             f' greater than latest_version=={latest_version}')
-                raise ValueError(highlighted_error(error_msg))
-        else:
-            target_version = latest_version
+    index_url_opt_names = ['-i', '--index-url', '--pypi-url']
+    if any([opt_name in install_args for opt_name in index_url_opt_names]):
+        echo_warning(
+            'The index url should be passed in via the index_url parameter, '
+            'not specified in install_args via -i/--index-url/--pypi-url.')
+    if index_url is not None:
+        install_args += ['-i', index_url]
 
-    # check local environment whether package existed
-    if is_install_master or is_install_local_repo:
+    patch_mm_distribution: Callable = patch_pkg_resources_distribution
+    try:
+        # pip>=22.1 have two distribution backends: pkg_resources and importlib.  # noqa: E501
+        from pip._internal.metadata import _should_use_importlib_metadata  # type: ignore # isort: skip # noqa: E501
+        if _should_use_importlib_metadata():
+            patch_mm_distribution = patch_importlib_distribution
+    except ImportError:
         pass
-    elif is_installed(target_pkg) and target_version:
-        existed_version = get_installed_version(target_pkg)
-        if is_version_equal(existed_version, target_version):
-            echo_warning(f'{target_pkg}=={existed_version} existed.')
-            return None
+
+    with patch_mm_distribution(index_url):
+        # We can use `create_command` method since pip>=19.3 (2019/10/14).
+        status_code = create_command('install').main(install_args)
+
+    check_mim_resources()
+    return status_code
+
+
+def get_mmcv_full_find_link() -> str:
+    """Get the mmcv-full find link corresponding to the current environment."""
+    torch_v, cuda_v = get_torch_cuda_version()
+    major, minor, *_ = torch_v.split('.')
+    torch_v = '.'.join([major, minor, '0'])
+
+    if cuda_v.isdigit():
+        cuda_v = f'cu{cuda_v}'
+    find_link = WHEEL_URL['mmcv-full'].format(
+        cuda_version=cuda_v, torch_version=f'torch{torch_v}')
+    return find_link
+
+
+@contextmanager
+def patch_pkg_resources_distribution(
+        index_url: Optional[str] = None) -> Generator:
+    """A patch for `pip._vendor.pkg_resources.Distribution`.
+
+    Since the old version of the OpenMMLab packages did not add the 'mim' extra
+    requirements to the release distribution, we need to hack the Distribution
+    and manually fetch the 'mim' requirements from `mminstall.txt`.
+
+    This patch works with 'pip<22.1' and 'pip>=22.1,python<3.11'.
+
+    Args:
+        index_url (str, optional): The pypi index url that pass to
+            `get_mmdeps_from_mmpkg_pypi`.
+    """
+    from pip._vendor.pkg_resources import Distribution, parse_requirements
+
+    origin_requires = Distribution.requires
+
+    def patched_requires(self, extras=()):
+        deps = origin_requires(self, extras)
+        if self.project_name not in PKG2PROJECT or self.project_name == 'mmcv-full':  # noqa: E501
+            return deps
+
+        if 'mim' in self.extras:
+            mim_extra_requires = origin_requires(self, ('mim', ))
+            filter_invalid_marker(mim_extra_requires)
+            deps += mim_extra_requires
         else:
-            if is_yes:
-                uninstall(target_pkg, is_yes)
-            else:
-                confirm_msg = (f'{target_pkg}=={existed_version} has been '
-                               f'installed, but want to install {target_pkg}=='
-                               f'{target_version}, do you want to uninstall '
-                               f'{target_pkg}=={existed_version} and '
-                               f'install {target_pkg}=={target_version}? ')
-                if click.confirm(confirm_msg):
-                    uninstall(target_pkg, True)
-                else:
-                    echo_warning(f'skip {target_pkg}')
-                    return None
+            if not hasattr(self, '_mm_deps'):
+                assert self.version is not None
+                mmdeps_text = get_mmdeps_from_mmpkg(self.project_name,
+                                                    self.version, index_url)
+                self._mm_deps = list(parse_requirements(mmdeps_text))
+                echo_warning(
+                    "Get 'mim' extra requirements from `mminstall.txt` "
+                    f'for {self}: {[str(i) for i in self._mm_deps]}.')
+            deps += self._mm_deps
+        return deps
 
-    # try to infer find_url if possible
-    if not find_url:
-        find_url = infer_find_url(target_pkg)
+    Distribution.requires = patched_requires  # type: ignore
+    try:
+        yield
+    finally:
+        Distribution.requires = origin_requires  # type: ignore
 
-    if is_install_local_repo:
-        repo_root = osp.abspath(target_pkg)
-        module_name, target_version = get_package_version(repo_root)
-        if not module_name:
-            raise FileNotFoundError(
-                highlighted_error(f'version.py is missed in {repo_root}'))
 
-        target_pkg = MODULE2PKG.get(module_name, module_name)
-        if target_pkg == 'mmcv' and os.getenv('MMCV_WITH_OPS', '0') == '1':
-            target_pkg = 'mmcv-full'
+@contextmanager
+def patch_importlib_distribution(index_url: Optional[str] = None) -> Generator:
+    """A patch for `pip._internal.metadata.importlib.Distribution`.
 
-        echo_success(f'installing {target_pkg} from local repo.')
+    Since the old version of the OpenMMLab packages did not add the 'mim' extra
+    requirements to the release distribution, we need to hack the Distribution
+    and manually fetch the 'mim' requirements from `mminstall.txt`.
 
-        install_from_repo(
-            repo_root,
-            package=target_pkg,
-            timeout=timeout,
-            is_yes=is_yes,
-            is_user_dir=is_user_dir,
-            is_editable=is_editable)
+    This patch works with 'pip>=22.1,python>=3.11'.
 
-    elif find_url and find_url.find('git') >= 0 or is_install_master:
-        install_from_github(target_pkg, target_version, find_url, timeout,
-                            is_yes, is_user_dir, is_install_master)
-    else:
-        # if installing from wheel failed, it will try to install package by
-        # building from source if possible.
+    Args:
+        index_url (str, optional): The pypi index url that pass to
+            `get_mminstall_from_pypi`.
+    """
+    from pip._internal.metadata.importlib import Distribution
+    from pip._internal.metadata.importlib._dists import Requirement
+
+    origin_iter_dependencies = Distribution.iter_dependencies
+
+    def patched_iter_dependencies(self, extras=()):
+        deps = list(origin_iter_dependencies(self, extras))
+        if self.canonical_name not in PKG2PROJECT or self.canonical_name == 'mmcv-full':  # noqa: E501
+            return deps
+
+        if 'mim' in self.iter_provided_extras:
+            mim_extra_requires = list(
+                origin_iter_dependencies(self, ('mim', )))
+            filter_invalid_marker(mim_extra_requires)
+            deps += mim_extra_requires
+        else:
+            if not hasattr(self, '_mm_deps'):
+                assert self.version is not None
+                mmdeps_text = get_mmdeps_from_mmpkg(self.canonical_name,
+                                                    self.version, index_url)
+                self._mm_deps = [
+                    Requirement(req) for req in mmdeps_text.splitlines()
+                ]
+            deps += self._mm_deps
+        return deps
+
+    Distribution.iter_dependencies = patched_iter_dependencies
+    try:
+        yield
+    finally:
+        Distribution.iter_dependencies = origin_iter_dependencies
+
+
+def filter_invalid_marker(extra_requires: List) -> None:
+    """Filter out invalid marker in requirements parsed from METADATA.
+
+    More detail can be found at: https://github.com/pypa/pip/issues/11191
+
+    Args:
+        extra_requires (list): A list of Requirement parsed from distribution
+            METADATA.
+    """
+    for req in extra_requires:
+        if req.marker is None:
+            continue
         try:
-            install_from_wheel(target_pkg, target_version, find_url, timeout,
-                               is_user_dir)
-        except RuntimeError as error:
-            if target_pkg in PKG2PROJECT:
-                find_url = f'{DEFAULT_URL}/{PKG2PROJECT[target_pkg]}.git'
-                if target_version:
-                    target_pkg = f'{target_pkg}=={target_version}'
-                if is_yes:
-                    install(target_pkg, find_url, timeout, is_yes, is_user_dir)
-                else:
-                    confirm_msg = (f'install {target_pkg} from wheel, but it '
-                                   'failed. Do you want to build it from '
-                                   'source if possible?')
-                    if click.confirm(confirm_msg):
-                        install(target_pkg, find_url, timeout, is_yes,
-                                is_user_dir)
-                    else:
-                        raise RuntimeError(
-                            highlighted_error(
-                                f'Failed to install {target_pkg}.'))
-            else:
-                raise RuntimeError(highlighted_error(error))
-
-    echo_success(f'Successfully installed {target_pkg}.')
+            req.marker.evaluate()
+        except:  # noqa: E722
+            req.marker = None
 
 
-def looks_like_path(name: str) -> bool:
-    """Checks whether the string "looks like" a path on the filesystem.
+def get_mmdeps_from_mmpkg(mmpkg_name: str,
+                          mmpkg_version: str,
+                          index_url: Optional[str] = None) -> str:
+    """Get 'mim' extra requirements for a given OpenMMLab package from
+    `mminstall.txt`.
 
-    This does not check whether the target actually exists, only judge from the
-    appearance.
+    If there is a cached `mminstall.txt`, use the cache, otherwise download the
+    source distribution package from pypi and extract `mminstall.txt` content.
 
     Args:
-        name (str): The string to be checked.
+        mmpkg_name (str): The OpenMMLab package name.
+        mmpkg_version (str): The OpenMMLab package version.
+        index_url (str, optional): The pypi index url that pass to
+            `get_mminstall_from_pypi`.
+
+    Returns:
+        str: The text content read from `mminstall.txt`, returns an empty
+        string if anything goes wrong.
     """
-    if osp.sep in name:
-        return True
-    if osp.altsep is not None and osp.altsep in name:
-        return True
-    if name.startswith('.'):
-        return True
-    return False
-
-
-def is_installable_dir(name: str) -> bool:
-    """Check whether path is a directory containing setup.py.
-
-    Args:
-        name (str): The string to be checked.
-    """
-    path = osp.abspath(name)
-    if osp.isdir(path):
-        setup_py = osp.join(path, 'setup.py')
-        return osp.isfile(setup_py)
+    mmpkg = f'{mmpkg_name}=={mmpkg_version}'
+    cache_mminstall_dir = os.path.join(DEFAULT_CACHE_DIR, 'mminstall')
+    if not os.path.exists(cache_mminstall_dir):
+        os.mkdir(cache_mminstall_dir)
+    cache_mminstall_fpath = os.path.join(cache_mminstall_dir, f'{mmpkg}.txt')
+    if os.path.exists(cache_mminstall_fpath):
+        # use cached `mminstall.txt`
+        with open(cache_mminstall_fpath) as f:
+            mminstall_content = f.read()
+        echo_warning(
+            f'Using cached `mminstall.txt` for {mmpkg}: {cache_mminstall_fpath}'  # noqa: E501
+        )
     else:
-        return False
+        # fetch `mminstall.txt` content from pypi
+        mminstall_content = get_mminstall_from_pypi(mmpkg, index_url=index_url)
+        with open(cache_mminstall_fpath, 'w') as f:
+            f.write(mminstall_content)
+    return mminstall_content
 
 
-def infer_find_url(package: str) -> str:
-    """Try to infer find_url if possible.
-
-    If package is the official package, the find_url can be inferred.
-
-    Args:
-        package (str): The name of package, such as mmcls.
-    """
-    find_url = ''
-    if package in WHEEL_URL:
-        torch_v, cuda_v = get_torch_cuda_version()
-
-        # In order to avoid builiding mmcv-full from source, we ignore the
-        # difference among micro version because there are usually no big
-        # changes among micro version. For example, the mmcv-full built in
-        # pytorch 1.8.0 also works on 1.8.1 or other versions.
-        major, minor, *_ = torch_v.split('.')
-        torch_v = '.'.join([major, minor, '0'])
-
-        if cuda_v.isdigit():
-            cuda_v = f'cu{cuda_v}'
-        find_url = WHEEL_URL[package].format(
-            cuda_version=cuda_v, torch_version=f'torch{torch_v}')
-    elif package in PKG2PROJECT:
-        find_url = (f'{DEFAULT_URL}/{PKG2PROJECT[package]}.git')
-
-    return find_url
-
-
-def parse_dependencies(path: str) -> list:
-    """Parse dependencies from repo/requirements/mminstall.txt.
+@typing.no_type_check
+def get_mminstall_from_pypi(mmpkg: str,
+                            index_url: Optional[str] = None) -> str:
+    """Get the `mminstall.txt` content for a given OpenMMLab package from PyPi.
 
     Args:
-        path (str): Path of mminstall.txt.
+        mmpkg (str): The OpenMMLab package name, optionally with a version
+            specifier. e.g. 'mmdet', 'mmdet==2.25.0'.
+        index_url (str, optional): The pypi index url, if given, will be used
+            in `pip download`.
+
+    Returns:
+        str: The text content read from `mminstall.txt`, returns an empty
+        string if anything goes wrong.
     """
-
-    def _get_proper_version(package, version, op):
-        releases = get_release_version(package)
-        if op == '>':
-            for r_v in releases:
-                if LooseVersion(r_v) > LooseVersion(version):
-                    return r_v
-            else:
-                raise ValueError(
-                    highlighted_error(f'invalid min version of {package}'))
-        elif op == '<':
-            for r_v in releases[::-1]:
-                if LooseVersion(r_v) < LooseVersion(version):
-                    return r_v
-            else:
-                raise ValueError(
-                    highlighted_error(f'invalid max version of {package}'))
-
-    dependencies = []
-    with open(path) as fr:
-        for requirement in parse_requirements(fr):
-            pkg_name = requirement.project_name
-            min_version = ''
-            max_version = ''
-            for op, version in requirement.specs:
-                if op == '==':
-                    min_version = max_version = version
-                    break
-                elif op == '>=':
-                    min_version = version
-                elif op == '>':
-                    min_version = _get_proper_version(pkg_name, version, '>')
-                elif op == '<=':
-                    max_version = version
-                elif op == '<':
-                    max_version = _get_proper_version(pkg_name, version, '<')
-
-            dependencies.append([pkg_name, min_version, max_version])
-
-    return dependencies
-
-
-def install_dependencies(dependencies: List[List[str]],
-                         timeout: int = 15,
-                         is_yes: bool = False,
-                         is_user_dir: bool = False) -> None:
-    """Install dependencies, such as mmcls depends on mmcv.
-
-    Args:
-        dependencies (list): The list of dependency.
-        timeout (int): The socket timeout. Default: 15.
-        is_yes (bool): Don’t ask for confirmation of uninstall deletions.
-            Default: False.
-        is_usr_dir (bool): Install to the Python user install directory for
-            environment variables and user configuration. Default: False.
-    """
-    for target_pkg, min_v, max_v in dependencies:
-        target_version = max_v
-        latest_version = get_latest_version(target_pkg, timeout)
-        if not target_version or LooseVersion(target_version) > LooseVersion(
-                latest_version):
-            target_version = latest_version
-
-        if is_installed(target_pkg):
-            existed_version = get_installed_version(target_pkg)
-            if (LooseVersion(min_v) <= LooseVersion(existed_version) <=
-                    LooseVersion(target_version)):
-                continue
-
-        echo_success(f'installing dependency: {target_pkg}')
-
-        target_pkg = f'{target_pkg}=={target_version}'
-
-        install(
-            target_pkg,
-            timeout=timeout,
-            is_yes=is_yes,
-            is_user_dir=is_user_dir)
-
-    echo_success('Successfully installed dependencies.')
-
-
-def install_from_repo(repo_root: str,
-                      *,
-                      package: str = '',
-                      timeout: int = 15,
-                      is_yes: bool = False,
-                      is_user_dir: bool = False,
-                      is_editable: bool = False):
-    """Install package from local repo.
-
-    Args:
-        repo_root (str): The root of repo.
-        package (str): The name of installed package. Default: ''.
-        timeout (int): The socket timeout. Default: 15.
-        is_yes (bool): Don’t ask for confirmation of uninstall deletions.
-            Default: False.
-        is_usr_dir (bool): Install to the Python user install directory for
-            environment variables and user configuration. Default: False.
-        is_editable (bool): Install a package in editable mode. Default: False.
-    """
-
-    def copy_file_to_package():
-        # rename the model_zoo.yml to model-index.yml but support both of them
-        # for backward compatibility
-        filenames = ['tools', 'configs', 'model_zoo.yml', 'model-index.yml']
-        module_name = PKG2MODULE.get(package, package)
-        # configs, tools and model-index.yml will be copied to package/.mim
-        mim_root = resource_filename(module_name, '.mim')
-        os.makedirs(mim_root, exist_ok=True)
-
-        for filename in filenames:
-            src_path = osp.join(repo_root, filename)
-            dst_path = osp.join(mim_root, filename)
-            if osp.exists(src_path):
-                if osp.islink(dst_path):
-                    os.unlink(dst_path)
-                if osp.isfile(src_path):
-                    shutil.copyfile(src_path, dst_path)
-                elif osp.isdir(src_path):
-                    if osp.exists(dst_path):
-                        shutil.rmtree(dst_path)
-                    shutil.copytree(src_path, dst_path)
-
-    def link_file_to_package():
-        # When user installs package with editable mode, we should create
-        # symlinks to package, which will synchronize the modified files.
-        # Besides, rename the model_zoo.yml to model-index.yml but support both
-        # of them for backward compatibility
-        filenames = ['tools', 'configs', 'model_zoo.yml', 'model-index.yml']
-        module_name = PKG2MODULE.get(package, package)
-        pkg_root = osp.join(repo_root, module_name)
-        # configs, tools and model-index.yml will be linked to package/.mim
-        mim_root = osp.join(pkg_root, '.mim')
-        os.makedirs(mim_root, exist_ok=True)
-
-        for filename in filenames:
-            src_path = osp.join(repo_root, filename)
-            dst_path = osp.join(mim_root, filename)
-            if osp.exists(dst_path):
-                continue
-            if osp.exists(src_path):
-                if osp.isfile(dst_path) or osp.islink(dst_path):
-                    os.remove(dst_path)
-                elif osp.isdir(dst_path):
-                    shutil.rmtree(dst_path)
-
-                os.symlink(src_path, dst_path)
-
-    # install dependencies. For example,
-    # install mmcls should install mmcv-full first if it is not installed or
-    # its(mmcv) version does not match.
-    mminstall_path = osp.join(repo_root, 'requirements', 'mminstall.txt')
-    if osp.exists(mminstall_path):
-        dependencies = parse_dependencies(mminstall_path)
-        if dependencies:
-            install_dependencies(dependencies, timeout, is_yes, is_user_dir)
-
-    third_dependencies = osp.join(repo_root, 'requirements', 'build.txt')
-    if osp.exists(third_dependencies):
-        dep_cmd = [
-            'python', '-m', 'pip', 'install', '-r', third_dependencies,
-            '--default-timeout', f'{timeout}'
+    with tempfile.TemporaryDirectory() as temp_dir:
+        download_args = [
+            mmpkg, '-d', temp_dir, '--no-deps', '--no-binary', ':all:'
         ]
-        if is_user_dir:
-            dep_cmd.append('--user')
-
-        call_command(dep_cmd)
-
-    install_cmd = ['python', '-m', 'pip', 'install']
-    if is_editable:
-        install_cmd.append('-e')
-    else:
-        # solving issues related to out-of-tree builds
-        # more datails at https://github.com/pypa/pip/issues/7555
-        # starting from pip==21.3 in-tree builds are the default
-        #   and --use-feature=in-tree-build is ignored
-        # more details at https://pip.pypa.io/en/stable/news/#id82
-        # starting from pip==22.1 --use-feature=in-tree-build raises an error
-        if LooseVersion('21.1.1') <= LooseVersion(
-                pip.__version__) < LooseVersion('22.1'):
-            install_cmd.append('--use-feature=in-tree-build')
-    install_cmd.append(repo_root)
-    if is_user_dir:
-        install_cmd.append('--user')
-
-    # The issue is caused by the import order of numpy and torch
-    # Please refer to github.com/pytorch/pytorch/issue/37377
-    os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
-
-    if package in WHEEL_URL:
-        echo_success(f'compiling {package} with "MMCV_WITH_OPS=1"')
-        os.environ['MMCV_WITH_OPS'] = '1'
-
-    call_command(install_cmd)
-
-    if is_editable:
-        link_file_to_package()
-    else:
-        copy_file_to_package()
+        if index_url is not None:
+            download_args += ['-i', index_url]
+        status_code = create_command('download').main(download_args)
+        if status_code != 0:
+            echo_warning(f'pip download failed with args: {download_args}')
+            exit(status_code)
+        mmpkg_tar_fpath = os.path.join(temp_dir, os.listdir(temp_dir)[0])
+        with tarfile.open(mmpkg_tar_fpath) as tarf:
+            mmdeps_fpath = tarf.members[0].name + '/requirements/mminstall.txt'
+            mmdeps_member = tarf._getmember(name=mmdeps_fpath)
+            if mmdeps_member is None:
+                echo_warning(f'{mmdeps_fpath} not found in {mmpkg_tar_fpath}')
+                return ''
+            tarf.fileobj.seek(mmdeps_member.offset_data)
+            mmdeps_content = tarf.fileobj.read(mmdeps_member.size).decode()
+    return mmdeps_content
 
 
-def install_from_github(package: str,
-                        version: str = '',
-                        find_url: str = '',
-                        timeout: int = 15,
-                        is_yes: bool = False,
-                        is_user_dir: bool = False,
-                        is_install_master: bool = False) -> None:
-    """Install package from github.
+def check_mim_resources() -> None:
+    """Check if the mim resource directory exists.
 
-    Args:
-        package (str): The name of installed package, such as mmcls.
-        version (str): Version of package. Default: ''.
-        find_url (str): Url for finding package. If finding is not provided,
-            program will infer the find_url as much as possible. Default: ''.
-        timeout (int): The socket timeout. Default: 15.
-        is_yes (bool): Don’t ask for confirmation of uninstall deletions.
-            Default: False.
-        is_usr_dir (bool): Install to the Python user install directory for
-            environment variables and user configuration. Default: False.
-        is_install_master (bool): Whether install master branch. If it is True,
-            process will install master branch. If it is False, process will
-            install the specified version. Default: False.
+    Newer versions of the OpenMMLab packages have packaged the mim resource
+    files into the distribution package, while earlier versions do not.
+
+    If the mim resources file (aka `.mim`) do not exists, log a warning that a
+    new version needs to be installed.
     """
-    click.echo(f'installing {package} from {find_url}.')
-
-    _, repo = parse_url(find_url)
-    clone_cmd = ['git', 'clone', find_url]
-    if not is_install_master:
-        clone_cmd.extend(['-b', f'v{version}'])
-
-    with tempfile.TemporaryDirectory() as temp_root:
-        repo_root = osp.join(temp_root, repo)
-        clone_cmd.append(repo_root)
-        call_command(clone_cmd)
-
-        install_from_repo(
-            repo_root,
-            package=package,
-            timeout=timeout,
-            is_yes=is_yes,
-            is_user_dir=is_user_dir)
-
-
-def install_from_wheel(package: str,
-                       version: str = '',
-                       find_url: str = '',
-                       timeout: int = 15,
-                       is_user_dir: bool = False) -> None:
-    """Install wheel from find_url.
-
-    Args:
-        package (str): The name of installed package, such as mmcls.
-        version (str): Version of package. Default: ''.
-        find_url (str): Url for finding package. If finding is not provided,
-            program will infer the find_url as much as possible. Default: ''.
-        timeout (int): The socket timeout. Default: 15.
-        is_usr_dir (bool): Install to the Python user install directory for
-            environment variables and user configuration. Default: False.
-    """
-    click.echo(f'installing {package} from wheel.')
-
-    install_cmd = [
-        'python', '-m', 'pip', '--default-timeout', f'{timeout}', 'install'
-    ]
-    if version:
-        install_cmd.append(f'{package}=={version}')
-    else:
-        install_cmd.append(package)
-    if find_url:
-        install_cmd.extend(['-f', find_url])
-    if is_user_dir:
-        install_cmd.append('--user')
-
-    call_command(install_cmd)
+    importlib.reload(pip._vendor.pkg_resources)
+    for pkg in pip._vendor.pkg_resources.working_set:  # type: ignore
+        pkg_name = pkg.project_name
+        if pkg_name not in PKG2PROJECT or pkg_name == 'mmcv-full':
+            continue
+        if pkg.has_metadata('top_level.txt'):
+            module_name = pkg.get_metadata('top_level.txt').split('\n')[0]
+            installed_path = os.path.join(pkg.location, module_name)
+        else:
+            installed_path = os.path.join(pkg.location, pkg_name)
+        mim_resources_path = os.path.join(installed_path, '.mim')
+        if not os.path.exists(mim_resources_path):
+            echo_warning(f'mim resources not found: {mim_resources_path}, '
+                         f'you can try to install the latest {pkg_name}.')

@@ -28,6 +28,10 @@ def test_gridsearch(gpus, tmp_path):
     runner = CliRunner()
     result = runner.invoke(install, ['mmcls', '--yes'])
     assert result.exit_code == 0
+    # Since `mminstall.txt` is not included in the distribution of
+    # mmcls<=0.23.1, we need to install mmcv-full manually.
+    result = runner.invoke(install, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
 
     args1 = [
         'mmcls', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',

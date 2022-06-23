@@ -71,16 +71,14 @@ def test_mmrepo_install():
 
         os.chdir(current_root)
 
+    # mim install git+https://github.com/open-mmlab/mmclassification.git
+    result = runner.invoke(
+        install, ['git+https://github.com/open-mmlab/mmclassification.git'])
+    assert result.exit_code == 0
+
     # mim install mmcls --yes
     result = runner.invoke(install, ['mmcls', '--yes'])
     assert result.exit_code == 0
-
-    # mim install mmcls -f https://github.com/open-mmlab/mmclassification.git
-    # install master branch
-    result = runner.invoke(install, [
-        'mmcls', '--yes', '-f',
-        'https://github.com/open-mmlab/mmclassification.git'
-    ])
 
     # mim install mmcls==0.11.0 --yes
     result = runner.invoke(install, ['mmcls==0.11.0', '--yes'])
