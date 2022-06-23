@@ -1,7 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import traceback
-
-import pip
 from click.testing import CliRunner
 
 from mim.commands.install import cli as install
@@ -15,23 +12,22 @@ def setup_module():
     assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmsegmentation', '--yes'])
+    assert result.exit_code == 0
 
 
 def test_uninstall():
     runner = CliRunner()
 
-    import site
-    import subprocess
-    subprocess.check_call(['pip', 'list'])
-    subprocess.check_call(['ls', site.getsitepackages()[0]])
-    subprocess.check_call(['pip', 'freeze'])
-    print(site.getsitepackages())
-
     # mim install mmsegmentation --yes
     result = runner.invoke(install, ['mmsegmentation', '--yes'])
-    traceback.print_exception(*result.exc_info)
-    print(result.output)
-    print(pip.__version__)
+    # Use importlib reload module in the same process may cause `isinstance`
+    # invalidation.
+    # A known issue: `METADATA not found in /tmp/xxx/xxx.whel` will be warning
+    # in pip 21.3.1, and mmcv-full could not install success as expected.
+    # So here we install mmsegmentation twice as an ugly workaround.
+    # TODO: find a better way to deal with this issues.
+    result = runner.invoke(install, ['mmsegmentation', '--yes'])
     assert result.exit_code == 0
 
     # check if install success
@@ -68,4 +64,6 @@ def teardown_module():
     result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmsegmentation', '--yes'])
     assert result.exit_code == 0
