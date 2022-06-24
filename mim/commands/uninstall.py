@@ -30,7 +30,7 @@ from mim.utils import call_command
     'requirements',
     multiple=True,
     help='Uninstall all the packages listed in the given requirements '
-    'file.  This option can be used multiple times.')
+    'file. This option can be used multiple times.')
 def cli(args: Tuple,
         confirm_yes: bool = False,
         requirements: Tuple = ()) -> None:
@@ -66,7 +66,7 @@ def uninstall(uninstall_args: Union[str, List],
         requirements (tuple): A tuple of requirements files to uninstalled.
 
     Returns:
-        The status code return by `pip uninstall`.
+        The status code returned by `pip uninstall`.
     """
     if isinstance(uninstall_args, str):
         uninstall_args = [uninstall_args]
