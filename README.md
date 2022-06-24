@@ -42,31 +42,25 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
 <details>
 <summary>1. install</summary>
 
-[![asciicast](https://asciinema.org/a/416945.svg)](https://asciinema.org/a/416945)
-
 - command
 
   ```bash
   # install latest version of mmcv-full
   > mim install mmcv-full  # wheel
-  # install 1.3.1
-  > mim install mmcv-full==1.3.1
-  # install master branch
-  > mim install mmcv-full -f https://github.com/open-mmlab/mmcv.git
+  # install 1.5.0
+  > mim install mmcv-full==1.5.0
 
   # install latest version of mmcls
   > mim install mmcls
-  # install 0.11.0
-  > mim install mmcls==0.11.0  # v0.11.0
   # install master branch
-  > mim install mmcls -f https://github.com/open-mmlab/mmclassification.git
+  > mim install git+https://github.com/open-mmlab/mmclassification.git
   # install local repo
   > git clone https://github.com/open-mmlab/mmclassification.git
   > cd mmclassification
   > mim install .
 
   # install extension based on OpenMMLab
-  mim install mmcls-project -f https://github.com/xxx/mmcls-project.git
+  mim install git+https://github.com/xxx/mmcls-project
   ```
 
 - api
@@ -77,21 +71,17 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
   # install mmcv
   install('mmcv-full')
 
-  # install mmcls
   # install mmcls will automatically install mmcv if it is not installed
-  install('mmcv-full', find_url='https://github.com/open-mmlab/mmcv.git')
-  install('mmcv-full==1.3.1', find_url='https://github.com/open-mmlab/mmcv.git')
+  install('mmcls')
 
   # install extension based on OpenMMLab
-  install('mmcls-project', find_url='https://github.com/xxx/mmcls-project.git')
+  install('git+https://github.com/xxx/mmcls-project')
   ```
 
 </details>
 
 <details>
 <summary>2. uninstall</summary>
-
-[![asciicast](https://asciinema.org/a/416948.svg)](https://asciinema.org/a/416948)
 
 - command
 
@@ -120,8 +110,6 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
 <details>
 <summary>3. list</summary>
 
-[![asciicast](https://asciinema.org/a/416949.svg)](https://asciinema.org/a/416949)
-
 - command
 
   ```bash
@@ -143,13 +131,11 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
 <details>
 <summary>4. search</summary>
 
-[![asciicast](https://asciinema.org/a/416950.svg)](https://asciinema.org/a/416950)
-
 - command
 
   ```bash
   > mim search mmcls
-  > mim search mmcls==0.11.0 --remote
+  > mim search mmcls==0.23.0 --remote
   > mim search mmcls --config resnet18_8xb16_cifar10
   > mim search mmcls --model resnet
   > mim search mmcls --dataset cifar-10
@@ -168,7 +154,7 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
   from mim import get_model_info
 
   get_model_info('mmcls')
-  get_model_info('mmcls==0.11.0', local=False)
+  get_model_info('mmcls==0.23.0', local=False)
   get_model_info('mmcls', models=['resnet'])
   get_model_info('mmcls', training_datasets=['cifar-10'])
   get_model_info('mmcls', filter_conditions='batch_size>45,epochs>100')
@@ -182,8 +168,6 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
 
 <details>
 <summary>5. download</summary>
-
-[![asciicast](https://asciinema.org/a/416951.svg)](https://asciinema.org/a/416951)
 
 - command
 
@@ -205,8 +189,6 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
 
 <details>
 <summary>6. train</summary>
-
-[![asciicast](https://asciinema.org/a/416953.svg)](https://asciinema.org/a/416953)
 
 - command
 
@@ -249,8 +231,6 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
 
 <details>
 <summary>7. test</summary>
-
-[![asciicast](https://asciinema.org/a/416955.svg)](https://asciinema.org/a/416955)
 
 - command
 
@@ -296,8 +276,6 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
 <details>
 <summary>8. run</summary>
 
-[![asciicast](https://asciinema.org/a/416956.svg)](https://asciinema.org/a/416956)
-
 - command
 
   ```bash
@@ -340,8 +318,6 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
 
 <details>
 <summary>9. gridsearch</summary>
-
-[![asciicast](https://asciinema.org/a/416958.svg)](https://asciinema.org/a/416958)
 
 - command
 
