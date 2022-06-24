@@ -60,7 +60,7 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
   > mim install .
 
   # install extension based on OpenMMLab
-  mim install git+https://github.com/xxx/mmcls-project
+  mim install git+https://github.com/xxx/mmcls-project.git
   ```
 
 - api
@@ -75,7 +75,7 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
   install('mmcls')
 
   # install extension based on OpenMMLab
-  install('git+https://github.com/xxx/mmcls-project')
+  install('git+https://github.com/xxx/mmcls-project.git')
   ```
 
 </details>
