@@ -30,7 +30,7 @@ def rich_progress_bar(
     )
 
     progress = Progress(*columns, refresh_per_second=30)
-    task_id = progress.add_task('Downloading', total=size)
+    task_id = progress.add_task('downloading', total=size)
     with progress:
         for chunk in iterable:
             yield chunk
