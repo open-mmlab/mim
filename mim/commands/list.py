@@ -1,11 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import importlib
 import os.path as osp
-import pkg_resources
 from email.parser import FeedParser
 from typing import List, Tuple
 
 import click
+from pip._vendor import pkg_resources
 from tabulate import tabulate
 
 
@@ -43,7 +43,7 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
     importlib.reload(pkg_resources)
 
     pkgs_info: List[Tuple[str, ...]] = []
-    for pkg in pkg_resources.working_set:
+    for pkg in pkg_resources.working_set:  # type: ignore
         pkg_name = pkg.project_name
         if all:
             pkgs_info.append((pkg_name, pkg.version))
