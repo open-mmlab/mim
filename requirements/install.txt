@@ -4,4 +4,5 @@ model-index
 pandas
 pip>=19.3
 requests
+rich
 tabulate
