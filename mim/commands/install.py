@@ -222,11 +222,11 @@ def patch_importlib_distribution(index_url: Optional[str] = None) -> Generator:
             deps += self._mm_deps
         return deps
 
-    Distribution.iter_dependencies = patched_iter_dependencies
+    Distribution.iter_dependencies = patched_iter_dependencies  # type: ignore
     try:
         yield
     finally:
-        Distribution.iter_dependencies = origin_iter_dependencies
+        Distribution.iter_dependencies = origin_iter_dependencies  # type: ignore  # noqa: E501
 
 
 def filter_invalid_marker(extra_requires: List) -> None:
