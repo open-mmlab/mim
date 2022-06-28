@@ -103,9 +103,13 @@ def install(
     else:
         mmcv_find_base_url = DEFAULT_MMCV_FIND_BASE_URL
 
+    parse_result = urlparse(mmcv_find_base_url)
+    assert parse_result.scheme, 'URL scheme not found: {parse_result}'
+    assert parse_result.netloc, 'URL netloc not found: {parse_result}'
+
     # Mark mmcv find host as trusted if URL scheme is http.
-    if 'http://' in mmcv_find_base_url:
-        install_args += ['--trusted-host', urlparse(mmcv_find_base_url).netloc]
+    if parse_result.scheme == 'http':
+        install_args += ['--trusted-host', parse_result.netloc]
 
     # Add mmcv-full find links by default.
     install_args += ['-f', get_mmcv_full_find_link(mmcv_find_base_url)]
