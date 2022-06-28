@@ -7,13 +7,13 @@ You can customize MIM using the `~/.mimrc` file, which should be placed in your 
 You can customize the default values of MIM commands with `~/.mimrc`:
 
 ```ini
-[option.train]
+[options.train]
 gpus = 8
 gpus_per_node = 8
 cpus_per_task = 4
 launcher = 'slurm'
 
-[option.install]
+[options.install]
 is_yes = True
 ```
 
