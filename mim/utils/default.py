@@ -5,6 +5,8 @@ import os.path as osp
 USER = 'open-mmlab'
 DEFAULT_URL = f'https://github.com/{USER}'
 
+DEFAULT_MMCV_FIND_BASE_URL = 'https://download.openmmlab.com'
+
 WHEEL_URL = {
     'mmcv-full':
     'https://download.openmmlab.com/mmcv/dist/{cuda_version}/'
