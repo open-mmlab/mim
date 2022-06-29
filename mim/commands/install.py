@@ -98,15 +98,15 @@ def install(
     # Get mmcv_find_base_url from environment variable if exists.
     mmcv_find_base_url = os.environ.get('MMCV_FIND_BASE_URL', None)
     if mmcv_find_base_url is not None:
-        echo_warning('Use the mmcv find base URL from environment variable '
+        echo_warning('Using the mmcv find base URL from environment variable '
                      f'`MMCV_FIND_BASE_URL`: {mmcv_find_base_url}')
     else:
         mmcv_find_base_url = DEFAULT_MMCV_FIND_BASE_URL
 
     # Check if `mmcv_find_base_url` match the pattern: <scheme>://<netloc>
     parse_result = urlparse(mmcv_find_base_url)
-    assert parse_result.scheme, f'URL scheme not found: {parse_result}'
-    assert parse_result.netloc, f'URL netloc not found: {parse_result}'
+    assert parse_result.scheme, 'Missing URL scheme (http / https). A valid ' \
+        f'`MMCV_FIND_BASE_URL` example: {DEFAULT_MMCV_FIND_BASE_URL}'
 
     # Mark mmcv find host as trusted if URL scheme is http.
     if parse_result.scheme == 'http':
