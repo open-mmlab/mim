@@ -14,7 +14,7 @@ from pip._internal.commands import create_command
 
 from mim.utils import (
     DEFAULT_CACHE_DIR,
-    DEFAULT_MMCV_FIND_BASE_URL,
+    DEFAULT_MMCV_BASE_URL,
     PKG2PROJECT,
     echo_warning,
     get_torch_cuda_version,
@@ -95,25 +95,25 @@ def install(
     # the package is already installed.
     importlib.reload(pip._vendor.pkg_resources)
 
-    # Get mmcv_find_base_url from environment variable if exists.
-    mmcv_find_base_url = os.environ.get('MMCV_FIND_BASE_URL', None)
-    if mmcv_find_base_url is not None:
+    # Get mmcv_base_url from environment variable if exists.
+    mmcv_base_url = os.environ.get('MMCV_BASE_URL', None)
+    if mmcv_base_url is not None:
         echo_warning('Using the mmcv find base URL from environment variable '
-                     f'`MMCV_FIND_BASE_URL`: {mmcv_find_base_url}')
+                     f'`MMCV_BASE_URL`: {mmcv_base_url}')
     else:
-        mmcv_find_base_url = DEFAULT_MMCV_FIND_BASE_URL
+        mmcv_base_url = DEFAULT_MMCV_BASE_URL
 
-    # Check if `mmcv_find_base_url` match the pattern: <scheme>://<netloc>
-    parse_result = urlparse(mmcv_find_base_url)
+    # Check if `mmcv_base_url` match the pattern: <scheme>://<netloc>
+    parse_result = urlparse(mmcv_base_url)
     assert parse_result.scheme, 'Missing URL scheme (http / https). A valid ' \
-        f'`MMCV_FIND_BASE_URL` example: {DEFAULT_MMCV_FIND_BASE_URL}'
+        f'`MMCV_BASE_URL` example: {DEFAULT_MMCV_BASE_URL}'
 
     # Mark mmcv find host as trusted if URL scheme is http.
     if parse_result.scheme == 'http':
         install_args += ['--trusted-host', parse_result.netloc]
 
     # Add mmcv-full find links by default.
-    install_args += ['-f', get_mmcv_full_find_link(mmcv_find_base_url)]
+    install_args += ['-f', get_mmcv_full_find_link(mmcv_base_url)]
 
     index_url_opt_names = ['-i', '--index-url', '--pypi-url']
     if any([opt_name in install_args for opt_name in index_url_opt_names]):
@@ -140,11 +140,11 @@ def install(
     return status_code
 
 
-def get_mmcv_full_find_link(mmcv_find_base_url: str) -> str:
+def get_mmcv_full_find_link(mmcv_base_url: str) -> str:
     """Get the mmcv-full find link corresponding to the current environment.
 
     Args:
-        mmcv_find_base_url (str): The base URL of mmcv find link.
+        mmcv_base_url (str): The base URL of mmcv find link.
 
     Returns:
         str: The mmcv find links corresponding to the current torch version and
@@ -157,7 +157,7 @@ def get_mmcv_full_find_link(mmcv_find_base_url: str) -> str:
     if cuda_v.isdigit():
         cuda_v = f'cu{cuda_v}'
 
-    find_link = f'{mmcv_find_base_url}/mmcv/dist/{cuda_v}/torch{torch_v}/index.html'  # noqa: E501
+    find_link = f'{mmcv_base_url}/mmcv/dist/{cuda_v}/torch{torch_v}/index.html'  # noqa: E501
     return find_link
 
 
