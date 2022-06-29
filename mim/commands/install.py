@@ -103,6 +103,7 @@ def install(
     else:
         mmcv_find_base_url = DEFAULT_MMCV_FIND_BASE_URL
 
+    # Check if `mmcv_find_base_url` match the pattern: <scheme>://<netloc>
     parse_result = urlparse(mmcv_find_base_url)
     assert parse_result.scheme, f'URL scheme not found: {parse_result}'
     assert parse_result.netloc, f'URL netloc not found: {parse_result}'
