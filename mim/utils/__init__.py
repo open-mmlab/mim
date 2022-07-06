@@ -22,6 +22,7 @@ from .utils import (
     ensure_installation,
     exit_with_error,
     extract_tar,
+    get_all_wheel_version,
     get_config,
     get_content_from_url,
     get_github_url,
@@ -88,4 +89,5 @@ __all__ = [
     'parse_home_page',
     'ensure_installation',
     'rich_progress_bar',
+    'get_all_wheel_version',
 ]

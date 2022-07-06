@@ -16,6 +16,7 @@ from mim.utils import (
     PKG2PROJECT,
     WHEEL_URL,
     echo_warning,
+    get_all_wheel_version,
     get_torch_cuda_version,
 )
 
@@ -95,7 +96,16 @@ def install(
     importlib.reload(pip._vendor.pkg_resources)
 
     # add mmcv-full find links by default
-    install_args += ['-f', get_mmcv_full_find_link()]
+    mmcv_full_find_link = get_mmcv_full_find_link()
+    install_args += ['-f', mmcv_full_find_link]
+
+    try:
+        # Get and prompt the built version of mmcv-full.
+        all_built_versions = get_all_wheel_version(mmcv_full_find_link)
+        click.echo('The mmcv-full built package version that satisfies the '
+                   f'current environment: {all_built_versions}.')
+    except:  # noqa: E722
+        pass
 
     index_url_opt_names = ['-i', '--index-url', '--pypi-url']
     if any([opt_name in install_args for opt_name in index_url_opt_names]):
