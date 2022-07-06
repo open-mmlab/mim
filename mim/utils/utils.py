@@ -554,3 +554,32 @@ def module_full_name(abbr: str) -> str:
     elif abbr in names or is_installed(abbr):
         return abbr
     return ''
+
+
+def get_all_wheel_version(index_page_url: str):
+    """Get all wheel version from the given index page url.
+
+    Args:
+        index_page_url (str): The index page url.
+
+    Returns:
+        list: A list of all version of wheel in this page.
+    """
+    response = get_content_from_url(index_page_url, timeout=5)
+    anchors = re.findall(r'<a href="(.*?)">', response.text)
+
+    wheel_file_re = re.compile(
+        r"""^(?P<namever>(?P<name>.+?)-(?P<ver>.*?))
+        ((-(?P<build>\d[^-]*?))?-(?P<pyver>.+?)-(?P<abi>.+?)-(?P<plat>.+?)
+        \.whl|\.dist-info)$""",
+        re.VERBOSE,
+    )
+
+    all_versions = set()
+    for anchor in anchors:
+        wheel_info = wheel_file_re.match(anchor.split('/')[-1])
+        if wheel_info:
+            # TODO: check valid tags (pyversions, abis, plat)
+            all_versions.add(wheel_info.group('ver').replace('_', '-'))
+
+    return sorted(all_versions, key=parse_version)
