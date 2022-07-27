@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .default import (
     DEFAULT_CACHE_DIR,
+    DEFAULT_MMCV_BASE_URL,
     DEFAULT_URL,
     MODULE2PKG,
     PKG2MODULE,
@@ -68,6 +69,7 @@ __all__ = [
     'color_echo',
     'USER',
     'WHEEL_URL',
+    'DEFAULT_MMCV_BASE_URL',
     'split_package_version',
     'call_command',
     'is_version_equal',
