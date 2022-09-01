@@ -86,7 +86,11 @@ def download(package: str,
             highlighted_error(f'Expected configs: {valid_configs}, but got '
                               f'{invalid_configs}'))
 
-    from mmcv import Config
+    try:
+        from mmengine import Config
+    except ImportError:
+        msg = 'Please install mmengine to use the download command.'
+        raise ImportError(highlighted_error(msg))
 
     for config in configs:
         click.echo(f'processing {config}...')

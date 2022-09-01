@@ -11,6 +11,8 @@ def setup_module():
     runner = CliRunner()
     result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmengine', '--yes'])
+    assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0
 
@@ -18,6 +20,8 @@ def setup_module():
 def test_download(tmp_path):
     runner = CliRunner()
     result = runner.invoke(install, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(install, ['mmengine', '--yes'])
     assert result.exit_code == 0
 
     with pytest.raises(ValueError):
@@ -53,6 +57,8 @@ def test_download(tmp_path):
 def teardown_module():
     runner = CliRunner()
     result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmengine', '--yes'])
     assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0
