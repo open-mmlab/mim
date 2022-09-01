@@ -13,6 +13,8 @@ def setup_module():
     runner = CliRunner()
     result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmengine', '--yes'])
+    assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0
 
@@ -27,6 +29,8 @@ def setup_module():
 def test_gridsearch(gpus, tmp_path):
     runner = CliRunner()
     result = runner.invoke(install, ['mmcls', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(install, ['mmengine', '--yes'])
     assert result.exit_code == 0
     # Since `mminstall.txt` is not included in the distribution of
     # mmcls<=0.23.1, we need to install mmcv-full manually.
@@ -67,6 +71,8 @@ def test_gridsearch(gpus, tmp_path):
 def teardown_module():
     runner = CliRunner()
     result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmengine', '--yes'])
     assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0

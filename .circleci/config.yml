@@ -28,7 +28,6 @@ jobs:
           name: Install dependencies for unit tests
           command: |
             python -m pip install -r requirements/tests.txt
-            python -m pip install git+ssh://git@github.com/open-mmlab/mmengine.git@main
       - run:
           name: Run unittests and generate coverage report
           command: |
