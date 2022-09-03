@@ -68,7 +68,10 @@ jobs:
       - name: Build and install
         run: rm -rf .eggs && python -m pip install -e .
       - name: Validate the installation
-        run: python -c "import mim"
+        run: |
+          python -c "import mim"
+          mim --help
+          python -m mim --help
       - name: Install unittest dependencies
         run: python -m pip install -r requirements/tests.txt
       - name: Run unittests and generate coverage report
