@@ -226,11 +226,9 @@ def train(
 
     if launcher == 'none':
         if gpus:
-            cmd = ['python', train_script, config, '--gpus',
-                   str(gpus)] + common_args
+            cmd = ['python', train_script, config] + common_args
         else:
-            cmd = ['python', train_script, config, '--device', 'cpu'
-                   ] + common_args
+            cmd = ['python', train_script, config] + common_args
     elif launcher == 'pytorch':
         cmd = [
             'python', '-m', 'torch.distributed.launch',

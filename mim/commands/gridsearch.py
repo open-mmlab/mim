@@ -272,8 +272,12 @@ def gridsearch(
     try:
         from mmengine import Config
     except ImportError:
-        msg = 'Please install mmengine to use the gridsearch command.'
-        raise ImportError(highlighted_error(msg))
+        try:
+            from mmcv import Config
+        except ImportError:
+            raise ImportError(
+                'Please install mmengine to use the download command: '
+                '`mim install mmengine`.')
 
     cfg = Config.fromfile(config)
     for arg in search_args_dict:
@@ -355,13 +359,9 @@ def gridsearch(
 
         if launcher == 'none':
             if gpus:
-                cmd = [
-                    'python', train_script, config_path, '--gpus',
-                    str(gpus)
-                ] + common_args
+                cmd = ['python', train_script, config_path] + common_args
             else:
-                cmd = ['python', train_script, config_path, '--device', 'cpu'
-                       ] + common_args
+                cmd = ['python', train_script, config_path] + common_args
         elif launcher == 'pytorch':
             cmd = [
                 'python', '-m', 'torch.distributed.launch',

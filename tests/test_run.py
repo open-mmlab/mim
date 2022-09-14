@@ -12,6 +12,8 @@ def setup_module():
     runner = CliRunner()
     result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcv', '--yes'])
+    assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0
 
@@ -26,38 +28,32 @@ def setup_module():
 ])
 def test_run(device, gpus, tmp_path):
     runner = CliRunner()
-    result = runner.invoke(install, ['mmcls', '--yes'])
-    assert result.exit_code == 0
-    # Since `mminstall.txt` is not included in the distribution of
-    # mmcls<=0.23.1, we need to install mmcv-full manually.
-    result = runner.invoke(install, ['mmcv-full', '--yes'])
+    result = runner.invoke(install, ['mmcls>=1.0.0rc0', '--yes'])
     assert result.exit_code == 0
 
     result = runner.invoke(run, [
-        'mmcls', 'train', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',
+        'mmcls', 'train', 'tests/data/lenet5_mnist.py',
         f'--work-dir={tmp_path}'
     ])
     assert result.exit_code == 0
     result = runner.invoke(run, [
-        'mmcls', 'test', 'tests/data/lenet5_mnist.py',
-        'tests/data/epoch_1.pth', f'--device={device}', '--metrics=accuracy'
+        'mmcls', 'test', 'tests/data/lenet5_mnist.py', 'tests/data/epoch_1.pth'
     ])
     assert result.exit_code == 0
     result = runner.invoke(run, [
-        'mmcls', 'xxx', 'tests/data/lenet5_mnist.py', 'tests/data/epoch_1.pth',
-        f'--gpus={gpus}', '--metrics=accuracy'
+        'mmcls', 'xxx', 'tests/data/lenet5_mnist.py', 'tests/data/epoch_1.pth'
     ])
     assert result.exit_code != 0
-    result = runner.invoke(run, [
-        'mmcls', 'test', 'tests/data/xxx.py', 'tests/data/epoch_1.pth',
-        f'--device={device}', '--metrics=accuracy'
-    ])
+    result = runner.invoke(
+        run, ['mmcls', 'test', 'tests/data/xxx.py', 'tests/data/epoch_1.pth'])
     assert result.exit_code != 0
 
 
 def teardown_module():
     runner = CliRunner()
     result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcv', '--yes'])
     assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0
