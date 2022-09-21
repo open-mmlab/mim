@@ -34,6 +34,8 @@ def test_gridsearch(gpus, tmp_path):
     assert result.exit_code == 0
     result = runner.invoke(install, ['mmengine', '--yes'])
     assert result.exit_code == 0
+    result = runner.invoke(install, ['mmcv>=2.0.0rc0', '--yes'])
+    assert result.exit_code == 0
 
     args1 = [
         'mmcls', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',

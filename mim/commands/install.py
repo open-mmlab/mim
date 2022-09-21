@@ -89,10 +89,22 @@ def install(
     """
 
     # Reload `pip._vendor.pkg_resources` so that pip can refresh to get the
-    # latest working set.
+    # latest working set in the same process.
     # In some cases, when a package is uninstalled and then installed, the
     # working set is not updated in time, leading to the mistaken belief that
     # the package is already installed.
+    #
+    # NOTE: Some unpredictable bugs could occurs with `importlib.reload`.
+    # A known issues in pip < 22.0: `METADATA not found in /tmp/xxx/xxx.whel`
+    # >>> import pip._vendor.pkg_resources
+    # >>> import importlib
+    # >>> a = pip._vendor.pkg_resources.DistInfoDistribution()
+    # >>> type(a) is pip._vendor.pkg_resources.DistInfoDistribution
+    # True
+    # >>> importlib.reload(pip._vendor.pkg_resources)
+    # <module 'pip._vendor.pkg_resources' from '...'>
+    # >>> type(a) is pip._vendor.pkg_resources.DistInfoDistribution
+    # False  # This will cause some problems!!!
     importlib.reload(pip._vendor.pkg_resources)
 
     # Get mmcv_base_url from environment variable if exists.

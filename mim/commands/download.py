@@ -100,8 +100,7 @@ def download(package: str,
             from mmcv import Config
         except ImportError:
             raise ImportError(
-                'Please install mmengine to use the download command: '
-                '`mim install mmengine`.')
+                'Please install mmengine to use the download command!')
 
     for config in configs:
         click.echo(f'processing {config}...')

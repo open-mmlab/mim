@@ -30,6 +30,10 @@ def test_run(device, gpus, tmp_path):
     runner = CliRunner()
     result = runner.invoke(install, ['mmcls>=1.0.0rc0', '--yes'])
     assert result.exit_code == 0
+    result = runner.invoke(install, ['mmengine', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(install, ['mmcv>=2.0.0rc0', '--yes'])
+    assert result.exit_code == 0
 
     result = runner.invoke(run, [
         'mmcls', 'train', 'tests/data/lenet5_mnist.py',
