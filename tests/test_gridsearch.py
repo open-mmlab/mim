@@ -38,12 +38,12 @@ def test_gridsearch(gpus, tmp_path):
     assert result.exit_code == 0
 
     args1 = [
-        'mmcls', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',
+        'mmcls', 'tests/data/lenet5_mnist_2.0.py', f'--gpus={gpus}',
         f'--work-dir={tmp_path}', '--search-args',
         '--optim_wrapper.optimizer.lr 1e-3 1e-4'
     ]
     args2 = [
-        'mmcls', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',
+        'mmcls', 'tests/data/lenet5_mnist_2.0.py', f'--gpus={gpus}',
         f'--work-dir={tmp_path}', '--search-args',
         '--optim_wrapper.optimizer.weight_decay 1e-3 1e-4'
     ]
@@ -53,7 +53,7 @@ def test_gridsearch(gpus, tmp_path):
         '--optim_wrapper.optimizer.lr 1e-3 1e-4'
     ]
     args4 = [
-        'mmcls', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',
+        'mmcls', 'tests/data/lenet5_mnist_2.0.py', f'--gpus={gpus}',
         f'--work-dir={tmp_path}', '--search-args'
     ]
 

@@ -35,7 +35,7 @@ def test_test(device):
     assert result.exit_code == 0
 
     result = runner.invoke(test, [
-        'mmcls', 'tests/data/lenet5_mnist.py', '--checkpoint',
+        'mmcls', 'tests/data/lenet5_mnist_2.0.py', '--checkpoint',
         'tests/data/epoch_1.pth'
     ])
     assert result.exit_code == 0
@@ -44,7 +44,7 @@ def test_test(device):
     ])
     assert result.exit_code != 0
     result = runner.invoke(test, [
-        'mmcls', 'tests/data/lenet5_mnist.py', '--checkpoint',
+        'mmcls', 'tests/data/lenet5_mnist_2.0.py', '--checkpoint',
         'tests/data/xxx.pth'
     ])
     assert result.exit_code != 0

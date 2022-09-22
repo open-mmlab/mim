@@ -35,7 +35,7 @@ def test_train(gpus, tmp_path):
     assert result.exit_code == 0
 
     result = runner.invoke(train, [
-        'mmcls', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',
+        'mmcls', 'tests/data/lenet5_mnist_2.0.py', f'--gpus={gpus}',
         f'--work-dir={tmp_path}'
     ])
     assert result.exit_code == 0

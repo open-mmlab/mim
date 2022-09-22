@@ -36,16 +36,18 @@ def test_run(device, gpus, tmp_path):
     assert result.exit_code == 0
 
     result = runner.invoke(run, [
-        'mmcls', 'train', 'tests/data/lenet5_mnist.py',
+        'mmcls', 'train', 'tests/data/lenet5_mnist_2.0.py',
         f'--work-dir={tmp_path}'
     ])
     assert result.exit_code == 0
     result = runner.invoke(run, [
-        'mmcls', 'test', 'tests/data/lenet5_mnist.py', 'tests/data/epoch_1.pth'
+        'mmcls', 'test', 'tests/data/lenet5_mnist_2.0.py',
+        'tests/data/epoch_1.pth'
     ])
     assert result.exit_code == 0
     result = runner.invoke(run, [
-        'mmcls', 'xxx', 'tests/data/lenet5_mnist.py', 'tests/data/epoch_1.pth'
+        'mmcls', 'xxx', 'tests/data/lenet5_mnist_2.0.py',
+        'tests/data/epoch_1.pth'
     ])
     assert result.exit_code != 0
     result = runner.invoke(
