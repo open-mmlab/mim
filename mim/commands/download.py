@@ -68,8 +68,6 @@ def download(package: str,
 
     # Create the destination directory if it does not exist.
     if not osp.exists(dest_root):
-        click.echo('The destination directory dose not exists and will '
-                   f'be created automatically: {dest_root}.')
         os.makedirs(dest_root)
 
     package, version = split_package_version(package)
