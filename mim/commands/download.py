@@ -66,7 +66,7 @@ def download(package: str,
 
     dest_root = osp.abspath(dest_root)
 
-    # Create destination directory if dose not exists.
+    # Create the destination directory if it does not exist.
     if not osp.exists(dest_root):
         click.echo('The destination directory dose not exists and will '
                    f'be created automatically: {dest_root}.')
