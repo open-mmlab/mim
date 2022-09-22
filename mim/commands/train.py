@@ -225,10 +225,14 @@ def train(
     common_args = ['--launcher', launcher] + list(other_args)
 
     if launcher == 'none':
-        if gpus:
-            cmd = ['python', train_script, config] + common_args
-        else:
-            cmd = ['python', train_script, config] + common_args
+        cmd = ['python', train_script, config] + common_args
+        help_msg = subprocess.check_output(['python', train_script, '-h'])
+        if '--gpus' in help_msg.decode():
+            # OpenMMLab 1.0 should add the `--gpus` or `--device` flags.
+            if gpus:
+                cmd += ['--gpus', str(gpus)]
+            else:
+                cmd += ['--device', 'cpu']
     elif launcher == 'pytorch':
         cmd = [
             'python', '-m', 'torch.distributed.launch',
