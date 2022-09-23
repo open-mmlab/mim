@@ -10,6 +10,8 @@ def setup_module():
     runner = CliRunner()
     result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcv', '--yes'])
+    assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0
 
@@ -29,6 +31,8 @@ def test_list():
 def teardown_module():
     runner = CliRunner()
     result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcv', '--yes'])
     assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0

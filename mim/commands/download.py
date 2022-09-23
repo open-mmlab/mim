@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os
 import os.path as osp
 from typing import List, Optional
 
@@ -65,6 +66,10 @@ def download(package: str,
 
     dest_root = osp.abspath(dest_root)
 
+    # Create the destination directory if it does not exist.
+    if not osp.exists(dest_root):
+        os.makedirs(dest_root)
+
     package, version = split_package_version(package)
     if version:
         raise ValueError(
@@ -89,8 +94,11 @@ def download(package: str,
     try:
         from mmengine import Config
     except ImportError:
-        msg = 'Please install mmengine to use the download command.'
-        raise ImportError(highlighted_error(msg))
+        try:
+            from mmcv import Config
+        except ImportError:
+            raise ImportError(
+                'Please install mmengine to use the download command!')
 
     for config in configs:
         click.echo(f'processing {config}...')

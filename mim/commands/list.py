@@ -66,7 +66,7 @@ def list_package(all: bool = False) -> List[Tuple[str, ...]]:
                 feed_parser.feed(metadata)
                 home_page = feed_parser.close().get('home-page')
 
-            if pkg_name.startswith('mmcv'):
+            if pkg_name.startswith('mmcv') or pkg_name == 'mmengine':
                 pkgs_info.append((pkg_name, pkg.version, home_page))
                 continue
 

@@ -12,6 +12,8 @@ def setup_module():
     runner = CliRunner()
     result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcv', '--yes'])
+    assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0
 
@@ -25,15 +27,15 @@ def setup_module():
 ])
 def test_train(gpus, tmp_path):
     runner = CliRunner()
-    result = runner.invoke(install, ['mmcls', '--yes'])
+    result = runner.invoke(install, ['mmcls>=1.0.0rc0', '--yes'])
     assert result.exit_code == 0
-    # Since `mminstall.txt` is not included in the distribution of
-    # mmcls<=0.23.1, we need to install mmcv-full manually.
-    result = runner.invoke(install, ['mmcv-full', '--yes'])
+    result = runner.invoke(install, ['mmengine', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(install, ['mmcv>=2.0.0rc0', '--yes'])
     assert result.exit_code == 0
 
     result = runner.invoke(train, [
-        'mmcls', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',
+        'mmcls', 'tests/data/lenet5_mnist_2.0.py', f'--gpus={gpus}',
         f'--work-dir={tmp_path}'
     ])
     assert result.exit_code == 0
@@ -48,6 +50,8 @@ def test_train(gpus, tmp_path):
 def teardown_module():
     runner = CliRunner()
     result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcv', '--yes'])
     assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
     assert result.exit_code == 0

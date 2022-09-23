@@ -13,6 +13,8 @@ def setup_module():
     runner = CliRunner()
     result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
+    result = runner.invoke(uninstall, ['mmcv', '--yes'])
+    assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmengine', '--yes'])
     assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcls', '--yes'])
@@ -28,30 +30,30 @@ def setup_module():
 ])
 def test_gridsearch(gpus, tmp_path):
     runner = CliRunner()
-    result = runner.invoke(install, ['mmcls', '--yes'])
+    result = runner.invoke(install, ['mmcls>=1.0.0rc0', '--yes'])
     assert result.exit_code == 0
     result = runner.invoke(install, ['mmengine', '--yes'])
     assert result.exit_code == 0
-    # Since `mminstall.txt` is not included in the distribution of
-    # mmcls<=0.23.1, we need to install mmcv-full manually.
-    result = runner.invoke(install, ['mmcv-full', '--yes'])
+    result = runner.invoke(install, ['mmcv>=2.0.0rc0', '--yes'])
     assert result.exit_code == 0
 
     args1 = [
-        'mmcls', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',
-        f'--work-dir={tmp_path}', '--search-args', '--optimizer.lr 1e-3 1e-4'
+        'mmcls', 'tests/data/lenet5_mnist_2.0.py', f'--gpus={gpus}',
+        f'--work-dir={tmp_path}', '--search-args',
+        '--optim_wrapper.optimizer.lr 1e-3 1e-4'
     ]
     args2 = [
-        'mmcls', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',
+        'mmcls', 'tests/data/lenet5_mnist_2.0.py', f'--gpus={gpus}',
         f'--work-dir={tmp_path}', '--search-args',
-        '--optimizer.weight_decay 1e-3 1e-4'
+        '--optim_wrapper.optimizer.weight_decay 1e-3 1e-4'
     ]
     args3 = [
         'mmcls', 'tests/data/xxx.py', f'--gpus={gpus}',
-        f'--work-dir={tmp_path}', '--search-args', '--optimizer.lr 1e-3 1e-4'
+        f'--work-dir={tmp_path}', '--search-args',
+        '--optim_wrapper.optimizer.lr 1e-3 1e-4'
     ]
     args4 = [
-        'mmcls', 'tests/data/lenet5_mnist.py', f'--gpus={gpus}',
+        'mmcls', 'tests/data/lenet5_mnist_2.0.py', f'--gpus={gpus}',
         f'--work-dir={tmp_path}', '--search-args'
     ]
 
@@ -70,6 +72,8 @@ def test_gridsearch(gpus, tmp_path):
 
 def teardown_module():
     runner = CliRunner()
+    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
     assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmengine', '--yes'])

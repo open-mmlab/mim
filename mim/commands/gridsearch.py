@@ -272,8 +272,11 @@ def gridsearch(
     try:
         from mmengine import Config
     except ImportError:
-        msg = 'Please install mmengine to use the gridsearch command.'
-        raise ImportError(highlighted_error(msg))
+        try:
+            from mmcv import Config
+        except ImportError:
+            raise ImportError(
+                'Please install mmengine to use the gridsearch command!')
 
     cfg = Config.fromfile(config)
     for arg in search_args_dict:
@@ -354,14 +357,14 @@ def gridsearch(
         common_args = ['--launcher', launcher] + other_args_str.split()
 
         if launcher == 'none':
-            if gpus:
-                cmd = [
-                    'python', train_script, config_path, '--gpus',
-                    str(gpus)
-                ] + common_args
-            else:
-                cmd = ['python', train_script, config_path, '--device', 'cpu'
-                       ] + common_args
+            cmd = ['python', train_script, config_path] + common_args
+            help_msg = subprocess.check_output(['python', train_script, '-h'])
+            if '--gpus' in help_msg.decode():
+                # OpenMMLab 1.0 should add the `--gpus` or `--device` flags.
+                if gpus:
+                    cmd += ['--gpus', str(gpus)]
+                else:
+                    cmd += ['--device', 'cpu']
         elif launcher == 'pytorch':
             cmd = [
                 'python', '-m', 'torch.distributed.launch',
