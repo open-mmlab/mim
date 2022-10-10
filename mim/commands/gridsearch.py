@@ -276,7 +276,7 @@ def gridsearch(
             from mmcv import Config
         except ImportError:
             raise ImportError(
-                '''Please install mmengine to use the gridsearch command:)
+                '''Please install mmengine to use the gridsearch command:
             `mim install mmengine`.''')
 
     cfg = Config.fromfile(config)
