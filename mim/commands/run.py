@@ -26,7 +26,7 @@ from mim.utils import (
     cls=CustomCommand)
 @click.argument('package', type=str, callback=param2lowercase)
 @click.argument('command', type=str)
-@click.option('-y', '--yes', is_flag=True, help='Don’t ask for confirmation.')
+@click.option('-y', '--yes', is_flag=True, help='Don\'t ask for confirmation.')
 @click.argument('other_args', nargs=-1, type=click.UNPROCESSED)
 def cli(package: str, command: str, yes: bool, other_args: tuple = ()) -> None:
     """Run arbitrary command of a codebase.
@@ -81,7 +81,7 @@ def run(
     Args:
         package (str): The codebase name.
         command (str): The command name.
-        yes (bool): Don’t ask for confirmation. Default: True.
+        yes (bool): Don\'t ask for confirmation. Default: True.
         other_args (tuple, optional): Other arguments, will be passed to the
             codebase's script. Defaults to ().
     """

@@ -23,7 +23,7 @@ from mim.utils import call_command
     '--yes',
     'confirm_yes',
     is_flag=True,
-    help='Don’t ask for confirmation of uninstall deletions.')
+    help='Don\'t ask for confirmation of uninstall deletions.')
 @click.option(
     '-r',
     '--requirement',
@@ -61,7 +61,7 @@ def uninstall(uninstall_args: Union[str, List],
     Args:
         uninstall_args (str or list): A package name or a list of package names
             to uninstalled. You can also put some `pip uninstal` options here.
-        confirm_yes (bool): Don’t ask for confirmation of uninstall deletions.
+        confirm_yes (bool): Don\'t ask for confirmation of uninstall deletions.
             Default: True.
         requirements (tuple): A tuple of requirements files to uninstalled.
 
