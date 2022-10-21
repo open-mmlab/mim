@@ -64,7 +64,7 @@ from mim.utils import (
     help='The partition to use (only applicable to launcher == "slurm")')
 @click.option(
     '--srun-args', type=str, help='Other srun arguments that might be used')
-@click.option('-y', '--yes', is_flag=True, help='Don’t ask for confirmation.')
+@click.option('-y', '--yes', is_flag=True, help='Don\'t ask for confirmation.')
 @click.argument('other_args', nargs=-1, type=click.UNPROCESSED)
 def cli(package: str,
         config: str,
@@ -160,7 +160,7 @@ def test(
             between 20000 and 30000.
         srun_args (str, optional): Other srun arguments that might be
             used, all arguments should be in a string. Defaults to None.
-        yes (bool): Don’t ask for confirmation. Default: True.
+        yes (bool): Don\'t ask for confirmation. Default: True.
         other_args (tuple, optional): Other arguments, will be passed to the
             codebase's training script. Defaults to ().
     """

@@ -107,7 +107,7 @@ class CustomCommand(click.Command):
                     files.extend([osp.join(item[0], x) for x in item[2]])
 
                 files = [x for x in files if x.endswith('.py')]
-                files = [x.split(tool_root + '/')[1] for x in files]
+                files = [x.split(tool_root + os.sep)[1] for x in files]
 
                 if len(files):
                     click.echo('=' * 80)

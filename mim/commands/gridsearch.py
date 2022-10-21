@@ -68,7 +68,7 @@ from mim.utils import (
     '-j', '--max-jobs', type=int, help='Max parallel number', default=1)
 @click.option(
     '--srun-args', type=str, help='Other srun arguments that might be used')
-@click.option('-y', '--yes', is_flag=True, help='Don’t ask for confirmation.')
+@click.option('-y', '--yes', is_flag=True, help='Don\'t ask for confirmation.')
 @click.option(
     '--search-args', type=str, help='Arguments for hyper parameters search')
 @click.argument('other_args', nargs=-1, type=click.UNPROCESSED)
@@ -186,7 +186,7 @@ def gridsearch(
             used, all arguments should be in a string. Defaults to None.
         search_args (str, optional): Arguments for hyper parameters search, all
             arguments should be in a string. Defaults to None.
-        yes (bool): Don’t ask for confirmation. Default: True.
+        yes (bool): Don\'t ask for confirmation. Default: True.
         other_args (tuple, optional): Other arguments, will be passed to the
             codebase's training script. Defaults to ().
     """
