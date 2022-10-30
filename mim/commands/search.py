@@ -5,7 +5,10 @@ import re
 import subprocess
 import tempfile
 import typing
+import os
 from typing import Any, List, Optional
+from pip._internal.commands import create_command
+import os.path as osp
 
 import click
 from modelindex.load_model_index import load
@@ -19,15 +22,14 @@ from mim.click import (
     param2lowercase,
 )
 from mim.utils import (
-    DEFAULT_CACHE_DIR,
-    PKG2PROJECT,
     cast2lowercase,
     echo_success,
-    get_github_url,
     get_installed_path,
     highlighted_error,
     is_installed,
-    split_package_version,
+    echo_warning,
+    extract_tar,
+    recursively_find,
 )
 
 
@@ -72,6 +74,15 @@ from mim.utils import (
 @click.option(
     '--local/--remote', default=True, help='Show local or remote packages.')
 @click.option(
+    '-i',
+    '--index-url',
+    '--pypi-url',
+    'index_url',
+    help='Base URL of the Python Package Index (default %default). '
+    'This should point to a repository compliant with PEP 503 '
+    '(the simple repository API) or a local directory laid out '
+    'in the same format.')
+@click.option(
     '--display-width', type=int, default=80, help='The display width.')
 def cli(packages: List[str],
         configs: Optional[List[str]] = None,
@@ -87,7 +98,8 @@ def cli(packages: List[str],
         json_path: Optional[str] = None,
         to_dict: bool = False,
         local: bool = True,
-        display_width: int = 80) -> Any:
+        display_width: int = 80,
+        index_url: Optional[str] = None) -> Any:
     """Show the information of packages.
 
     \b
@@ -118,7 +130,8 @@ def cli(packages: List[str],
             ascending=ascending,
             shown_fields=shown_fields,
             unshown_fields=unshown_fields,
-            local=local)
+            local=local,
+            index_url=index_url)
 
         if to_dict or json_path:
             packages_info.update(dataframe.to_dict('index'))  # type: ignore
@@ -150,7 +163,8 @@ def get_model_info(package: str,
                    shown_fields: Optional[List[str]] = None,
                    unshown_fields: Optional[List[str]] = None,
                    local: bool = True,
-                   to_dict: bool = False) -> Any:
+                   to_dict: bool = False,
+                   index_url: Optional[str] = None) -> Any:
     """Get model information like metric or dataset.
 
     Args:
@@ -170,8 +184,11 @@ def get_model_info(package: str,
         local (bool): Query from local environment or remote github.
             Default: True.
         to_dict (bool): Convert dataframe into dict. Default: False.
+        index_url (str, optional): The pypi index url, if given, will be used
+            in `pip download` command for downloading packages when local
+            is False. Default: None.
     """
-    metadata = load_metadata(package, local)
+    metadata = load_metadata(package, local, index_url)
     dataframe = convert2df(metadata)
     dataframe = filter_by_configs(dataframe, configs)
     dataframe = filter_by_conditions(dataframe, filter_conditions)
@@ -186,13 +203,16 @@ def get_model_info(package: str,
         return dataframe
 
 
-def load_metadata(package: str, local: bool = True) -> Optional[ModelIndex]:
+def load_metadata(package: str, local: bool = True, index_url: Optional[str] = None) -> Optional[ModelIndex]:
     """Load metadata from local package or remote package.
 
     Args:
         package (str): Name of package to load metadata.
         local (bool): Query from local environment or remote github.
             Default: True.
+        index_url (str, optional): The pypi index url, if given, will be used
+            in `pip download` command for downloading packages when local
+            is False. Default: None.
     """
     if '=' in package and local:
         raise ValueError(
@@ -203,7 +223,7 @@ def load_metadata(package: str, local: bool = True) -> Optional[ModelIndex]:
     if local:
         return load_metadata_from_local(package)
     else:
-        return load_metadata_from_remote(package)
+        return load_metadata_from_remote(package, index_url)
 
 
 def load_metadata_from_local(package: str):
@@ -241,55 +261,58 @@ def load_metadata_from_local(package: str):
                 f'install {package}" or use mim search {package} --remote'))
 
 
-def load_metadata_from_remote(package: str) -> Optional[ModelIndex]:
-    """Load metadata from github.
+def load_metadata_from_remote(package: str, index_url: Optional[str] = None) -> Optional[ModelIndex]:
+    """Load metadata from PyPI.
 
-    Download the model_zoo directory from github and parse it into metadata.
+    Download the model_zoo directory from PyPI and parse it into metadata.
 
     Args:
         package (str): Name of package to load metadata.
+        index_url (str, optional): The pypi index url, if given, will be used
+            in `pip download` command for downloading packages.
+            Default: None.
 
     Example:
-        >>> # load metadata from master branch
+        >>> # load metadata from latest version
         >>> metadata = load_metadata_from_remote('mmcls')
         >>> # load metadata from 0.11.0
         >>> metadata = load_metadata_from_remote('mmcls==0.11.0')
     """
-    package, version = split_package_version(package)
-
-    github_url = get_github_url(package)
-
-    pkl_path = osp.join(DEFAULT_CACHE_DIR, f'{package}-{version}.pkl')
-    if osp.exists(pkl_path):
-        with open(pkl_path, 'rb') as fr:
-            return pickle.load(fr)
+    if index_url is not None:
+        click.echo(f'Loading metadata from PyPI ({index_url}) by "pip download" command.')
     else:
-        clone_cmd = ['git', 'clone', github_url]
-        if version:
-            clone_cmd.extend(['-b', f'v{version}'])
-        with tempfile.TemporaryDirectory() as temp:
-            repo_root = osp.join(temp, PKG2PROJECT[package])
-            clone_cmd.append(repo_root)
-            subprocess.check_call(
-                clone_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        click.echo(f'Loading metadata from PyPI by "pip download" command.')
 
-            # rename the model_zoo.yml to model-index.yml but support both of
-            # them for backward compatibility
-            possible_metadata_paths = [
-                osp.join(repo_root, 'model-index.yml'),
-                osp.join(repo_root, 'model_zoo.yml'),
-            ]
-            for metadata_path in possible_metadata_paths:
-                if osp.exists(metadata_path):
-                    metadata = load(metadata_path)
-                    if version:
-                        with open(pkl_path, 'wb') as fw:
-                            pickle.dump(metadata, fw)
-                    return metadata
-            raise FileNotFoundError(
-                highlighted_error(
-                    'model-index.yml or model_zoo.yml is not found, please '
-                    f'upgrade your {package} to support search command'))
+    with tempfile.TemporaryDirectory() as temp_dir:
+        download_args = [
+            package, '-d', temp_dir, '--no-deps', '--no-binary', ':all:', '-q'
+        ]
+        if index_url is not None:
+            download_args += ['-i', index_url]
+        status_code = create_command('download').main(download_args)
+        if status_code != 0:
+            echo_warning(f'pip download failed with args: {download_args}')
+            exit(status_code)
+        
+        # untar the file and get the package directory
+        tar_path = osp.join(temp_dir, os.listdir(temp_dir)[0])
+        extract_tar(tar_path, temp_dir)
+        filename_no_ext = osp.basename(tar_path).rstrip('.tar.gz')
+        package_dir = osp.join(temp_dir, filename_no_ext)
+
+        # rename the model_zoo.yml to model-index.yml but support both of
+        # them for backward compatibility
+        possible_metadata_paths = recursively_find(package_dir, 'model-index.yml')
+        possible_metadata_paths.extend(recursively_find(package_dir, 'model_zoo.yml'))
+        for metadata_path in possible_metadata_paths:
+            if osp.exists(metadata_path):
+                metadata = load(metadata_path)
+                return metadata
+        raise FileNotFoundError(
+            highlighted_error(
+                'model-index.yml or model_zoo.yml is not found, please '
+                f'upgrade your {package} to support search command'))
+        
 
 
 def convert2df(metadata: ModelIndex) -> DataFrame:
