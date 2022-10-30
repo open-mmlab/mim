@@ -37,8 +37,8 @@ def test_search():
     result = runner.invoke(search, ['mmaction2', '--remote'])
     assert result.exit_code == 0
 
-    # mim search mmcls==0.11.0 --remote
-    result = runner.invoke(search, ['mmcls==0.11.0', '--remote'])
+    # mim search mmcls==0.24.0 --remote
+    result = runner.invoke(search, ['mmcls==0.24.0', '--remote'])
     assert result.exit_code == 0
 
     # always test latest mmcls
