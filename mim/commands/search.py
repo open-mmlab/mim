@@ -1,19 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os
 import os.path as osp
-import pickle
 import re
-import subprocess
 import tempfile
 import typing
-import os
 from typing import Any, List, Optional
-from pip._internal.commands import create_command
-import os.path as osp
 
 import click
 from modelindex.load_model_index import load
 from modelindex.models.ModelIndex import ModelIndex
 from pandas import DataFrame, Series
+from pip._internal.commands import create_command
 
 from mim.click import (
     OptionEatAll,
@@ -24,11 +21,11 @@ from mim.click import (
 from mim.utils import (
     cast2lowercase,
     echo_success,
+    echo_warning,
+    extract_tar,
     get_installed_path,
     highlighted_error,
     is_installed,
-    echo_warning,
-    extract_tar,
     recursively_find,
 )
 
@@ -203,7 +200,9 @@ def get_model_info(package: str,
         return dataframe
 
 
-def load_metadata(package: str, local: bool = True, index_url: Optional[str] = None) -> Optional[ModelIndex]:
+def load_metadata(package: str,
+                  local: bool = True,
+                  index_url: Optional[str] = None) -> Optional[ModelIndex]:
     """Load metadata from local package or remote package.
 
     Args:
@@ -261,7 +260,9 @@ def load_metadata_from_local(package: str):
                 f'install {package}" or use mim search {package} --remote'))
 
 
-def load_metadata_from_remote(package: str, index_url: Optional[str] = None) -> Optional[ModelIndex]:
+def load_metadata_from_remote(package: str,
+                              index_url: Optional[str] = None
+                              ) -> Optional[ModelIndex]:
     """Load metadata from PyPI.
 
     Download the model_zoo directory from PyPI and parse it into metadata.
@@ -279,9 +280,10 @@ def load_metadata_from_remote(package: str, index_url: Optional[str] = None) -> 
         >>> metadata = load_metadata_from_remote('mmcls==0.11.0')
     """
     if index_url is not None:
-        click.echo(f'Loading metadata from PyPI ({index_url}) by "pip download" command.')
+        click.echo(f'Loading metadata from PyPI ({index_url}) with '
+                   '"pip download" command.')
     else:
-        click.echo(f'Loading metadata from PyPI by "pip download" command.')
+        click.echo('Loading metadata from PyPI with "pip download" command.')
 
     with tempfile.TemporaryDirectory() as temp_dir:
         download_args = [
@@ -293,7 +295,7 @@ def load_metadata_from_remote(package: str, index_url: Optional[str] = None) -> 
         if status_code != 0:
             echo_warning(f'pip download failed with args: {download_args}')
             exit(status_code)
-        
+
         # untar the file and get the package directory
         tar_path = osp.join(temp_dir, os.listdir(temp_dir)[0])
         extract_tar(tar_path, temp_dir)
@@ -302,8 +304,10 @@ def load_metadata_from_remote(package: str, index_url: Optional[str] = None) -> 
 
         # rename the model_zoo.yml to model-index.yml but support both of
         # them for backward compatibility
-        possible_metadata_paths = recursively_find(package_dir, 'model-index.yml')
-        possible_metadata_paths.extend(recursively_find(package_dir, 'model_zoo.yml'))
+        possible_metadata_paths = recursively_find(package_dir,
+                                                   'model-index.yml')
+        possible_metadata_paths.extend(
+            recursively_find(package_dir, 'model_zoo.yml'))
         for metadata_path in possible_metadata_paths:
             if osp.exists(metadata_path):
                 metadata = load(metadata_path)
@@ -312,7 +316,6 @@ def load_metadata_from_remote(package: str, index_url: Optional[str] = None) -> 
             highlighted_error(
                 'model-index.yml or model_zoo.yml is not found, please '
                 f'upgrade your {package} to support search command'))
-        
 
 
 def convert2df(metadata: ModelIndex) -> DataFrame:
