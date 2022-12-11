@@ -36,9 +36,16 @@ from mim.utils import (
     required=True,
     help='Config ids to download, such as resnet18_8xb16_cifar10')
 @click.option(
+    '--no-check-certificate',
+    'check_certificate',
+    is_flag=True,
+    default=True,
+    help='Ignore ssl certificate check')
+@click.option(
     '--dest', 'dest_root', type=str, help='Destination of saving checkpoints.')
 def cli(package: str,
         configs: List[str],
+        check_certificate: bool,
         dest_root: Optional[str] = None) -> None:
     """Download checkpoints from url and parse configs from package.
 
@@ -47,20 +54,23 @@ def cli(package: str,
         > mim download mmcls --config resnet18_8xb16_cifar10
         > mim download mmcls --config resnet18_8xb16_cifar10 --dest .
     """
-    download(package, configs, dest_root)
+    download(package, configs, check_certificate, dest_root)
 
 
 def download(package: str,
              configs: List[str],
+             check_certificate: bool = True,
              dest_root: Optional[str] = None) -> List[str]:
     """Download checkpoints from url and parse configs from package.
 
     Args:
         package (str): Name of package.
         configs (List[str]): List of config ids.
+        check_certificate (bool): Whether to check the ssl certificate
         dest_root (Optional[str]): Destination directory to save checkpoint and
             config. Default: None.
     """
+    print(check_certificate)
     if dest_root is None:
         dest_root = DEFAULT_CACHE_DIR
 
@@ -112,7 +122,8 @@ def download(package: str,
                 echo_success(f'{filename} exists in {dest_root}')
             else:
                 # TODO: check checkpoint hash when all the models are ready.
-                download_from_file(checkpoint_url, checkpoint_path)
+                download_from_file(checkpoint_url, checkpoint_path,
+                                   check_certificate)
 
                 echo_success(
                     f'Successfully downloaded {filename} to {dest_root}')
