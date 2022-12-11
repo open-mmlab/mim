@@ -70,7 +70,6 @@ def download(package: str,
         dest_root (Optional[str]): Destination directory to save checkpoint and
             config. Default: None.
     """
-    print(check_certificate)
     if dest_root is None:
         dest_root = DEFAULT_CACHE_DIR
 
