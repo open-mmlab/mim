@@ -174,7 +174,6 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
   ```bash
   > mim download mmcls --config resnet18_8xb16_cifar10
   > mim download mmcls --config resnet18_8xb16_cifar10 --dest .
-  > mim download mmcls --no-check-certificate --config resnet18_8xb16_cifar10 --dest .
   ```
 
 - api
