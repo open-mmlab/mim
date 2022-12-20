@@ -141,6 +141,8 @@ def get_content_from_url(url: str,
     Args:
         url (str): Url for getting content.
         timeout (int): Set the socket timeout. Default: 15.
+        check_certificate (bool): Whether to check the ssl certificate.
+            Default: True.
     """
     try:
         response = requests.get(
@@ -166,7 +168,8 @@ def download_from_file(url: str,
     Args:
         url (str): URL of the object to download.
         dest_path (str): Path where object will be saved.
-        check_certificate (bool): Whether to check the ssl certificate
+        check_certificate (bool): Whether to check the ssl certificate.
+            Default: True.
         hash_prefix (string, optional): If not None, the SHA256 downloaded
             file should start with `hash_prefix`. Default: None.
     """

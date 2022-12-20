@@ -182,6 +182,7 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
   from mim import download
 
   download('mmcls', ['resnet18_8xb16_cifar10'])
+  download('mmcls', ['resnet18_8xb16_cifar10'], dest_dir='.')
   ```
 
 </details>

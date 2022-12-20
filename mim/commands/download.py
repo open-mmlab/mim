@@ -66,7 +66,8 @@ def download(package: str,
     Args:
         package (str): Name of package.
         configs (List[str]): List of config ids.
-        check_certificate (bool): Whether to check the ssl certificate
+        check_certificate (bool): Whether to check the ssl certificate.
+            Default: True.
         dest_root (Optional[str]): Destination directory to save checkpoint and
             config. Default: None.
     """
