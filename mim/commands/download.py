@@ -45,7 +45,7 @@ from mim.utils import (
     '--dest', 'dest_root', type=str, help='Destination of saving checkpoints.')
 def cli(package: str,
         configs: List[str],
-        check_certificate: bool,
+        check_certificate: bool = True,
         dest_root: Optional[str] = None) -> None:
     """Download checkpoints from url and parse configs from package.
 
