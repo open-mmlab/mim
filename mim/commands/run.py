@@ -3,6 +3,7 @@
 import os
 import os.path as osp
 import subprocess
+import sys
 from typing import Tuple, Union
 
 import click
@@ -18,6 +19,8 @@ from mim.utils import (
     module_full_name,
     recursively_find,
 )
+
+PYTHON = sys.executable
 
 
 @click.command(
@@ -152,7 +155,7 @@ def run(
     script = files[0]
     click.echo(f'Use the script {script} for command {command}.')
 
-    cmd = ['python', script] + list(other_args)
+    cmd = [PYTHON, script] + list(other_args)
 
     cmd_text = ' '.join(cmd)
     click.echo(f'The command to call is {cmd_text}. ')
