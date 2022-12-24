@@ -3,6 +3,7 @@ import os
 import os.path as osp
 import random as rd
 import subprocess
+import sys
 from typing import Optional, Tuple, Union
 
 import click
@@ -17,6 +18,8 @@ from mim.utils import (
     module_full_name,
     recursively_find,
 )
+
+PYTHON = sys.executable
 
 
 @click.command(
@@ -249,13 +252,13 @@ def test(
     common_args = ['--launcher', launcher] + list(other_args)
 
     if launcher == 'none':
-        cmd = ['python', test_script, config]
+        cmd = [PYTHON, test_script, config]
         if checkpoint:
             cmd += [checkpoint]
         cmd += common_args
     elif launcher == 'pytorch':
         cmd = [
-            'python', '-m', 'torch.distributed.launch',
+            PYTHON, '-m', 'torch.distributed.launch',
             f'--nproc_per_node={gpus}', f'--master_port={port}', test_script,
             config
         ]
@@ -275,7 +278,7 @@ def test(
             f'--cpus-per-task={cpus_per_task}', '--kill-on-bad-exit=1'
         ]
         cmd += parsed_srun_args
-        cmd += ['python', '-u', test_script, config]
+        cmd += [PYTHON, '-u', test_script, config]
         if checkpoint:
             cmd += [checkpoint]
         cmd += common_args
