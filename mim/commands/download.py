@@ -36,7 +36,7 @@ from mim.utils import (
     required=True,
     help='Config ids to download, such as resnet18_8xb16_cifar10')
 @click.option(
-    '--no-check-certificate',
+    '--ignore-ssl',
     'check_certificate',
     is_flag=True,
     default=True,
@@ -45,8 +45,8 @@ from mim.utils import (
     '--dest', 'dest_root', type=str, help='Destination of saving checkpoints.')
 def cli(package: str,
         configs: List[str],
-        check_certificate: bool = True,
-        dest_root: Optional[str] = None) -> None:
+        dest_root: Optional[str] = None,
+        check_certificate: bool = True) -> None:
     """Download checkpoints from url and parse configs from package.
 
     \b
@@ -54,22 +54,22 @@ def cli(package: str,
         > mim download mmcls --config resnet18_8xb16_cifar10
         > mim download mmcls --config resnet18_8xb16_cifar10 --dest .
     """
-    download(package, configs, check_certificate, dest_root)
+    download(package, configs, dest_root, check_certificate)
 
 
 def download(package: str,
              configs: List[str],
-             check_certificate: bool = True,
-             dest_root: Optional[str] = None) -> List[str]:
+             dest_root: Optional[str] = None,
+             check_certificate: bool = True) -> List[str]:
     """Download checkpoints from url and parse configs from package.
 
     Args:
         package (str): Name of package.
         configs (List[str]): List of config ids.
-        check_certificate (bool): Whether to check the ssl certificate.
-            Default: True.
         dest_root (Optional[str]): Destination directory to save checkpoint and
             config. Default: None.
+        check_certificate (bool): Whether to check the ssl certificate.
+            Default: True.
     """
     if dest_root is None:
         dest_root = DEFAULT_CACHE_DIR
