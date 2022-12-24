@@ -134,15 +134,19 @@ def get_github_url(package: str) -> str:
 
 def get_content_from_url(url: str,
                          timeout: int = 15,
-                         stream: bool = False) -> Response:
+                         stream: bool = False,
+                         check_certificate: bool = True) -> Response:
     """Get content from url.
 
     Args:
         url (str): Url for getting content.
         timeout (int): Set the socket timeout. Default: 15.
+        check_certificate (bool): Whether to check the ssl certificate.
+            Default: True.
     """
     try:
-        response = requests.get(url, timeout=timeout, stream=stream)
+        response = requests.get(
+            url, timeout=timeout, stream=stream, verify=check_certificate)
     except InvalidURL as err:
         raise highlighted_error(err)  # type: ignore
     except Timeout as err:
@@ -157,7 +161,8 @@ def get_content_from_url(url: str,
 @typing.no_type_check
 def download_from_file(url: str,
                        dest_path: str,
-                       hash_prefix: Optional[str] = None) -> None:
+                       hash_prefix: Optional[str] = None,
+                       check_certificate: bool = True) -> None:
     """Download object at the given URL to a local path.
 
     Args:
@@ -165,11 +170,14 @@ def download_from_file(url: str,
         dest_path (str): Path where object will be saved.
         hash_prefix (string, optional): If not None, the SHA256 downloaded
             file should start with `hash_prefix`. Default: None.
+        check_certificate (bool): Whether to check the ssl certificate.
+            Default: True.
     """
     if hash_prefix is not None:
         sha256 = hashlib.sha256()
 
-    response = get_content_from_url(url, stream=True)
+    response = get_content_from_url(
+        url, stream=True, check_certificate=check_certificate)
     size = int(response.headers.get('content-length'))
     with open(dest_path, 'wb') as fw:
         content_iter = response.iter_content(chunk_size=1024)
