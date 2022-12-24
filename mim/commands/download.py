@@ -122,8 +122,10 @@ def download(package: str,
                 echo_success(f'{filename} exists in {dest_root}')
             else:
                 # TODO: check checkpoint hash when all the models are ready.
-                download_from_file(checkpoint_url, checkpoint_path,
-                                   check_certificate=check_certificate)
+                download_from_file(
+                    checkpoint_url,
+                    checkpoint_path,
+                    check_certificate=check_certificate)
 
                 echo_success(
                     f'Successfully downloaded {filename} to {dest_root}')
