@@ -161,8 +161,8 @@ def get_content_from_url(url: str,
 @typing.no_type_check
 def download_from_file(url: str,
                        dest_path: str,
-                       check_certificate: bool,
-                       hash_prefix: Optional[str] = None) -> None:
+                       hash_prefix: Optional[str] = None,
+                       check_certificate: bool) -> None:
     """Download object at the given URL to a local path.
 
     Args:
