@@ -162,16 +162,16 @@ def get_content_from_url(url: str,
 def download_from_file(url: str,
                        dest_path: str,
                        hash_prefix: Optional[str] = None,
-                       check_certificate: bool) -> None:
+                       check_certificate: bool = True) -> None:
     """Download object at the given URL to a local path.
 
     Args:
         url (str): URL of the object to download.
         dest_path (str): Path where object will be saved.
-        check_certificate (bool): Whether to check the ssl certificate.
-            Default: True.
         hash_prefix (string, optional): If not None, the SHA256 downloaded
             file should start with `hash_prefix`. Default: None.
+        check_certificate (bool): Whether to check the ssl certificate.
+            Default: True.
     """
     if hash_prefix is not None:
         sha256 = hashlib.sha256()
