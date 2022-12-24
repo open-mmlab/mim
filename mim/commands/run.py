@@ -114,7 +114,9 @@ def run(
     pkg_root = get_installed_path(package)
     possible_prefixes = [
         osp.join(pkg_root, '.mim', f'tools{os.sep}'),
-        osp.join(pkg_root, f'tools{os.sep}')
+        osp.join(pkg_root, f'tools{os.sep}'),
+        osp.join(pkg_root, '.mim', f'demo{os.sep}'),
+        osp.join(pkg_root, f'demo{os.sep}')
     ]
     for possible_prefix in possible_prefixes:
         if osp.exists(possible_prefix):
