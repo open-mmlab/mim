@@ -3,6 +3,7 @@
 import os
 import os.path as osp
 import subprocess
+import sys
 from typing import Tuple, Union
 
 import click
@@ -18,6 +19,8 @@ from mim.utils import (
     module_full_name,
     recursively_find,
 )
+
+PYTHON = sys.executable
 
 
 @click.command(
@@ -110,8 +113,8 @@ def run(
 
     pkg_root = get_installed_path(package)
     possible_prefixes = [
-        osp.join(pkg_root, '.mim', 'tools/'),
-        osp.join(pkg_root, 'tools/'),
+        osp.join(pkg_root, '.mim', f'tools{os.sep}'),
+        osp.join(pkg_root, f'tools{os.sep}),
         osp.join(pkg_root, '.mim', f'demo{os.sep}'),
         osp.join(pkg_root, f'demo{os.sep}')
     ]
@@ -123,15 +126,15 @@ def run(
     command_domain = ''
     if ':' in command:
         split_command = command.split(':')
-        command_domain = '/'.join(split_command[:-1])
+        command_domain = os.sep.join(split_command[:-1])
         command = split_command[-1]
 
     files = recursively_find(prefix, command + '.py')
 
     if command_domain == '':
-        suffix = f'/{command}.py'
+        suffix = f'{os.sep}{command}.py'
     else:
-        suffix = f'/{command_domain}/{command}.py'
+        suffix = f'{os.sep}{command_domain}{os.sep}{command}.py'
     files = [f for f in files if f.endswith(suffix)]
 
     if len(files) == 0:
@@ -144,17 +147,17 @@ def run(
             echo_warning(f)
 
         # Use the shortest path
-        files.sort(key=lambda x: len(x.split('/')))
+        files.sort(key=lambda x: len(x.split(os.sep)))
         echo_warning(f'We are using the script {files[0]}. ')
         echo_warning('To use other scripts, you need to use these commands: ')
         for f in files[1:]:
-            cmd = f.split(prefix)[1].split('.')[0].replace('/', ':')
+            cmd = f.split(prefix)[1].split('.')[0].replace(os.sep, ':')
             echo_warning(f'Command for {f}: {cmd}')
 
     script = files[0]
     click.echo(f'Use the script {script} for command {command}.')
 
-    cmd = ['python', script] + list(other_args)
+    cmd = [PYTHON, script] + list(other_args)
 
     cmd_text = ' '.join(cmd)
     click.echo(f'The command to call is {cmd_text}. ')
