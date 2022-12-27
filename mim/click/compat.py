@@ -1,8 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from distutils.version import LooseVersion
 from typing import Callable
 
 import click
+from pip._vendor.packaging import version
 
 
 def autocompletion_to_shell_complete(autocompletion: Callable) -> Callable:
@@ -44,7 +44,7 @@ def argument(*param_decls, **attrs):
     """
     # 'autocompletion' will be removed in Click 8.1 and its new name is
     # 'shell_complete'.
-    if LooseVersion(click.__version__) >= LooseVersion('8.0.0'):
+    if version.parse(click.__version__) >= version.parse('8.0.0'):
         autocompletion = attrs.pop('autocompletion', None)
         if autocompletion is not None:
             attrs['shell_complete'] = autocompletion_to_shell_complete(

@@ -10,13 +10,13 @@ import subprocess
 import tarfile
 import typing
 from collections import defaultdict
-from distutils.version import LooseVersion
 from email.parser import FeedParser
 from pkg_resources import get_distribution, parse_version
 from typing import Any, List, Optional, Tuple, Union
 
 import click
 import requests
+from pip._vendor.packaging import version
 from requests.exceptions import InvalidURL, RequestException, Timeout
 from requests.models import Response
 
@@ -285,7 +285,7 @@ def get_latest_version(package: str, timeout: int = 15) -> str:
 
 
 def is_version_equal(version1: str, version2: str) -> bool:
-    return LooseVersion(version1) == LooseVersion(version2)
+    return version.parse(version1) == version.parse(version2)
 
 
 @ensure_installation
