@@ -201,9 +201,8 @@ def gridsearch(
 
     # If launcher == "slurm", must have following args
     if launcher == 'slurm':
-        msg = ('If launcher is slurm, '
-               'gpus-per-node and partition should not be None')
-        flag = (gpus_per_node is not None) and (partition is not None)
+        msg = 'If launcher is slurm, partition should not be None'
+        flag = partition is not None
         if not flag:
             raise AssertionError(highlighted_error(msg))
 
@@ -382,12 +381,19 @@ def gridsearch(
             if not has_job_name:
                 job_name = osp.splitext(osp.basename(config_path))[0]
                 parsed_srun_args.append(f'--job-name={job_name}_train')
-            cmd = [
+            if gpus:
+                cmd = [
                 'srun', '-p', f'{partition}', f'--gres=gpu:{gpus_per_node}',
                 f'--ntasks={gpus}', f'--ntasks-per-node={gpus_per_node}',
                 f'--cpus-per-task={cpus_per_task}', '--kill-on-bad-exit=1'
-            ] + parsed_srun_args + [PYTHON, '-u', train_script, config_path
-                                    ] + common_args
+                ] + parsed_srun_args + [PYTHON, '-u', train_script,
+                                        config_path] + common_args
+            else:
+                cmd = [
+                'srun', '-p', f'{partition}',
+                f'--cpus-per-task={cpus_per_task}', '--kill-on-bad-exit=1'
+                ] + parsed_srun_args + [PYTHON, '-u', train_script,
+                                        config] + common_args
 
         cmds.append(cmd)
 
