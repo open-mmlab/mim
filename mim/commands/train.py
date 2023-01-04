@@ -162,9 +162,8 @@ def train(
 
     # If launcher == "slurm", must have following args
     if launcher == 'slurm':
-        msg = ('If launcher is slurm, '
-               'gpus-per-node and partition should not be None')
-        flag = (gpus_per_node is not None) and (partition is not None)
+        msg = 'If launcher is slurm, partition should not be None'
+        flag = partition is not None
         assert flag, msg
 
     if port is None:
