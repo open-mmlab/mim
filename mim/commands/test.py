@@ -270,11 +270,17 @@ def test(
         if not has_job_name:
             job_name = osp.splitext(osp.basename(config))[0]
             parsed_srun_args.append(f'--job-name={job_name}_test')
-        cmd = [
-            'srun', '-p', f'{partition}', f'--gres=gpu:{gpus_per_node}',
-            f'--ntasks={gpus}', f'--ntasks-per-node={gpus_per_node}',
-            f'--cpus-per-task={cpus_per_task}', '--kill-on-bad-exit=1'
-        ]
+        if gpus:
+            cmd = [
+                'srun', '-p', f'{partition}', f'--gres=gpu:{gpus_per_node}',
+                f'--ntasks={gpus}', f'--ntasks-per-node={gpus_per_node}',
+                f'--cpus-per-task={cpus_per_task}', '--kill-on-bad-exit=1'
+            ]
+        else:
+            cmd = [
+                'srun', '-p', f'{partition}',
+                f'--cpus-per-task={cpus_per_task}', '--kill-on-bad-exit=1'
+            ]
         cmd += parsed_srun_args
         cmd += [PYTHON, '-u', test_script, config]
         if checkpoint:

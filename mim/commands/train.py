@@ -248,12 +248,19 @@ def train(
         if not has_job_name:
             job_name = osp.splitext(osp.basename(config))[0]
             parsed_srun_args.append(f'--job-name={job_name}_train')
-        cmd = [
-            'srun', '-p', f'{partition}', f'--gres=gpu:{gpus_per_node}',
-            f'--ntasks={gpus}', f'--ntasks-per-node={gpus_per_node}',
-            f'--cpus-per-task={cpus_per_task}', '--kill-on-bad-exit=1'
-        ] + parsed_srun_args + [PYTHON, '-u', train_script, config
-                                ] + common_args
+        if gpus:
+            cmd = [
+                'srun', '-p', f'{partition}', f'--gres=gpu:{gpus_per_node}',
+                f'--ntasks={gpus}', f'--ntasks-per-node={gpus_per_node}',
+                f'--cpus-per-task={cpus_per_task}', '--kill-on-bad-exit=1'
+                ] + parsed_srun_args + [PYTHON, '-u', train_script, config
+                                          ] + common_args
+        else:
+            cmd = [
+                'srun', '-p', f'{partition}',
+                f'--cpus-per-task={cpus_per_task}', '--kill-on-bad-exit=1'
+                ] + parsed_srun_args + [PYTHON, '-u', train_script, config
+                                          ] + common_args
 
     cmd_text = ' '.join(cmd)
     click.echo(f'Training command is {cmd_text}. ')
