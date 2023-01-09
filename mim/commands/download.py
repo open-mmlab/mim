@@ -2,6 +2,7 @@
 import os
 import os.path as osp
 from typing import List, Optional
+from urllib.parse import unquote
 
 import click
 
@@ -132,6 +133,7 @@ def download(package: str,
 
         config_paths = model_info[config]['config']
         for config_path in config_paths.split(','):
+            config_path = unquote(config_path)
             installed_path = get_installed_path(package)
             # configs will be put in package/.mim in PR #68
             possible_config_paths = [
