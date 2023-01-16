@@ -12,7 +12,7 @@ import typing
 from collections import defaultdict
 from email.parser import FeedParser
 from pkg_resources import get_distribution, parse_version
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import click
 import requests
@@ -509,8 +509,11 @@ def get_config(cfg, name):
     name = name.split('.')
     suffix = ''
     for item in name:
-        assert item in cfg, f'attribute {item} not cfg{suffix}'
-        cfg = cfg[item]
+        if isinstance(cfg, Sequence) and not isinstance(cfg, str):
+            cfg = cfg[int(item)]
+        else:
+            assert item in cfg, f'attribute {item} not cfg{suffix}'
+            cfg = cfg[item]
         suffix += f'.{item}'
     return cfg
 
@@ -524,8 +527,11 @@ def set_config(cfg, name, value):
     name = name.split('.')
     suffix = ''
     for item in name[:-1]:
-        assert item in cfg, f'attribute {item} not cfg{suffix}'
-        cfg = cfg[item]
+        if isinstance(cfg, Sequence) and not isinstance(cfg, str):
+            cfg = cfg[int(item)]
+        else:
+            assert item in cfg, f'attribute {item} not cfg{suffix}'
+            cfg = cfg[item]
         suffix += f'.{item}'
 
     assert name[-1] in cfg, f'attribute {item} not cfg{suffix}'
