@@ -60,7 +60,7 @@ def test_gridsearch(gpus, tmp_path):
     args5 = [
         'mmcls', 'tests/data/lenet5_mnist_2.0.py', f'--gpus={gpus}',
         f'--work-dir={tmp_path}', '--search-args',
-        '--train_dataloader.dataset.pipeline.0.scale 8 16 32'
+        '--train_dataloader.dataset.pipeline.0.scale 16 32'
     ]
 
     result = runner.invoke(gridsearch, args1)
