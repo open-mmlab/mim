@@ -57,6 +57,12 @@ def test_gridsearch(gpus, tmp_path):
         f'--work-dir={tmp_path}', '--search-args'
     ]
 
+    args5 = [
+        'mmcls', 'tests/data/lenet5_mnist_2.0.py', f'--gpus={gpus}',
+        f'--work-dir={tmp_path}', '--search-args',
+        '--train_dataloader.dataset.pipeline.0.scale 16 32'
+    ]
+
     result = runner.invoke(gridsearch, args1)
     assert result.exit_code == 0
 
@@ -68,6 +74,9 @@ def test_gridsearch(gpus, tmp_path):
 
     result = runner.invoke(gridsearch, args4)
     assert result.exit_code != 0
+
+    result = runner.invoke(gridsearch, args5)
+    assert result.exit_code == 0
 
 
 def teardown_module():

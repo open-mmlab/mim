@@ -12,7 +12,11 @@ model = dict(
 dataset_type = 'MNIST'
 data_preprocessor = dict(mean=[33.46], std=[78.87])
 
-pipeline = [dict(type='Resize', scale=32), dict(type='PackClsInputs')]
+pipeline = [
+    dict(type='Resize', scale=32),
+    dict(type='Pad', size=(32, 32)),
+    dict(type='PackClsInputs')
+]
 
 common_data_cfg = dict(
     type=dataset_type, data_prefix='data/mnist', pipeline=pipeline)
