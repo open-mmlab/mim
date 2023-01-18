@@ -182,7 +182,7 @@ def get_model_info(package: str,
             Default: True.
         to_dict (bool): Convert dataframe into dict. Default: False.
         index_url (str, optional): The pypi index url, if given, will be used
-            in `pip download` command for downloading packages when local
+            in ``pip download`` command for downloading packages when local
             is False. Default: None.
     """
     metadata = load_metadata(package, local, index_url)
@@ -210,7 +210,7 @@ def load_metadata(package: str,
         local (bool): Query from local environment or remote github.
             Default: True.
         index_url (str, optional): The pypi index url, if given, will be used
-            in `pip download` command for downloading packages when local
+            in ``pip download`` command for downloading packages when local
             is False. Default: None.
     """
     if '=' in package and local:
@@ -270,7 +270,7 @@ def load_metadata_from_remote(package: str,
     Args:
         package (str): Name of package to load metadata.
         index_url (str, optional): The pypi index url, if given, will be used
-            in `pip download` command for downloading packages.
+            in ``pip download`` command for downloading packages.
             Default: None.
 
     Example:
