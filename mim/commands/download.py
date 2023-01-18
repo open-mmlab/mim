@@ -36,10 +36,17 @@ from mim.utils import (
     required=True,
     help='Config ids to download, such as resnet18_8xb16_cifar10')
 @click.option(
+    '--ignore-ssl',
+    'check_certificate',
+    is_flag=True,
+    default=True,
+    help='Ignore ssl certificate check')
+@click.option(
     '--dest', 'dest_root', type=str, help='Destination of saving checkpoints.')
 def cli(package: str,
         configs: List[str],
-        dest_root: Optional[str] = None) -> None:
+        dest_root: Optional[str] = None,
+        check_certificate: bool = True) -> None:
     """Download checkpoints from url and parse configs from package.
 
     \b
@@ -47,12 +54,13 @@ def cli(package: str,
         > mim download mmcls --config resnet18_8xb16_cifar10
         > mim download mmcls --config resnet18_8xb16_cifar10 --dest .
     """
-    download(package, configs, dest_root)
+    download(package, configs, dest_root, check_certificate)
 
 
 def download(package: str,
              configs: List[str],
-             dest_root: Optional[str] = None) -> List[str]:
+             dest_root: Optional[str] = None,
+             check_certificate: bool = True) -> List[str]:
     """Download checkpoints from url and parse configs from package.
 
     Args:
@@ -60,6 +68,8 @@ def download(package: str,
         configs (List[str]): List of config ids.
         dest_root (Optional[str]): Destination directory to save checkpoint and
             config. Default: None.
+        check_certificate (bool): Whether to check the ssl certificate.
+            Default: True.
     """
     if dest_root is None:
         dest_root = DEFAULT_CACHE_DIR
@@ -112,7 +122,10 @@ def download(package: str,
                 echo_success(f'{filename} exists in {dest_root}')
             else:
                 # TODO: check checkpoint hash when all the models are ready.
-                download_from_file(checkpoint_url, checkpoint_path)
+                download_from_file(
+                    checkpoint_url,
+                    checkpoint_path,
+                    check_certificate=check_certificate)
 
                 echo_success(
                     f'Successfully downloaded {filename} to {dest_root}')

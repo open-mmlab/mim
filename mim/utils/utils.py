@@ -10,13 +10,13 @@ import subprocess
 import tarfile
 import typing
 from collections import defaultdict
-from distutils.version import LooseVersion
 from email.parser import FeedParser
 from pkg_resources import get_distribution, parse_version
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import click
 import requests
+from pip._vendor.packaging import version
 from requests.exceptions import InvalidURL, RequestException, Timeout
 from requests.models import Response
 
@@ -134,15 +134,19 @@ def get_github_url(package: str) -> str:
 
 def get_content_from_url(url: str,
                          timeout: int = 15,
-                         stream: bool = False) -> Response:
+                         stream: bool = False,
+                         check_certificate: bool = True) -> Response:
     """Get content from url.
 
     Args:
         url (str): Url for getting content.
         timeout (int): Set the socket timeout. Default: 15.
+        check_certificate (bool): Whether to check the ssl certificate.
+            Default: True.
     """
     try:
-        response = requests.get(url, timeout=timeout, stream=stream)
+        response = requests.get(
+            url, timeout=timeout, stream=stream, verify=check_certificate)
     except InvalidURL as err:
         raise highlighted_error(err)  # type: ignore
     except Timeout as err:
@@ -157,7 +161,8 @@ def get_content_from_url(url: str,
 @typing.no_type_check
 def download_from_file(url: str,
                        dest_path: str,
-                       hash_prefix: Optional[str] = None) -> None:
+                       hash_prefix: Optional[str] = None,
+                       check_certificate: bool = True) -> None:
     """Download object at the given URL to a local path.
 
     Args:
@@ -165,11 +170,14 @@ def download_from_file(url: str,
         dest_path (str): Path where object will be saved.
         hash_prefix (string, optional): If not None, the SHA256 downloaded
             file should start with `hash_prefix`. Default: None.
+        check_certificate (bool): Whether to check the ssl certificate.
+            Default: True.
     """
     if hash_prefix is not None:
         sha256 = hashlib.sha256()
 
-    response = get_content_from_url(url, stream=True)
+    response = get_content_from_url(
+        url, stream=True, check_certificate=check_certificate)
     size = int(response.headers.get('content-length'))
     with open(dest_path, 'wb') as fw:
         content_iter = response.iter_content(chunk_size=1024)
@@ -277,7 +285,7 @@ def get_latest_version(package: str, timeout: int = 15) -> str:
 
 
 def is_version_equal(version1: str, version2: str) -> bool:
-    return LooseVersion(version1) == LooseVersion(version2)
+    return version.parse(version1) == version.parse(version2)
 
 
 @ensure_installation
@@ -501,8 +509,11 @@ def get_config(cfg, name):
     name = name.split('.')
     suffix = ''
     for item in name:
-        assert item in cfg, f'attribute {item} not cfg{suffix}'
-        cfg = cfg[item]
+        if isinstance(cfg, Sequence) and not isinstance(cfg, str):
+            cfg = cfg[int(item)]
+        else:
+            assert item in cfg, f'attribute {item} not cfg{suffix}'
+            cfg = cfg[item]
         suffix += f'.{item}'
     return cfg
 
@@ -516,8 +527,11 @@ def set_config(cfg, name, value):
     name = name.split('.')
     suffix = ''
     for item in name[:-1]:
-        assert item in cfg, f'attribute {item} not cfg{suffix}'
-        cfg = cfg[item]
+        if isinstance(cfg, Sequence) and not isinstance(cfg, str):
+            cfg = cfg[int(item)]
+        else:
+            assert item in cfg, f'attribute {item} not cfg{suffix}'
+            cfg = cfg[item]
         suffix += f'.{item}'
 
     assert name[-1] in cfg, f'attribute {item} not cfg{suffix}'

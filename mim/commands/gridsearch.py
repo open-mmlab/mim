@@ -4,6 +4,7 @@ import itertools
 import os
 import os.path as osp
 import subprocess
+import sys
 import time
 from concurrent.futures import ProcessPoolExecutor as Executor
 from typing import Optional, Tuple, Union
@@ -25,6 +26,8 @@ from mim.utils import (
     set_config,
     string2args,
 )
+
+PYTHON = sys.executable
 
 
 @click.command(
@@ -358,8 +361,8 @@ def gridsearch(
         common_args = ['--launcher', launcher] + other_args_str.split()
 
         if launcher == 'none':
-            cmd = ['python', train_script, config_path] + common_args
-            help_msg = subprocess.check_output(['python', train_script, '-h'])
+            cmd = [PYTHON, train_script, config_path] + common_args
+            help_msg = subprocess.check_output([PYTHON, train_script, '-h'])
             if '--gpus' in help_msg.decode():
                 # OpenMMLab 1.0 should add the `--gpus` or `--device` flags.
                 if gpus:
@@ -368,7 +371,7 @@ def gridsearch(
                     cmd += ['--device', 'cpu']
         elif launcher == 'pytorch':
             cmd = [
-                'python', '-m', 'torch.distributed.launch',
+                PYTHON, '-m', 'torch.distributed.launch',
                 f'--nproc_per_node={gpus}', f'--master_port={port}',
                 train_script, config_path
             ] + common_args
@@ -383,7 +386,7 @@ def gridsearch(
                 'srun', '-p', f'{partition}', f'--gres=gpu:{gpus_per_node}',
                 f'--ntasks={gpus}', f'--ntasks-per-node={gpus_per_node}',
                 f'--cpus-per-task={cpus_per_task}', '--kill-on-bad-exit=1'
-            ] + parsed_srun_args + ['python', '-u', train_script, config_path
+            ] + parsed_srun_args + [PYTHON, '-u', train_script, config_path
                                     ] + common_args
 
         cmds.append(cmd)

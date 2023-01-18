@@ -2,6 +2,7 @@
 import os
 import os.path as osp
 import subprocess
+import sys
 import typing as t
 from gettext import ngettext
 
@@ -17,6 +18,8 @@ from mim.utils import (
     is_installed,
     recursively_find,
 )
+
+PYTHON = sys.executable
 
 
 class CustomCommand(click.Command):
@@ -60,8 +63,7 @@ class CustomCommand(click.Command):
                 script = osp.join(
                     get_installed_path(repo), '.mim', 'tools',
                     f'{self.name}.py')
-                ret = subprocess.check_output(
-                    ['python', '-u', script, '--help'])
+                ret = subprocess.check_output([PYTHON, '-u', script, '--help'])
                 color_echo(
                     'The help message of corresponding script is: ',
                     color='blue')
@@ -93,7 +95,7 @@ class CustomCommand(click.Command):
                         f'Multiple scripts with name {command}.py are in '
                         f'codebase {repo}.')
                 ret = subprocess.check_output(
-                    ['python', '-u', files[0], '--help'])
+                    [PYTHON, '-u', files[0], '--help'])
                 click.echo('=' * 80)
                 click.echo('The help message of corresponding script is: ')
                 click.echo(ret.decode('utf-8'))
