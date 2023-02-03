@@ -1,8 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 
-# NOTE: Since we could got AssertionError when importing pip before
+# NOTE: We could got AssertionError when importing pip before
 # setuptools. A workaround is to import setuptools first and filter
-# warnings that cased by setuptools replacing distutils.
+# warnings that are caused by setuptools replacing distutils.
 # Related issues:
 # - https://github.com/pypa/setuptools/issues/3621
 # - https://github.com/open-mmlab/mmclassification/issues/1343
