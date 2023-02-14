@@ -102,7 +102,7 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
   uninstall('mmcv-full')
 
   # uninstall mmcls
-  uninstall('mmcls)
+  uninstall('mmcls')
   ```
 
 </details>
