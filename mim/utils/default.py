@@ -16,6 +16,7 @@ RAW_GITHUB_URL = 'https://raw.githubusercontent.com/{owner}/{repo}/{branch}'
 PKG2PROJECT = {
     'mmcv-full': 'mmcv',
     'mmcls': 'mmclassification',
+    'mmpretrain': 'mmpretrain',
     'mmdet': 'mmdetection',
     'mmdet3d': 'mmdetection3d',
     'mmsegmentation': 'mmsegmentation',
