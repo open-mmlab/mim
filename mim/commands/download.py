@@ -1,9 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os
 import os.path as osp
+import subprocess
 from typing import List, Optional
 
 import click
+import yaml
 
 from mim.click import (
     OptionEatAll,
@@ -14,11 +16,13 @@ from mim.click import (
 from mim.commands.search import get_model_info
 from mim.utils import (
     DEFAULT_CACHE_DIR,
+    call_command,
     download_from_file,
     echo_success,
     get_installed_path,
     highlighted_error,
     is_installed,
+    module_full_name,
     split_package_version,
 )
 
@@ -33,8 +37,13 @@ from mim.utils import (
     '--config',
     'configs',
     cls=OptionEatAll,
-    required=True,
-    help='Config ids to download, such as resnet18_8xb16_cifar10')
+    help='Config ids to download, such as resnet18_8xb16_cifar10',
+    default=None)
+@click.option(
+    '--dataset',
+    'dataset',
+    help='dataset name to download, such as coco2017',
+    default=None)
 @click.option(
     '--ignore-ssl',
     'check_certificate',
@@ -44,7 +53,8 @@ from mim.utils import (
 @click.option(
     '--dest', 'dest_root', type=str, help='Destination of saving checkpoints.')
 def cli(package: str,
-        configs: List[str],
+        configs: Optional[List[str]],
+        dataset: Optional[str],
         dest_root: Optional[str] = None,
         check_certificate: bool = True) -> None:
     """Download checkpoints from url and parse configs from package.
@@ -54,11 +64,12 @@ def cli(package: str,
         > mim download mmcls --config resnet18_8xb16_cifar10
         > mim download mmcls --config resnet18_8xb16_cifar10 --dest .
     """
-    download(package, configs, dest_root, check_certificate)
+    download(package, configs, dataset, dest_root, check_certificate)
 
 
 def download(package: str,
-             configs: List[str],
+             configs: Optional[List[str]],
+             dataset: Optional[str],
              dest_root: Optional[str] = None,
              check_certificate: bool = True) -> List[str]:
     """Download checkpoints from url and parse configs from package.
@@ -71,11 +82,31 @@ def download(package: str,
         check_certificate (bool): Whether to check the ssl certificate.
             Default: True.
     """
+    full_name = module_full_name(package)
+    if full_name == '':
+        msg = f"Can't determine a unique package given abbreviation {package}"
+        raise ValueError(highlighted_error(msg))
+    package = full_name
+
     if dest_root is None:
         dest_root = DEFAULT_CACHE_DIR
 
-    dest_root = osp.abspath(dest_root)
+    if configs is not None and dataset is not None:
+        raise ValueError(
+            'Cannot download config and dataset at the same time!')
+    if configs is None and dataset is None:
+        raise ValueError('Please specify config or dataset to download!')
+    
+    if configs is not None:
+        return _download_configs(package, configs, dest_root, check_certificate)
+    else:
+        return _download_dataset(package, dataset, dest_root)
 
+
+def _download_configs(package: str,
+                      configs: Optional[List[str]],
+                      dest_root: Optional[str] = None,
+                      check_certificate: bool = True) -> List[str]:
     # Create the destination directory if it does not exist.
     if not osp.exists(dest_root):
         os.makedirs(dest_root)
@@ -152,3 +183,60 @@ def download(package: str,
                     highlighted_error(f'{config_path} is not found.'))
 
     return checkpoints
+
+
+def _download_dataset(package: str,
+                      dataset: str,
+                      dest_root: Optional[str] = None) -> None:
+    if not is_installed(package):
+        raise RuntimeError(
+            f'Please install {package} by ')
+    installed_path = get_installed_path(package)
+    mim_path = osp.join(installed_path, '.mim')
+    dataset_index_path = osp.join(mim_path, 'dataset-index.yml')
+
+    if not osp.exists(dataset_index_path):
+        raise FileNotFoundError(
+            f'Cannot find dataset-index.yaml in {dataset_index_path}, please update '
+            f'{package} to the latest version! If you have already updated it '
+            f'and still get this error, please report an issue to {package}')
+    with open(dataset_index_path, 'r') as f:
+        datasets_meta = yaml.load(f, Loader=yaml.SafeLoader)
+
+    if dataset not in datasets_meta:
+        raise KeyError(f'Cannot find {dataset} in {dataset_index_path}. '
+                       'here are the available datasets: '
+                       '{}'.format("\n".join(datasets_meta.keys())))
+    dataset_meta = datasets_meta.get(dataset)
+    
+    # TODO rename
+    script_path = dataset_meta.get('script_path')
+    script_path = osp.join(mim_path, script_path)
+    src_name = dataset_meta.get('src_name', dataset)
+    data_root = dataset_meta['data_root'] if dest_root is None else dest_root
+    download_root = dataset_meta['download_root']
+
+    os.makedirs(download_root, exist_ok=True)
+
+    try:
+        import sys
+        process = subprocess.Popen(
+            ['odl', 'get', src_name, '-d', download_root],
+            stdin=sys.stdin,
+            stdout=sys.stdout,
+            stderr=sys.stderr)
+        process.wait()
+        echo_success(f'Down load {dataset} to {download_root} successfully!')
+    except subprocess.CalledProcessError as e:
+        output = e.output.decode()
+        if 'login' in output:
+            raise RuntimeError('please login first by "odl login"')
+        raise RuntimeError(output)
+    
+    
+    if script_path:
+        echo_success('Preprocess data ...')
+        os.makedirs(data_root, exist_ok=True)
+        # call_command(['chmod', '+x', script_path, osp.curdir])
+        call_command([script_path, download_root, data_root])
+        echo_success('Finished!')
