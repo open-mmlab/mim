@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os
 import os.path as osp
+import platform
 import subprocess
 from typing import List, Optional, Union
 
@@ -213,13 +214,8 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
     script_path = dataset_meta.get('script_path')
     script_path = osp.join(mim_path, script_path)
     src_name = dataset_meta.get('src_name', dataset)
-    if dest_root == DEFAULT_CACHE_DIR:
-        data_root = dataset_meta['data_root']
-    else:
-        data_root = dest_root
     download_root = dataset_meta['download_root']
     os.makedirs(download_root, exist_ok=True)
-
     try:
         import sys
         color_echo(f'Start downloading {dataset} to {download_root}...',
@@ -236,9 +232,16 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
             raise RuntimeError('please login first by "odl login"')
         raise RuntimeError(output)
 
+    if platform.system != 'Linux':
+        raise RuntimeError('download dataset is only available for Linux!')
+
     if script_path:
         color_echo('Preprocess data ...', 'blue')
+        if dest_root == DEFAULT_CACHE_DIR:
+            data_root = dataset_meta['data_root']
+        else:
+            data_root = dest_root
         os.makedirs(data_root, exist_ok=True)
-        # call_command(['chmod', '+x', script_path, osp.curdir])
+        call_command(['chmod', '+x', script_path])
         call_command([script_path, download_root, data_root])
         echo_success('Finished!')
