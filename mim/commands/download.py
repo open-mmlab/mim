@@ -2,7 +2,7 @@
 import os
 import os.path as osp
 import subprocess
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import click
 import yaml
@@ -17,6 +17,7 @@ from mim.commands.search import get_model_info
 from mim.utils import (
     DEFAULT_CACHE_DIR,
     call_command,
+    color_echo,
     download_from_file,
     echo_success,
     get_installed_path,
@@ -71,7 +72,7 @@ def download(package: str,
              configs: Optional[List[str]],
              dataset: Optional[str],
              dest_root: Optional[str] = None,
-             check_certificate: bool = True) -> List[str]:
+             check_certificate: bool = True) -> Union[List[str], None]:
     """Download checkpoints from url and parse configs from package.
 
     Args:
@@ -96,19 +97,20 @@ def download(package: str,
             'Cannot download config and dataset at the same time!')
     if configs is None and dataset is None:
         raise ValueError('Please specify config or dataset to download!')
-    
+
     if configs is not None:
-        return _download_configs(package, configs, dest_root, check_certificate)
+        return _download_configs(package, configs, dest_root,
+                                 check_certificate)
     else:
-        return _download_dataset(package, dataset, dest_root)
+        return _download_dataset(package, dataset, dest_root)  # type: ignore
 
 
 def _download_configs(package: str,
-                      configs: Optional[List[str]],
-                      dest_root: Optional[str] = None,
+                      configs: List[str],
+                      dest_root: str,
                       check_certificate: bool = True) -> List[str]:
     # Create the destination directory if it does not exist.
-    if not osp.exists(dest_root):
+    if osp.exists(dest_root):
         os.makedirs(dest_root)
 
     package, version = split_package_version(package)
@@ -185,57 +187,57 @@ def _download_configs(package: str,
     return checkpoints
 
 
-def _download_dataset(package: str,
-                      dataset: str,
-                      dest_root: Optional[str] = None) -> None:
+def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
     if not is_installed(package):
-        raise RuntimeError(
-            f'Please install {package} by ')
+        raise RuntimeError(f'Please install {package} by ')
     installed_path = get_installed_path(package)
     mim_path = osp.join(installed_path, '.mim')
     dataset_index_path = osp.join(mim_path, 'dataset-index.yml')
 
     if not osp.exists(dataset_index_path):
         raise FileNotFoundError(
-            f'Cannot find dataset-index.yaml in {dataset_index_path}, please update '
-            f'{package} to the latest version! If you have already updated it '
-            f'and still get this error, please report an issue to {package}')
-    with open(dataset_index_path, 'r') as f:
+            f'Cannot find dataset-index.yaml in {dataset_index_path}, '
+            f'please update {package} to the latest version! If you have '
+            f'already updated it and still get this error, please report an '
+            f'issue to {package}')
+    with open(dataset_index_path) as f:
         datasets_meta = yaml.load(f, Loader=yaml.SafeLoader)
 
     if dataset not in datasets_meta:
         raise KeyError(f'Cannot find {dataset} in {dataset_index_path}. '
                        'here are the available datasets: '
-                       '{}'.format("\n".join(datasets_meta.keys())))
+                       '{}'.format('\n'.join(datasets_meta.keys())))
     dataset_meta = datasets_meta.get(dataset)
-    
+
     # TODO rename
     script_path = dataset_meta.get('script_path')
     script_path = osp.join(mim_path, script_path)
     src_name = dataset_meta.get('src_name', dataset)
-    data_root = dataset_meta['data_root'] if dest_root is None else dest_root
+    if dest_root == DEFAULT_CACHE_DIR:
+        data_root = dataset_meta['data_root']
+    else:
+        data_root = dest_root
     download_root = dataset_meta['download_root']
-
     os.makedirs(download_root, exist_ok=True)
 
     try:
         import sys
+        color_echo(f'Start downloading {dataset} to {download_root}...',
+                   'blue')
         process = subprocess.Popen(
             ['odl', 'get', src_name, '-d', download_root],
             stdin=sys.stdin,
             stdout=sys.stdout,
             stderr=sys.stderr)
         process.wait()
-        echo_success(f'Down load {dataset} to {download_root} successfully!')
     except subprocess.CalledProcessError as e:
         output = e.output.decode()
         if 'login' in output:
             raise RuntimeError('please login first by "odl login"')
         raise RuntimeError(output)
-    
-    
+
     if script_path:
-        echo_success('Preprocess data ...')
+        color_echo('Preprocess data ...', 'blue')
         os.makedirs(data_root, exist_ok=True)
         # call_command(['chmod', '+x', script_path, osp.curdir])
         call_command([script_path, download_root, data_root])
