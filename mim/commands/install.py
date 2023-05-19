@@ -244,7 +244,7 @@ def patch_importlib_distribution(index_url: Optional[str] = None) -> Generator:
         if self.canonical_name not in PKG2PROJECT or self.canonical_name == 'mmcv-full':  # noqa: E501
             return deps
 
-        if 'mim' in str(self.iter_provided_extras):
+        if 'mim' in self.iter_provided_extras():
             mim_extra_requires = list(
                 origin_iter_dependencies(self, ('mim', )))
             filter_invalid_marker(mim_extra_requires)
