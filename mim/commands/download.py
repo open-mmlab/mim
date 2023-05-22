@@ -42,25 +42,32 @@ from mim.utils import (
     default=True,
     help='Ignore ssl certificate check')
 @click.option(
+    '--no-checkpoint',
+    'ignore_checkpoint',
+    is_flag=True,
+    help='Ignore ssl certificate check')
+@click.option(
     '--dest', 'dest_root', type=str, help='Destination of saving checkpoints.')
 def cli(package: str,
         configs: List[str],
         dest_root: Optional[str] = None,
-        check_certificate: bool = True) -> None:
+        check_certificate: bool = True,
+        ignore_checkpoint: bool = False) -> None:
     """Download checkpoints from url and parse configs from package.
 
     \b
     Example:
-        > mim download mmcls --config resnet18_8xb16_cifar10
-        > mim download mmcls --config resnet18_8xb16_cifar10 --dest .
+        > mim download mmpretrain --config resnet18_8xb16_cifar10
+        > mim download mmpretrain --config resnet18_8xb16_cifar10 --dest .
     """
-    download(package, configs, dest_root, check_certificate)
+    download(package, configs, dest_root, check_certificate, ignore_checkpoint)
 
 
 def download(package: str,
              configs: List[str],
              dest_root: Optional[str] = None,
-             check_certificate: bool = True) -> List[str]:
+             check_certificate: bool = True,
+             ignore_checkpoint: bool = False) -> List[str]:
     """Download checkpoints from url and parse configs from package.
 
     Args:
@@ -70,6 +77,8 @@ def download(package: str,
             config. Default: None.
         check_certificate (bool): Whether to check the ssl certificate.
             Default: True.
+        ignore_checkpoint (bool): Whether to download checkpoints. If True,
+            only config will be downloaded. Default: False.
     """
     if dest_root is None:
         dest_root = DEFAULT_CACHE_DIR
@@ -114,21 +123,24 @@ def download(package: str,
     for config in configs:
         click.echo(f'processing {config}...')
 
-        checkpoint_urls = model_info[config]['weight']
-        for checkpoint_url in checkpoint_urls.split(','):
-            filename = checkpoint_url.split('/')[-1]
-            checkpoint_path = osp.join(dest_root, filename)
-            if osp.exists(checkpoint_path):
-                echo_success(f'{filename} exists in {dest_root}')
-            else:
-                # TODO: check checkpoint hash when all the models are ready.
-                download_from_file(
-                    checkpoint_url,
-                    checkpoint_path,
-                    check_certificate=check_certificate)
+        if not ignore_checkpoint:
+            checkpoint_urls = model_info[config]['weight']
+            for checkpoint_url in checkpoint_urls.split(','):
+                filename = checkpoint_url.split('/')[-1]
+                checkpoint_path = osp.join(dest_root, filename)
+                if osp.exists(checkpoint_path):
+                    echo_success(f'{filename} exists in {dest_root}')
+                else:
+                    # TODO: check checkpoint hash when all the models are ready
+                    download_from_file(
+                        checkpoint_url,
+                        checkpoint_path,
+                        check_certificate=check_certificate)
 
-                echo_success(
-                    f'Successfully downloaded {filename} to {dest_root}')
+                    echo_success(
+                        f'Successfully downloaded {filename} to {dest_root}')
+
+                checkpoints.append(filename)
 
         config_paths = model_info[config]['config']
         for config_path in config_paths.split(','):
@@ -145,7 +157,6 @@ def download(package: str,
                     config_obj.dump(saved_config_path)
                     echo_success(
                         f'Successfully dumped {config}.py to {dest_root}')
-                    checkpoints.append(filename)
                     break
             else:
                 raise ValueError(
