@@ -9,56 +9,53 @@ from mim.commands.uninstall import cli as uninstall
 
 def setup_module():
     runner = CliRunner()
-    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    result = runner.invoke(uninstall, ['mmcv', '--yes'])
     assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmengine', '--yes'])
     assert result.exit_code == 0
-    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    result = runner.invoke(uninstall, ['mmpretrain', '--yes'])
     assert result.exit_code == 0
 
 
 def test_download(tmp_path):
     runner = CliRunner()
-    result = runner.invoke(install, ['mmcv-full', '--yes'])
+    result = runner.invoke(install, ['mmcv', '--yes'])
     assert result.exit_code == 0
     result = runner.invoke(install, ['mmengine', '--yes'])
     assert result.exit_code == 0
 
     with pytest.raises(ValueError):
         # version is not allowed
-        download('mmcls==0.11.0', ['resnet18_8xb16_cifar10'])
+        download('mmpretrain==0.11.0', ['resnet18_8xb16_cifar10'])
 
     with pytest.raises(RuntimeError):
-        # mmcls is not installed
-        download('mmcls', ['resnet18_8xb16_cifar10'])
+        # mmpretrain is not installed
+        download('mmpretrain', ['resnet18_8xb16_cifar10'])
 
     with pytest.raises(ValueError):
         # invalid config
-        download('mmcls==0.11.0', ['resnet18_b16x8_cifar1'])
+        download('mmpretrain', ['resnet18_b16x8_cifar1'])
 
     runner = CliRunner()
-    # mim install mmcls --yes
-    result = runner.invoke(install, [
-        'mmcls', '--yes', '-f',
-        'https://github.com/open-mmlab/mmclassification.git'
-    ])
+    # mim install mmpretrain
+    result = runner.invoke(install, ['mmpretrain'])
     assert result.exit_code == 0
 
-    # mim download mmcls --config resnet18_8xb16_cifar10
-    checkpoints = download('mmcls', ['resnet18_8xb16_cifar10'])
+    # mim download mmpretrain --config resnet18_8xb16_cifar10
+    checkpoints = download('mmpretrain', ['resnet18_8xb16_cifar10'])
     assert checkpoints == ['resnet18_b16x8_cifar10_20210528-bd6371c8.pth']
-    checkpoints = download('mmcls', ['resnet18_8xb16_cifar10'])
+    checkpoints = download('mmpretrain', ['resnet18_8xb16_cifar10'])
 
-    # mim download mmcls --config resnet18_8xb16_cifar10 --dest tmp_path
-    checkpoints = download('mmcls', ['resnet18_8xb16_cifar10'], tmp_path)
+    # mim download mmpretrain --config resnet18_8xb16_cifar10 --dest tmp_path
+    checkpoints = download('mmpretrain', ['resnet18_8xb16_cifar10'], tmp_path)
     assert checkpoints == ['resnet18_b16x8_cifar10_20210528-bd6371c8.pth']
 
 
 def teardown_module():
     runner = CliRunner()
-    result = runner.invoke(uninstall, ['mmcv-full', '--yes'])
+    result = runner.invoke(uninstall, ['mmcv', '--yes'])
     assert result.exit_code == 0
     result = runner.invoke(uninstall, ['mmengine', '--yes'])
     assert result.exit_code == 0
-    result = runner.invoke(uninstall, ['mmcls', '--yes'])
+    result = runner.invoke(uninstall, ['mmpretrain', '--yes'])
     assert result.exit_code == 0
