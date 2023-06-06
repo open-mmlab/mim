@@ -3,6 +3,7 @@ import os
 import os.path as osp
 import platform
 import subprocess
+import sys
 from typing import List, Optional, Union
 
 import click
@@ -189,8 +190,12 @@ def _download_configs(package: str,
 
 
 def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
+    if platform.system() != 'Linux':
+        raise RuntimeError('download dataset is only available for Linux!')
+
     if not is_installed(package):
         raise RuntimeError(f'Please install {package} by ')
+
     installed_path = get_installed_path(package)
     mim_path = osp.join(installed_path, '.mim')
     dataset_index_path = osp.join(mim_path, 'dataset-index.yml')
@@ -211,29 +216,22 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
     dataset_meta = datasets_meta.get(dataset)
 
     # TODO rename
-    script_path = dataset_meta.get('script_path')
+    script_path = dataset_meta.get('script')
     script_path = osp.join(mim_path, script_path)
-    src_name = dataset_meta.get('src_name', dataset)
+    src_name = dataset_meta.get('dataset', dataset)
     download_root = dataset_meta['download_root']
     os.makedirs(download_root, exist_ok=True)
-    try:
-        import sys
-        color_echo(f'Start downloading {dataset} to {download_root}...',
-                   'blue')
-        process = subprocess.Popen(
-            ['odl', 'get', src_name, '-d', download_root],
-            stdin=sys.stdin,
-            stdout=sys.stdout,
-            stderr=sys.stderr)
-        process.wait()
-    except subprocess.CalledProcessError as e:
-        output = e.output.decode()
-        if 'login' in output:
-            raise RuntimeError('please login first by "odl login"')
-        raise RuntimeError(output)
 
-    if platform.system != 'Linux':
-        raise RuntimeError('download dataset is only available for Linux!')
+    color_echo(f'Start downloading {dataset} to {download_root}...', 'blue')
+    process = subprocess.Popen(
+        ['odl', 'get', src_name, '-d', download_root],
+        stdin=sys.stdin,
+        stdout=subprocess.PIPE,
+        stderr=sys.stderr)
+    process.wait()
+
+    if 'login' in process.stdout.read().decode().lower():
+        raise RuntimeError('please login first by "odl login"')
 
     if script_path:
         color_echo('Preprocess data ...', 'blue')
