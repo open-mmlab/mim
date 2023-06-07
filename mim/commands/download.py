@@ -216,30 +216,31 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
     dataset_meta = datasets_meta.get(dataset)
 
     # TODO rename
-    script_path = dataset_meta.get('script')
-    script_path = osp.join(mim_path, script_path)
     src_name = dataset_meta.get('dataset', dataset)
     download_root = dataset_meta['download_root']
     os.makedirs(download_root, exist_ok=True)
 
     color_echo(f'Start downloading {dataset} to {download_root}...', 'blue')
-    process = subprocess.Popen(
-        ['odl', 'get', src_name, '-d', download_root],
-        stdin=sys.stdin,
-        stdout=subprocess.PIPE,
-        stderr=sys.stderr)
+    process = subprocess.Popen(['odl', 'get', src_name, '-d', download_root],
+                               stdin=sys.stdin,
+                               stdout=sys.stdout,
+                               stderr=sys.stderr)
     process.wait()
 
-    if 'login' in process.stdout.read().decode().lower():
-        raise RuntimeError('please login first by "odl login"')
+    if not osp.exists(download_root):
+        return
 
-    if script_path:
-        color_echo('Preprocess data ...', 'blue')
-        if dest_root == DEFAULT_CACHE_DIR:
-            data_root = dataset_meta['data_root']
-        else:
-            data_root = dest_root
-        os.makedirs(data_root, exist_ok=True)
-        call_command(['chmod', '+x', script_path])
-        call_command([script_path, download_root, data_root])
-        echo_success('Finished!')
+    script_path = dataset_meta.get('script')
+    if script_path is None:
+        return
+
+    script_path = osp.join(mim_path, script_path)
+    color_echo('Preprocess data ...', 'blue')
+    if dest_root == DEFAULT_CACHE_DIR:
+        data_root = dataset_meta['data_root']
+    else:
+        data_root = dest_root
+    os.makedirs(data_root, exist_ok=True)
+    call_command(['chmod', '+x', script_path])
+    call_command([script_path, download_root, data_root])
+    echo_success('Finished!')
