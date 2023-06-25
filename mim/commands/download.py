@@ -95,6 +95,8 @@ def download(package: str,
     if dest_root is None:
         dest_root = DEFAULT_CACHE_DIR
 
+    dest_root = osp.abspath(dest_root)
+
     if configs is not None and dataset is not None:
         raise ValueError(
             'Cannot download config and dataset at the same time!')
@@ -113,8 +115,7 @@ def _download_configs(package: str,
                       dest_root: str,
                       check_certificate: bool = True) -> List[str]:
     # Create the destination directory if it does not exist.
-    if osp.exists(dest_root):
-        os.makedirs(dest_root)
+    os.makedirs(dest_root, exist_ok=True)
 
     package, version = split_package_version(package)
     if version:
@@ -217,8 +218,23 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
                        '{}'.format('\n'.join(datasets_meta.keys())))
     dataset_meta = datasets_meta[dataset]
 
-    # TODO rename
+    # OpenMMLab repo will define the `dataset-index.yml` like this:
+    # voc2007:
+    #     dataset: PASCAL_VOC2007
+    #     download_root: data
+    #     data_root: data
+    #     script: tools/dataset_converters/scripts/preprocess_voc2007.sh
+
+    # In this case, the top level key "voc2007" means the "Dataset Name" passed
+    # to `mim download --dataset {Dataset Name}`
+    # The nested field "dataset" means the argument passed to `odl get`
+    # If the value of "dataset" is the same as the "Dataset Name". Downstream
+    # repos can skip defining "dataset" and "Dataset Name" will be passed
+    # to `odl get`
     src_name = dataset_meta.get('dataset', dataset)
+
+    # `odl get` will download raw dataset to `download_root`, and the script
+    # will process the raws data and put the prepared data to the `data_root`
     download_root = dataset_meta['download_root']
     os.makedirs(download_root, exist_ok=True)
 
@@ -238,7 +254,7 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
 
     script_path = osp.join(mim_path, script_path)
     color_echo('Preprocess data ...', 'blue')
-    if dest_root == DEFAULT_CACHE_DIR:
+    if dest_root == osp.abspath(DEFAULT_CACHE_DIR):
         data_root = dataset_meta['data_root']
     else:
         data_root = dest_root
