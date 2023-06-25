@@ -194,7 +194,8 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
         raise RuntimeError('download dataset is only available for Linux!')
 
     if not is_installed(package):
-        raise RuntimeError(f'Please install {package} by ')
+        raise RuntimeError(
+            f'Please install {package} by `pip install {package}`')
 
     installed_path = get_installed_path(package)
     mim_path = osp.join(installed_path, '.mim')
@@ -202,7 +203,7 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
 
     if not osp.exists(dataset_index_path):
         raise FileNotFoundError(
-            f'Cannot find dataset-index.yaml in {dataset_index_path}, '
+            f'Cannot find {dataset_index_path}, '
             f'please update {package} to the latest version! If you have '
             f'already updated it and still get this error, please report an '
             f'issue to {package}')
@@ -213,7 +214,7 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
         raise KeyError(f'Cannot find {dataset} in {dataset_index_path}. '
                        'here are the available datasets: '
                        '{}'.format('\n'.join(datasets_meta.keys())))
-    dataset_meta = datasets_meta.get(dataset)
+    dataset_meta = datasets_meta[dataset]
 
     # TODO rename
     src_name = dataset_meta.get('dataset', dataset)
