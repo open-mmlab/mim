@@ -239,11 +239,9 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
     os.makedirs(download_root, exist_ok=True)
 
     color_echo(f'Start downloading {dataset} to {download_root}...', 'blue')
-    process = subprocess.Popen(['odl', 'get', src_name, '-d', download_root],
-                               stdin=sys.stdin,
-                               stdout=sys.stdout,
-                               stderr=sys.stderr)
-    process.wait()
+    subprocess.check_call(['odl', 'get', src_name, '-d', download_root],
+                          stdin=sys.stdin,
+                          stdout=sys.stdout)
 
     if not osp.exists(download_root):
         return
