@@ -67,23 +67,24 @@ def cli(package: str,
         > mim download mmcls --config resnet18_8xb16_cifar10
         > mim download mmcls --config resnet18_8xb16_cifar10 --dest .
     """
-    download(package, configs, dataset, dest_root, check_certificate)
+    download(package, configs, dest_root, check_certificate, dataset)
 
 
 def download(package: str,
-             configs: Optional[List[str]],
-             dataset: Optional[str],
+             configs: Optional[List[str]] = None,
              dest_root: Optional[str] = None,
-             check_certificate: bool = True) -> Union[List[str], None]:
+             check_certificate: bool = True,
+             dataset: Optional[str] = None) -> Union[List[str], None]:
     """Download checkpoints from url and parse configs from package.
 
     Args:
         package (str): Name of package.
-        configs (List[str]): List of config ids.
-        dest_root (Optional[str]): Destination directory to save checkpoint and
+        configs (List[str], optional): List of config ids.
+        dest_root (str, optional): Destination directory to save checkpoint and
             config. Default: None.
         check_certificate (bool): Whether to check the ssl certificate.
             Default: True.
+        dataset (str, optional): The name of dataset.
     """
     full_name = module_full_name(package)
     if full_name == '':
