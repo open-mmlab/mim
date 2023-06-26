@@ -193,7 +193,7 @@ def _download_configs(package: str,
 
 def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
     if platform.system() != 'Linux':
-        raise RuntimeError('download dataset is only available for Linux!')
+        raise RuntimeError('downloading dataset is only supported in Linux!')
 
     if not is_installed(package):
         raise RuntimeError(
@@ -228,7 +228,7 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
     # In this case, the top level key "voc2007" means the "Dataset Name" passed
     # to `mim download --dataset {Dataset Name}`
     # The nested field "dataset" means the argument passed to `odl get`
-    # If the value of "dataset" is the same as the "Dataset Name". Downstream
+    # If the value of "dataset" is the same as the "Dataset Name", downstream
     # repos can skip defining "dataset" and "Dataset Name" will be passed
     # to `odl get`
     src_name = dataset_meta.get('dataset', dataset)
