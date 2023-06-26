@@ -1,6 +1,7 @@
 Click
 colorama
 model-index
+opendatalab
 pandas
 pip>=19.3
 requests
