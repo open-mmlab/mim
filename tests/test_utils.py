@@ -4,6 +4,7 @@ from click.testing import CliRunner
 from mim.commands.install import cli as install
 from mim.commands.uninstall import cli as uninstall
 from mim.utils import get_github_url, parse_home_page
+from mim.utils.utils import get_torch_device_version, is_npu_available
 
 
 def setup_module():
@@ -37,6 +38,14 @@ def test_get_github_url():
     assert result.exit_code == 0
     assert get_github_url(
         'mmcls') == 'https://github.com/open-mmlab/mmclassification.git'
+
+
+def test_get_torch_device_version():
+    torch_v, device, device_v = get_torch_device_version()
+    assert torch_v.replace('.', '').isdigit()
+    if is_npu_available():
+        assert device == 'ascend'
+        assert device_v.replace('.', '').isdigit()
 
 
 def teardown_module():

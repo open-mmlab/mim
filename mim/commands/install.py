@@ -17,7 +17,8 @@ from mim.utils import (
     DEFAULT_MMCV_BASE_URL,
     PKG2PROJECT,
     echo_warning,
-    get_torch_cuda_version,
+    exit_with_error,
+    get_torch_device_version,
 )
 
 
@@ -160,16 +161,24 @@ def get_mmcv_full_find_link(mmcv_base_url: str) -> str:
 
     Returns:
         str: The mmcv find links corresponding to the current torch version and
-        cuda version.
+        CUDA/NPU version.
     """
-    torch_v, cuda_v = get_torch_cuda_version()
+    torch_v, device, device_v = get_torch_device_version()
     major, minor, *_ = torch_v.split('.')
     torch_v = '.'.join([major, minor, '0'])
 
-    if cuda_v.isdigit():
-        cuda_v = f'cu{cuda_v}'
+    if device == 'cuda' and device_v.isdigit():
+        device_link = f'cu{device_v}'
+    elif device == 'ascend':
+        if not device_v.isdigit():
+            exit_with_error('Unable to install OpenMMLab projects via mim '
+                            'on the current Ascend NPU, '
+                            'please compile from source code to install.')
+        device_link = f'ascend{device_v}'
+    else:
+        device_link = 'cpu'
 
-    find_link = f'{mmcv_base_url}/mmcv/dist/{cuda_v}/torch{torch_v}/index.html'  # noqa: E501
+    find_link = f'{mmcv_base_url}/mmcv/dist/{device_link}/torch{torch_v}/index.html'  # noqa: E501
     return find_link
 
 
