@@ -210,13 +210,13 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
             f'already updated it and still get this error, please report an '
             f'issue to {package}')
     with open(dataset_index_path) as f:
-        datasets_meta = yaml.load(f, Loader=yaml.SafeLoader)
+        dataset_metas = yaml.load(f, Loader=yaml.SafeLoader)
 
-    if dataset not in datasets_meta:
+    if dataset not in dataset_metas:
         raise KeyError(f'Cannot find {dataset} in {dataset_index_path}. '
                        'here are the available datasets: '
-                       '{}'.format('\n'.join(datasets_meta.keys())))
-    dataset_meta = datasets_meta[dataset]
+                       '{}'.format('\n'.join(dataset_metas.keys())))
+    dataset_meta = dataset_metas[dataset]
     # OpenMMLab repo will define the `dataset-index.yml` like this:
     # openxlab: true
     # voc2007:
@@ -238,9 +238,8 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
     # repos can skip defining "dataset" and "Dataset Name" will be passed
     # to `odl get`
 
-    use_openxlab = dataset_meta.get('openxlab', False)
+    use_openxlab = dataset_metas.get('openxlab', False)
     src_name = dataset_meta.get('dataset', dataset)
-
     # `odl get` will download raw dataset to `download_root`, and the script
     # will process the raws data and put the prepared data to the `data_root`
     download_root = dataset_meta['download_root']
