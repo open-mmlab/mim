@@ -217,20 +217,28 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
                        'here are the available datasets: '
                        '{}'.format('\n'.join(datasets_meta.keys())))
     dataset_meta = datasets_meta[dataset]
-
     # OpenMMLab repo will define the `dataset-index.yml` like this:
+    # openxlab: true
     # voc2007:
     #     dataset: PASCAL_VOC2007
     #     download_root: data
     #     data_root: data
     #     script: tools/dataset_converters/scripts/preprocess_voc2007.sh
 
-    # In this case, the top level key "voc2007" means the "Dataset Name" passed
+    # In this case:
+    # `openxlab` means download the dataset with `openxlab` cli, otherwise
+    # use the `odl` cli. Although `odl` cli will not be maintained in the
+    # future, we still keep it here for compatibility.
+
+    # The top level key "voc2007" means the "Dataset Name" passed
     # to `mim download --dataset {Dataset Name}`
+
     # The nested field "dataset" means the argument passed to `odl get`
     # If the value of "dataset" is the same as the "Dataset Name", downstream
     # repos can skip defining "dataset" and "Dataset Name" will be passed
     # to `odl get`
+
+    use_openxlab = dataset_meta.get('openxlab', False)
     src_name = dataset_meta.get('dataset', dataset)
 
     # `odl get` will download raw dataset to `download_root`, and the script
@@ -239,9 +247,15 @@ def _download_dataset(package: str, dataset: str, dest_root: str) -> None:
     os.makedirs(download_root, exist_ok=True)
 
     color_echo(f'Start downloading {dataset} to {download_root}...', 'blue')
-    subprocess.check_call(['odl', 'get', src_name, '-d', download_root],
-                          stdin=sys.stdin,
-                          stdout=sys.stdout)
+    if use_openxlab:
+        subprocess.check_call(
+            ['openxlab', 'dataset', 'get', src_name, '-d', download_root],
+            stdin=sys.stdin,
+            stdout=sys.stdout)
+    else:
+        subprocess.check_call(['odl', 'get', src_name, '-d', download_root],
+                              stdin=sys.stdin,
+                              stdout=sys.stdout)
 
     if not osp.exists(download_root):
         return
