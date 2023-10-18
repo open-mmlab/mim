@@ -94,5 +94,5 @@ The implementation of `mim export` function depends on `mim/utils/mmpack`. Curre
 #### Need to be improve
 
 1. Currently, the inheritance relationship expansion of double parent classes is not supported. Improvements will be made in the future depending on the needs.
-2. The config file containing `teacher_config` cannot be executed correctly because `teacher_config` cannot be found in the current path. You can avoid export errors by manually modifying the path pointed by `teacher_config`.
+2. Here comes ERROR when the origin config contains other files' `path` that can not be found in the current path. You can avoid export errors by manually modifying the `path` in the origin config.
 3. When isinstance() is used, if the parent class is just a class in the inheritance chain, the judgment may be False after expansion, because the original inheritance relationship will not be retained.

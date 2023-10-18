@@ -25,9 +25,15 @@ PYTHON = sys.executable
     '--fast_test',
     is_flag=True,
     help='The fast_test mode using few data for testing')
+@click.option(
+    '--keep_log',
+    is_flag=True,
+    help='The fast_test mode using few data for testing')
+
 def cli(config: str,
         export_root_dir: Optional[str] = None,
-        fast_test: bool = False) -> None:
+        fast_test: bool = False,
+        keep_log: bool = False) -> None:
 
     export_from_cfg(
-        config, export_root_dir=export_root_dir, fast_test=fast_test)
+        config, export_root_dir=export_root_dir, fast_test=fast_test, keep_log=keep_log)

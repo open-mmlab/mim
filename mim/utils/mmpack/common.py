@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 
 # initialization template for __init__.py
-__init__str = """
+_init_str = """
 import os
 import os.path as osp
 
@@ -71,27 +71,4 @@ REGISTRY_TYPE = {
     'log processor': 'LOG_PROCESSORS',
     'inferencer': 'INFERENCERS',
     'function': 'FUNCTIONS',
-}
-
-# module package names transfer to github's repo names
-MODULE2GitPACKAGE = {
-    # 'mmcls': 'mmcls',
-    'mmdet': 'mmdetection',
-    'mmdet3d': 'mmdetection3d',
-    'mmseg': 'mmsegmentation',
-    'mmaction': 'mmaction2',
-    'mmtrack': 'mmtracking',
-    'mmpose': 'mmpose',
-    'mmedit': 'mmedit',
-    'mmocr': 'mmocr',
-    'mmgen': 'mmgeneration',
-    'mmfewshot': 'mmfewshot',
-    'mmrazor': 'mmrazor',
-    'mmflow': 'mmflow',
-    'mmhuman3d': 'mmhuman3d',
-    'mmrotate': 'mmrotate',
-    'mmselfsup': 'mmselfsup',
-    'mmyolo': 'mmyolo',
-    'mmpretrain': 'mmpretrain',
-    'mmagic': 'mmagic',
 }

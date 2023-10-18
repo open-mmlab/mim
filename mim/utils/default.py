@@ -13,6 +13,26 @@ WHEEL_URL = {
     '{torch_version}/index.html',
 }
 RAW_GITHUB_URL = 'https://raw.githubusercontent.com/{owner}/{repo}/{branch}'
+
+OFFICIAL_MODULES = [
+    'mmcls',
+    'mmdet',
+    'mmdet3d',
+    'mmseg',
+    'mmaction2',
+    'mmtrack',
+    'mmpose',
+    'mmedit',
+    'mmocr',
+    'mmgen',
+    'mmselfsup'
+    'mmrotate',
+    'mmflow',
+    'mmyolo',
+    'mmpretrain',
+    'mmagic'
+]
+
 PKG2PROJECT = {
     'mmcv-full': 'mmcv',
     'mmcls': 'mmclassification',

@@ -51,13 +51,17 @@ minimun_package(Named as pack_from_{repo}_20231212_121212)
 
 `mim export` 功能实现依赖于 `mim/utils/mmpack`。目前只支持 `mmpose/mmdetection/mmagic/mmsegmentation`的部分 config 配置文件。并且对下游repo 有一些约束。
 
-1. 目前还不支持双父类的继承关系展开，后续看需求进行改进
-2. config 命名最好**不要有特殊符号**，否则无法通过 `mmengine.hub.get_config()` 进行解析，如：
+#### 针对下游库
+
+1. config 命名最好**不要有特殊符号**，否则无法通过 `mmengine.hub.get_config()` 进行解析，如：
+
    - gn+ws/faster-rcnn_r101_fpn_gn-ws-all_1x_coco.py
    - legacy_1.x/cascade-mask-rcnn_r50_fpn_1x_coco_v1.py
-3. 含有 `teacher_config` 的 config 文件目前还不能被正确执行，因为无法在当前路径找到 `teacher_config`，可以通过手动修改 `teacher_config` 所指路径来避免导出错误。
-4. 对于用到 isinstance()时，如果父类只是继承链中某个类，可能展开后判断就会为False，因为并不会保留原有的继承关系
-5. 建议下游继承于 mmengine 的 Registry名字不要改动，如 mmagic 中就将 `EVALUATOR` 重新命名为了 `EVALUATORS`
+
+2. 针对 `mmsegmentation`, 在使用 `mim.export` 导出 `mmseg` 的 config 之前, 首先需要去掉对于 `registry.py` 的外层文件夹封装， 即修改 `mmseg/registry/registry.py -> mmseg/registry.py`。
+
+3. 建议下游继承于 mmengine 的 Registry名字不要改动，如 mmagic 中就将 `EVALUATOR` 重新命名为了 `EVALUATORS`
+
    ```python
    from mmengine.registry import EVALUATOR as MMENGINE_EVALUATOR
 
@@ -68,7 +72,9 @@ minimun_package(Named as pack_from_{repo}_20231212_121212)
        locations=['mmagic.evaluation'],
    )
    ```
-6. 另外，如果添加了 mmengine 中没有的注册器，如 mmagic 中的 `DIFFUSION_SCHEDULERS`，需要在 `mim/utils/mmpack/common.py` 的 `REGISTRY_TYPE` 中添加键值对，用于注册 `torch` 模块到 `DIFFUSION_SCHEDULERS`
+
+4. 另外，如果添加了 mmengine 中没有的注册器，如 mmagic 中的 `DIFFUSION_SCHEDULERS`，需要在 `mim/utils/mmpack/common.py` 的 `REGISTRY_TYPE` 中添加键值对，用于注册 `torch` 模块到 `DIFFUSION_SCHEDULERS`
+
    ```python
    # "mmagic/mmagic/registry.py"
    # modules for diffusion models that support adding noise and denoising
@@ -84,3 +90,11 @@ minimun_package(Named as pack_from_{repo}_20231212_121212)
        ...
    }
    ```
+
+#### 对于 `mim.export` 功能需要改进的地方
+
+1. 目前还不支持双父类的继承关系展开，后续看需求进行改进
+
+2. 对于用到 isinstance()时，如果父类只是继承链中某个类，可能展开后判断就会为False，因为并不会保留原有的继承关系
+
+3. 当 config 文件中含有当前文件夹没法被访问到的`数据集路径`，导出可能会失败。目前的临时解决方法是：将原来的 config 文件保存到当前文件夹下，然后需要使用者手动修改`数据集路径`为当前路径下的可访问路径。如：`data/ADEChallengeData2016/ -> your_data_dir/ADEChallengeData2016/`
