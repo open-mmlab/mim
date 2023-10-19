@@ -1,23 +1,26 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import ast
+import inspect
+import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set, Union
-from .common import BUILDER_TRANS
+from typing import Dict, List, Optional, Set, Tuple, Union
+
 from mmengine.logging import print_log
-import logging
 from mmengine.model import (
     BaseDataPreprocessor,
     BaseModel,
     BaseModule,
     ImgDataPreprocessor,
 )
-import inspect
+
+from .common import BUILDER_TRANS
+
 
 @dataclass
 class TopClassNodeInfo:
     """Contatins ``top_cls_node`` information which waiting to be flattened.
-    
+
     Attributes:
         "cls_node": `ast.ClassDef`, needed to be flattened.
         "level_cls_name": The class name of flattened layer.
@@ -27,18 +30,19 @@ class TopClassNodeInfo:
         "sub_func": Collects all `ast.FunctionDef` nodes in this class.
         "sub_assign": Collects all `ast.Assign` nodes in this class
     """
-    cls_node: ast.ClassDef = None
-    level_cls_name: str = None
-    super_cls_name: str = None
-    end_idx: int = None
+    cls_node: ast.ClassDef
+    level_cls_name: Optional[str] = None
+    super_cls_name: Optional[str] = None
+    end_idx: Optional[int] = None
     sub_func: Dict[str, ast.FunctionDef] = field(default_factory=dict)
     sub_assign: Dict[str, ast.Assign] = field(default_factory=dict)
 
+
 @dataclass
 class TopAstInfo:
-    """ top_ast_info (TopClassNodeInfo): Contatins the initial information
-            of the ``top_ast_tree``.
-    
+    """top_ast_info (TopClassNodeInfo): Contatins the initial information of
+    the ``top_ast_tree``.
+
     Attributes:
         class_dict (TopClassNodeInfo): Contatins ``top_cls_node``
             information which waiting to be flattened.
@@ -51,19 +55,22 @@ class TopAstInfo:
         importfrom_asname_dict (Dict[str, ast.ImportFrom]): Contatins the
             asname alias of `ast.ImportFrom` information.
     """
-    class_dict: TopClassNodeInfo = None
-    importfrom_dict: Dict[str, List[Union[ast.ImportFrom, List[str]]]] = field(default_factory=dict)
-    importfrom_asname_dict: Dict[str, ast.ImportFrom] = field(default_factory=dict)
+    class_dict: TopClassNodeInfo
+    importfrom_dict: Dict[str, Tuple[ast.ImportFrom,
+                                     List[str]]] = field(default_factory=dict)
+    importfrom_asname_dict: Dict[str,
+                                 ast.ImportFrom] = field(default_factory=dict)
     import_list: List[str] = field(default_factory=list)
     try_list: List[ast.Try] = field(default_factory=list)
     if_list: List[ast.If] = field(default_factory=list)
     assign_list: List[ast.Assign] = field(default_factory=list)
 
+
 @dataclass
 class ExtraSuperAstInfo:
-    """extra_super_ast_info (ExtraSuperAstInfo): Contatins the extra information
-            of the ``super_ast_tree`` which needed to be consider.
-    
+    """extra_super_ast_info (ExtraSuperAstInfo): Contatins the extra
+    information of the ``super_ast_tree`` which needed to be consider.
+
     Attributes:
         used_module (Dict[ast.AST, Set[str]): The dict records
             the node and a set
@@ -73,22 +80,25 @@ class ExtraSuperAstInfo:
         extra_importfrom (List[ast.alias]): Records extra
             `ast.Import` nodes' alias in the super class file.
     """
-    used_module: Dict[ast.AST, Set[str]] = field(default_factory=lambda: defaultdict(set))
+    used_module: Dict[ast.AST, Set[str]] = field(
+        default_factory=lambda: defaultdict(set))
     extra_import: List[ast.alias] = field(default_factory=list)
-    extra_importfrom: Dict[ast.ImportFrom, List[ast.alias]] = field(default_factory=dict)
+    extra_importfrom: Dict[str, Tuple[ast.ImportFrom,
+                                      List[str]]] = field(default_factory=dict)
+
 
 @dataclass
 class NeededNodeInfo:
-    """need_node_info (NeededNodeInfo): Contatins the needed node by comparing ``super_ast_tree``
-        and ``top_ast_tree``.
-        
+    """need_node_info (NeededNodeInfo): Contatins the needed node by comparing
+    ``super_ast_tree`` and ``top_ast_tree``.
+
     Attributes:
         need_importfrom_nodes (set, optional): Collect the needed
-            `ast.ImportFrom` nodes from ``extra_super_ast_info.extra_importfrom``.
+            `ast.ImportFrom` node from ``ExtraSuperAstInfo.extra_importfrom``.
         need_import_alias_asname (set, optional): Collect the needed
-            `ast.Import` asname nodes from ``extra_super_ast_info.extra_import``.
+            `ast.Import` asname nodes from ``ExtraSuperAstInfo.extra_import``.
         need_import_alias (set, optional): Collect the needed `ast.Import`
-            nodes from ``extra_super_ast_info.extra_import``.
+            nodes from ``ExtraSuperAstInfo.extra_import``.
     """
     need_importfrom_nodes: Set[ast.ImportFrom] = field(default_factory=set)
     need_import_alias_asname: Set[ast.alias] = field(default_factory=set)
@@ -112,9 +122,8 @@ def get_len(used_modules_dict_set: Dict[ast.AST, Set[str]]):
     return len_sum
 
 
-def record_used_node(node: ast.AST,
-                               used_module_dict_set: Dict[ast.AST,
-                                                            Set[str]]):
+def record_used_node(node: ast.AST, used_module_dict_set: Dict[ast.AST,
+                                                               Set[str]]):
     """Recode the node had been use and no need to remove.
 
     Args:
@@ -142,7 +151,7 @@ def record_used_node(node: ast.AST,
         for func_sub_node in node.body:
             for func_sub_sub_node in ast.walk(func_sub_node):
                 if isinstance(func_sub_sub_node, ast.Name):
-                        used_module_dict_set[node].add(func_sub_sub_node.id)
+                    used_module_dict_set[node].add(func_sub_sub_node.id)
 
     # iteratively process the body of ClassDef
     elif isinstance(node, ast.ClassDef):
@@ -156,7 +165,7 @@ def record_used_node(node: ast.AST,
 
 
 def if_need_remove(node: ast.AST, used_module_dict_set: Dict[ast.AST,
-                                                               Set[str]]):
+                                                             Set[str]]):
     """Justify if the node should be remove.
 
     If the node not be use actually, it will be removed.
@@ -227,7 +236,6 @@ def is_in_top_ast_tree(node: ast.AST,
     return False
 
 
-
 def ignore_ast_docstring(node: Union[ast.ClassDef, ast.FunctionDef]):
     """Get the insert key ignoring the docstring.
 
@@ -261,10 +269,10 @@ def find_local_import(node: Union[ast.FunctionDef, ast.Assign],
 
     Args:
         node (ast.FunctionDef | ast.Assign)
-        extra_super_ast_info (ExtraSuperAstInfo): Contatins the extra information
-                    of the ``super_ast_tree`` which needed to be consider.
-        need_node_info (NeededNodeInfo, optional): Contatins the needed node by comparing ``super_ast_tree``
-            and ``top_ast_tree``.
+        extra_super_ast_info (ExtraSuperAstInfo): Contatins the extra
+            information of the ``super_ast_tree`` which needed to be consider.
+        need_node_info (NeededNodeInfo, optional): Contatins the needed node
+            by comparing ``super_ast_tree`` and ``top_ast_tree``.
 
     Returns:
         need_node_info
@@ -278,10 +286,12 @@ def find_local_import(node: Union[ast.FunctionDef, ast.Assign],
     if len(used_module) != 0:
 
         # record all used ast.ImportFrom nodes
-        for import_node, alias_list in extra_super_ast_info.extra_importfrom.values():
+        for import_node, alias_list in \
+                extra_super_ast_info.extra_importfrom.values():
             for module in used_module:
                 if module in alias_list:  # type: ignore[operator]
-                    need_node_info.need_importfrom_nodes.add(import_node)
+                    need_node_info.need_importfrom_nodes.add(
+                        import_node)  # type: ignore[arg-type]  # noqa: E501
                     continue
 
         # record all used ast.Import nodes
@@ -296,14 +306,13 @@ def find_local_import(node: Union[ast.FunctionDef, ast.Assign],
     return need_node_info
 
 
-def add_local_import_to_func(node,
-                             need_node_info: NeededNodeInfo()):
+def add_local_import_to_func(node, need_node_info: NeededNodeInfo):
     """Add the needed ast.ImportFrom and ast.Import to ast.Function.
 
     Args:
         node (ast.FunctionDef | ast.Assign)
-        need_node_info (NeededNodeInfo): Contatins the needed node by comparing ``super_ast_tree``
-            and ``top_ast_tree``.
+        need_node_info (NeededNodeInfo): Contatins the needed node by
+            comparing ``super_ast_tree`` and ``top_ast_tree``.
     """
     insert_index = ignore_ast_docstring(node)
 
@@ -313,16 +322,16 @@ def add_local_import_to_func(node,
     if len(need_node_info.need_import_alias) != 0:
         node.body.insert(
             insert_index,
-            ast.Import(names=[alias for alias in need_node_info.need_import_alias]))
+            ast.Import(
+                names=[alias for alias in need_node_info.need_import_alias]))
 
     for alias in need_node_info.need_import_alias_asname:
         node.body.insert(insert_index, ast.Import(names=[alias]))
 
 
-def add_local_import_to_class(
-        cls_node: ast.ClassDef,
-        extra_super_ast_info: ExtraSuperAstInfo,
-        new_node_begin_index=-9999):
+def add_local_import_to_class(cls_node: ast.ClassDef,
+                              extra_super_ast_info: ExtraSuperAstInfo,
+                              new_node_begin_index=-9999):
     """Add the needed `ast.ImportFrom` and `ast.Import` to `ast.Class`'s
     sub_nodes, including `ast.Assign` and `ast.Function`.
 
@@ -338,7 +347,6 @@ def add_local_import_to_class(
             the node and a set including module names it uses.
         new_node_begin_index (int, optional): The index of the last node
             of cls_node.body.
-
     """
     # for later add all the needed ast.ImportFrom and ast.Import nodes for
     # class attributes
@@ -358,19 +366,17 @@ def add_local_import_to_class(
         elif isinstance(cls_sub_node,
                         ast.FunctionDef) and i >= new_node_begin_index:
             need_node_info = find_local_import(
-                    node=cls_sub_node,
-                    extra_super_ast_info=extra_super_ast_info,
-                )
+                node=cls_sub_node,
+                extra_super_ast_info=extra_super_ast_info,
+            )
 
             add_local_import_to_func(
-                node=cls_sub_node,
-                need_node_info= need_node_info)
+                node=cls_sub_node, need_node_info=need_node_info)
 
     # add all the needed ast.ImportFrom and ast.Import nodes for
     # class attributes
     add_local_import_to_func(
-        node=cls_node,
-        need_node_info=later_need_node_info)
+        node=cls_node, need_node_info=later_need_node_info)
 
 
 def init_prepare(top_ast_tree: ast.Module, flattened_cls_name: str):
@@ -386,22 +392,22 @@ def init_prepare(top_ast_tree: ast.Module, flattened_cls_name: str):
         top_ast_info (TopClassNodeInfo): Contatins the initial information
             of the ``top_ast_tree``.
     """
-    # TODO
-    top_ast_info = TopAstInfo()
-    top_ast_info.class_dict = TopClassNodeInfo()
+    class_dict = TopClassNodeInfo(None)  # type: ignore
+    top_ast_info = TopAstInfo(class_dict)
 
     # top_ast_tree scope
     for node in top_ast_tree.body:
 
         # ast.Module -> ast.ImporFrom
         if isinstance(node, ast.ImportFrom):
-            if node.names[0].asname is not None:
-                top_ast_info.importfrom_asname_dict[node.module] = [node]
-            else:
+            if node.module is not None and node.names[0].asname is not None:
+                top_ast_info.importfrom_asname_dict[node.module] = node
+            elif node.module is not None:
                 # yapf: disable
-                top_ast_info.importfrom_dict[node.module] = [node] + [
+                top_ast_info.importfrom_dict[node.module] = (
+                    node,
                     [alias.name for alias in node.names]  # type: ignore
-                ]
+                )
                 # yapf: enable
 
         # ast.Module -> ast.Import
@@ -439,9 +445,9 @@ def init_prepare(top_ast_tree: ast.Module, flattened_cls_name: str):
             #   >>> class A(C)
             top_ast_info.class_dict.cls_node = node
             top_ast_info.class_dict.level_cls_name = flattened_cls_name
-            top_ast_info.class_dict.super_cls_name = node.bases[0].id
+            top_ast_info.class_dict.super_cls_name = node.bases[
+                0].id  # type: ignore[attr-defined]
             top_ast_info.class_dict.end_idx = len(node.body)
-
 
             for sub_node in node.body:
                 if isinstance(sub_node, ast.FunctionDef):
@@ -451,13 +457,13 @@ def init_prepare(top_ast_tree: ast.Module, flattened_cls_name: str):
                     top_ast_info.class_dict.sub_assign[sub_node.targets[
                         0].id] = sub_node  # type: ignore[attr-defined]
 
-    assert top_ast_info.class_dict is not None, f"The class [{flattened_cls_name}] \
-        doesn't exist in the ast tree."
+    assert top_ast_info.class_dict is not None, \
+        f"The class [{flattened_cls_name}] doesn't exist in the ast tree."
 
     return top_ast_info
 
 
-def collect_needed_node_from_super(super_ast_tree: ast.Module, 
+def collect_needed_node_from_super(super_ast_tree: ast.Module,
                                    top_ast_info: TopAstInfo):
     """Flatten specific model class.
 
@@ -488,8 +494,8 @@ def collect_needed_node_from_super(super_ast_tree: ast.Module,
             of the ``top_ast_tree``.
 
     Returns:
-        extra_super_ast_info (ExtraSuperAstInfo): Contatins the extra information
-            of the ``super_ast_tree`` which needed to be consider.
+        extra_super_ast_info (ExtraSuperAstInfo): Contatins the extra
+            information of the ``super_ast_tree`` which needed to be consider.
     """
     extra_super_ast_info = ExtraSuperAstInfo()
 
@@ -509,19 +515,18 @@ def collect_needed_node_from_super(super_ast_tree: ast.Module,
             #   >>> for abc import a as A, B
             if node.names[0].asname is not None:
                 if node.module in top_ast_info.importfrom_asname_dict:
-                    top_importfrom_node = top_ast_info.importfrom_asname_dict.get(
-                        node.module)
+                    top_importfrom_node = \
+                        top_ast_info.importfrom_asname_dict.get(node.module)
 
                     if ast.dump(top_importfrom_node  # type: ignore[arg-type]
                                 ) != ast.dump(node):
                         # yapf: disable
-                        extra_super_ast_info.extra_importfrom[node.module] = [node] + [
-                            [
-                                alias.name
-                                if alias.asname is None else alias.asname
-                                for alias in node.names
-                            ]  # type: ignore
-                        ]
+                        alias_names = [alias.name
+                                       if alias.asname is None
+                                       else alias.asname
+                                       for alias in node.names]
+                        extra_super_ast_info.extra_importfrom[node.module] = \
+                            (node, alias_names)
                         # yapf: enable
 
             # only name
@@ -529,29 +534,29 @@ def collect_needed_node_from_super(super_ast_tree: ast.Module,
                 # the ast.alias import from the same module will be merge into
                 # one ast.ImportFrom
                 if node.module in top_ast_info.importfrom_dict:
-                    top_importfrom_node, last_names = top_ast_info.importfrom_dict.get(
-                        node.module)  # type: ignore[misc]
+                    (top_importfrom_node, last_names) = \
+                        top_ast_info.importfrom_dict.get(node.module)  # type: ignore  # noqa: E501
 
-                    current_names = [alias.name for alias in node.names]
+                    current_names = [alias.name for alias in node.names
+                                     ]  # type: ignore[misc]  # noqa: E501
                     last_names = list(set(last_names + current_names))
                     top_importfrom_node.names = [
                         ast.alias(name=name) for name in last_names
-                    ]
+                    ]  # type: ignore[attr-defined]
 
                     # NOTE: update the information of top_ast_tree
-                    top_ast_info.importfrom_dict[node.module] = [top_importfrom_node
-                                                        ] + [last_names]
+                    top_ast_info.importfrom_dict[node.module] = (
+                        top_importfrom_node, last_names)
 
                 # those don't exist ast.ImportFrom will be later added
-                else:
+                elif node.module is not None:
                     # yapf: disable
-                    extra_super_ast_info.extra_importfrom[node.module] = [node] + [
-                        [
-                            alias.name
-                            if alias.asname is None else alias.asname
-                            for alias in node.names
-                        ]  # type: ignore
-                    ]
+                    alias_names = [alias.name
+                                   if alias.asname is None
+                                   else alias.asname
+                                   for alias in node.names]
+                    extra_super_ast_info.extra_importfrom[node.module] = \
+                        (node, alias_names)
                     # yapf: enable
 
         # ast.Module -> ast.Import
@@ -566,13 +571,14 @@ def collect_needed_node_from_super(super_ast_tree: ast.Module,
 
         # ast.Module -> ast.Try / ast.Assign / ast.If
         elif (isinstance(node, ast.Try) or isinstance(node, ast.Assign) or
-              isinstance(node, ast.If)) \
-            and not is_in_top_ast_tree(node, top_ast_info=top_ast_info):
-                record_used_node(node, extra_super_ast_info.used_module)
+                isinstance(node, ast.If)) and \
+                not is_in_top_ast_tree(node, top_ast_info=top_ast_info):
+            record_used_node(node, extra_super_ast_info.used_module)
 
         # ast.Module -> ast.ClassDef
-        elif isinstance(node, ast.ClassDef
-                        ) and node.name == top_ast_info.class_dict.super_cls_name:
+        elif isinstance(
+                node, ast.ClassDef
+        ) and node.name == top_ast_info.class_dict.super_cls_name:
 
             # get the specific flattened class node in the top_ast_tree
             top_cls_node = top_ast_info.class_dict.cls_node
@@ -591,9 +597,8 @@ def collect_needed_node_from_super(super_ast_tree: ast.Module,
             # correct level, it will be turn to use the root super
             # class' method.
             super_func = []
-            for sub_node in ast.walk(top_cls_node):
+            for sub_node in ast.walk(top_cls_node):  # type: ignore[arg-type]
 
-                
                 if isinstance(sub_node, ast.Attribute) \
                         and hasattr(sub_node, 'value') \
                         and isinstance(sub_node.value, ast.Call) \
@@ -660,19 +665,19 @@ def collect_needed_node_from_super(super_ast_tree: ast.Module,
                         top_ast_info.class_dict.sub_func[
                             super_cls_sub_node.name] = super_cls_sub_node
                         record_used_node(super_cls_sub_node,
-                                                   extra_super_ast_info.used_module)
+                                         extra_super_ast_info.used_module)
 
                     # the function don't exist in top class node will be
                     # directly imported
-                    elif super_cls_sub_node.name not in top_ast_info.class_dict.sub_func:
+                    elif super_cls_sub_node.name not in \
+                            top_ast_info.class_dict.sub_func:
                         func_need_append.append(super_cls_sub_node)
                         # if super_cls_sub_node.name == "_init_cls_convs":
-                        #     import ipdb; ipdb.set_trace()
                         # NOTE: update the information of top_ast_tree
                         top_ast_info.class_dict.sub_func[
                             super_cls_sub_node.name] = super_cls_sub_node
                         record_used_node(super_cls_sub_node,
-                                                   extra_super_ast_info.used_module)
+                                         extra_super_ast_info.used_module)
 
                 # ast.Module -> ast.ClassDef -> ast.Assign
                 elif isinstance(super_cls_sub_node, ast.Assign):
@@ -687,40 +692,45 @@ def collect_needed_node_from_super(super_ast_tree: ast.Module,
                         assign_need_append.append(super_cls_sub_node)
 
                         # NOTE: update the information of top_ast_tree
-                        top_ast_info.class_dict.end_idx += 1
+                        top_ast_info.class_dict.end_idx += 1  # type: ignore
                         top_ast_info.class_dict.sub_assign[
                             super_cls_sub_node.
                             targets[0].  # type: ignore[attr-defined]
                             id] = super_cls_sub_node
                         record_used_node(super_cls_sub_node,
-                                                   extra_super_ast_info.used_module)
+                                         extra_super_ast_info.used_module)
 
             # add all the needed ast.ClassDef -> ast.FunctionDef and
             # ast.ClassDef -> ast.Assign to top_cls_node
             if len(assign_need_append) != 0:
-                insert_idx = ignore_ast_docstring(top_cls_node)
+                insert_idx = ignore_ast_docstring(
+                    top_cls_node)  # type: ignore[arg-type]  # noqa: E501
 
                 assign_need_append.reverse()
                 for assign in assign_need_append:
-                    top_cls_node.body.insert(insert_idx, assign)
+                    top_cls_node.body.insert(
+                        insert_idx,
+                        assign)  # type: ignore[arg-type]  # noqa: E501
 
-            # import ipdb; ipdb.set_trace()
             func_name = [func.name for func in func_need_append]
-            print_log(f"Add function {func_name}.",
-                      logger="export",
-                      level=logging.INFO)
-            top_cls_node.body.extend(func_need_append)
+            print_log(
+                f'Add function {func_name}.',
+                logger='export',
+                level=logging.INFO)
+            top_cls_node.body.extend(
+                func_need_append)  # type: ignore[arg-type]  # noqa: E501
 
             # complete this level flatten, change the super class of
             # top_cls_node
-            top_cls_node.bases = node.bases
+            top_cls_node.bases = node.bases  # type: ignore[attr-defined]
 
             # NOTE: update the information of top_ast_tree
             top_ast_info.class_dict.level_cls_name = node.name
             # HARD CODE: useless, only for preventing error when ``nn.xxx``
             # as the last super class
-            top_ast_info.class_dict.super_cls_name = node.bases[0].id if isinstance(
-                node.bases[0], ast.Name) else node.bases[0]
+            top_ast_info.class_dict.super_cls_name = node.bases[  # type: ignore  # noqa: E501
+                0].id \
+                if isinstance(node.bases[0], ast.Name) else node.bases[0]
 
     return extra_super_ast_info
 
@@ -731,8 +741,8 @@ def postprocess_top_ast_tree(
     extra_super_ast_info: ExtraSuperAstInfo,
     top_ast_info: TopAstInfo,
 ):
-    """Postprocess ``top_ast_tree`` with the information collected by traversing
-    super_ast_tree.
+    """Postprocess ``top_ast_tree`` with the information collected by
+    traversing super_ast_tree.
 
     This function finishes:
         1. get all the nodes needed by ``top_ast_tree`` and
@@ -747,8 +757,8 @@ def postprocess_top_ast_tree(
             class in the specific flatten class's mro.
         top_ast_tree (ast.Module): The top ast tree contains the classes
             directly called, which is  continuelly updated.
-        extra_super_ast_info (ExtraSuperAstInfo): Contatins the extra information
-            of the ``super_ast_tree`` which needed to be consider.
+        extra_super_ast_info (ExtraSuperAstInfo): Contatins the extra
+            information of the ``super_ast_tree`` which needed to be consider.
         top_ast_info (TopClassNodeInfo): Contatins the initial information
             of the ``top_ast_tree``.
     """
@@ -764,7 +774,8 @@ def postprocess_top_ast_tree(
 
     # HARD CODE: there will be a situation that the super class and the sub
     # class exist in the same file, the super class should
-    imported_module_name_upper.discard(top_ast_info.class_dict.super_cls_name)
+    imported_module_name_upper.discard(
+        top_ast_info.class_dict.super_cls_name)  # type: ignore  # noqa: E501
 
     # find the needed ast.ClassDef or ast.FunctionDef in super_ast_tree
     need_append_node_name: Set[str] = set()
@@ -777,7 +788,8 @@ def postprocess_top_ast_tree(
             for node in super_ast_tree.body:
                 if (isinstance(node, ast.ClassDef)
                     or isinstance(node, ast.FunctionDef)) \
-                    and not if_need_remove(node, extra_super_ast_info.used_module) \
+                    and not if_need_remove(node,
+                                           extra_super_ast_info.used_module) \
                         and node.name not in imported_module_name_upper:
 
                     need_append_node_name.add(node.name)
@@ -798,7 +810,6 @@ def postprocess_top_ast_tree(
         elif isinstance(top_node, ast.FunctionDef) or isinstance(
                 top_node, ast.ClassDef):
             top_cls_func_node_name_list.append(top_node.name)
-    # import ipdb; ipdb.set_trace()
     # super_ast_tree scope
     for node in super_ast_tree.body:
 
@@ -822,7 +833,7 @@ def postprocess_top_ast_tree(
                 top_ast_info.if_list.append(node)
 
         elif not if_need_remove(node, extra_super_ast_info.used_module) \
-            and not is_in_top_ast_tree(node, 
+            and not is_in_top_ast_tree(node,
                                        top_ast_info,
                                        top_cls_func_node_name_list) \
                 and node.name in need_append_node_name:  # type: ignore[attr-defined]  # noqa: E501
@@ -831,12 +842,10 @@ def postprocess_top_ast_tree(
             if isinstance(node, ast.FunctionDef):
 
                 need_node_info = find_local_import(
-                        node=node,
-                        extra_super_ast_info=extra_super_ast_info)
+                    node=node, extra_super_ast_info=extra_super_ast_info)
 
                 add_local_import_to_func(
-                    node=node,
-                    need_node_info=need_node_info)
+                    node=node, need_node_info=need_node_info)
 
                 # NOTE: postprocess top_ast_tree
                 top_ast_tree.body.insert(insert_idx, node)
@@ -845,8 +854,7 @@ def postprocess_top_ast_tree(
             # ast.Module -> ast.ClassDef
             elif isinstance(node, ast.ClassDef):
                 add_local_import_to_class(
-                    cls_node=node,
-                    extra_super_ast_info=extra_super_ast_info)
+                    cls_node=node, extra_super_ast_info=extra_super_ast_info)
 
                 # NOTE: postprocess top_ast_tree
                 top_ast_tree.body.insert(insert_idx, node)
@@ -867,23 +875,21 @@ def postprocess_top_ast_tree(
     # all the extra import will be inserted to the top of the top_ast_tree
     need_node_info = NeededNodeInfo()
 
-    for module_name, (sub_node,
-                      name_list) in extra_super_ast_info.extra_importfrom.items():
+    for module_name, (
+            sub_node,
+            name_list) in extra_super_ast_info.extra_importfrom.items():
         need_node_info.need_importfrom_nodes.add(sub_node)
-        top_ast_info.importfrom_dict[module_name] = [sub_node] + [name_list]
+        top_ast_info.importfrom_dict[module_name] = (sub_node, name_list)
 
-    for alias in extra_super_ast_info.extra_import:
-        if alias.asname is not None:
+    for alias in extra_super_ast_info.extra_import:  # type: ignore
+        if alias.asname is not None:  # type: ignore
             need_node_info.need_import_alias_asname.add(alias)
-            top_ast_info.import_list.append(alias.asname)
+            top_ast_info.import_list.append(alias.asname)  # type: ignore
         else:
             need_node_info.need_import_alias.add(alias)
-            top_ast_info.import_list.append(alias.name)
+            top_ast_info.import_list.append(alias.name)  # type: ignore
 
-    add_local_import_to_func(
-        node=top_ast_tree,
-        need_node_info=need_node_info
-    )
+    add_local_import_to_func(node=top_ast_tree, need_node_info=need_node_info)
 
 
 def postprocess_super_call(ast_tree: ast.Module):
@@ -934,7 +940,8 @@ def flatten_inheritance_chain(top_ast_tree: ast.Module, obj_cls: type):
         obj_cls (object): The chosen top class to be flattened.
     """
     print_log(
-        f'------------- Starting flatten model [{obj_cls.__name__}] -------------\n'
+        f'------------- Starting flatten model [{obj_cls.__name__}] '
+        f'-------------\n'
         f'\n    *[mro]: {obj_cls.mro()}\n',
         logger='export',
         level=logging.INFO)
@@ -949,7 +956,6 @@ def flatten_inheritance_chain(top_ast_tree: ast.Module, obj_cls: type):
             break
         inheritance_chain.append(cls)
 
-
     # collect the init information of ``top_ast_tree``
     top_ast_info = init_prepare(top_ast_tree, obj_cls.__name__)
 
@@ -963,8 +969,7 @@ def flatten_inheritance_chain(top_ast_tree: ast.Module, obj_cls: type):
         ImportResolverTransformer(cls.__module__).visit(super_ast_tree)
         # collect the difference between ``top_ast_tree`` and ``super_ast_tree``  # noqa: E501
         extra_super_ast_info = collect_needed_node_from_super(
-                super_ast_tree=super_ast_tree,
-                top_ast_info=top_ast_info)
+            super_ast_tree=super_ast_tree, top_ast_info=top_ast_info)
 
         # update ``top_ast_tree``
         postprocess_top_ast_tree(
@@ -975,10 +980,10 @@ def flatten_inheritance_chain(top_ast_tree: ast.Module, obj_cls: type):
         )
 
     print_log(
-        f'------------- Ending flatten model [{obj_cls.__name__}] -------------\n', 
+        f'------------- Ending flatten model [{obj_cls.__name__}] '
+        f'-------------\n',
         logger='export',
         level=logging.INFO)
-
 
 
 class RegisterModuleTransformer(ast.NodeTransformer):
@@ -1021,15 +1026,15 @@ class ImportResolverTransformer(ast.NodeTransformer):
     def visit_ImportFrom(self, node):
         matched = self._match_alias_registry(node)
         if matched is not None:
-            # In an ideal scenario, the `ImportResolverTransformer` would modify
-            # the import sources of all `Registry` from downstream algorithm
-            # libraries (`mmdet`) to `pack`, for example, convert
+            # In an ideal scenario, the `ImportResolverTransformer` would
+            # modify the import sources of all `Registry` from downstream
+            # algorithm libraries (`mmdet`) to `pack`, for example, convert
             # `from mmdet.models import DETECTORS` to
             # `from pack.models import DETECTORS`.
 
-            # However, some algorithm libraries, such as `mmpose`, provide aliases
-            # for `MODELS`, `TASK_UTILS`, and other registries,
-            # as seen here: https://github.com/open-mmlab/mmpose/blob/537bd8e543ab463fb55120d5caaa1ae22d6aaf06/mmpose/models/builder.py#L13.
+            # However, some algorithm libraries, such as `mmpose`, provide
+            # aliases for `MODELS`, `TASK_UTILS`, and other registries,
+            # as seen here: https://github.com/open-mmlab/mmpose/blob/537bd8e543ab463fb55120d5caaa1ae22d6aaf06/mmpose/models/builder.py#L13.  # noqa: E501
 
             # For these registries with aliases, we cannot directly import from
             # `pack.registry` because `pack.registry` is copied from
@@ -1062,8 +1067,6 @@ class ImportResolverTransformer(ast.NodeTransformer):
                 node.module = 'pack.registry'
 
         return node
-
-    # TODO: resolve Import Node
 
     def _match_alias_registry(self, node) -> Optional[str]:
         match_patch_key = None

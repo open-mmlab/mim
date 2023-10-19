@@ -6,15 +6,14 @@ import inspect
 import logging
 import os
 import os.path as osp
-import re
 import shutil
-from functools import wraps, lru_cache
+from functools import wraps
 from typing import Callable
 
 import torch.nn
 from mmengine import mkdir_or_exist
-from mmengine.logging import print_log
 from mmengine.config import ConfigDict
+from mmengine.logging import print_log
 from mmengine.model import (
     BaseDataPreprocessor,
     BaseModel,
@@ -28,12 +27,13 @@ from mim.utils import OFFICIAL_MODULES
 from .common import REGISTRY_TYPE
 from .flatten_func import *  # noqa: F403, F401
 from .flatten_func import (
+    ImportResolverTransformer,
+    RegisterModuleTransformer,
     flatten_inheritance_chain,
     ignore_ast_docstring,
     postprocess_super_call,
-    RegisterModuleTransformer,
-    ImportResolverTransformer
 )
+
 
 def format_code(code_text: str):
     """Format the code text with yapf."""
@@ -42,8 +42,7 @@ def format_code(code_text: str):
         blank_line_before_nested_class_or_def=True,
         split_before_expression_after_opening_paren=True)
     try:
-        code_text, _ = FormatCode(
-            code_text, style_config=yapf_style)  # TODO: some code couldn't pass the verify
+        code_text, _ = FormatCode(code_text, style_config=yapf_style)
     except:  # noqa: E722
         raise SyntaxError('Failed to format the config file, please '
                           f'check the syntax of: \n{code_text}')
@@ -68,13 +67,11 @@ def _postprocess_registry_locations(export_root_dir: str):
         """node structure.
 
         Assign(     targets=[         Name(id='EVALUATORS', ctx=Store())],
-        value=Call(         func=Name(id='Registry', ctx=Load()),
-        args=[             Constant(value='evaluator')],         keywords=[
-        keyword(                 arg='parent',
-        value=Name(id='MMENGINE_EVALUATOR', ctx=Load())),             keyword(
-        arg='locations',                 value=List(                     elts=[
-        Constant(value='pack.evaluation')],
-        ctx=Load()))])),
+        value=Call(         func=Name(id='Registry', ctx=Load()), args=[
+        Constant(value='evaluator')],         keywords=[ keyword( arg='parent',
+        value=Name(id='MMENGINE_EVALUATOR', ctx=Load())), keyword(
+        arg='locations',                 value=List( elts=[
+        Constant(value='pack.evaluation')], ctx=Load()))])),
         """
         if isinstance(node, ast.Call):
             need_to_be_remove = None
@@ -83,8 +80,9 @@ def _postprocess_registry_locations(export_root_dir: str):
                 if keyword.arg == 'locations':
                     for sub_node in ast.walk(keyword):
 
-                        # the locations of Registry already transfer to `pack` scope before.
-                        # if the location path is exist, then turn to pack scope  # noqa: E501
+                        # the locations of Registry already transfer to `pack`
+                        # scope before. if the location path is exist, then
+                        # turn to pack scope
                         if isinstance(
                                 sub_node,
                                 ast.Constant) and 'pack' in sub_node.value:
@@ -94,12 +92,11 @@ def _postprocess_registry_locations(export_root_dir: str):
                                     osp.join(export_root_dir, path).replace(
                                         '.', '/')):
                                 print_log(
-                                    '[ Pass ] Remove Registry.locations '  # noqa: E501
+                                    '[ Pass ] Remove Registry.locations '
                                     f"'{osp.join(export_root_dir, path).replace('.','/')}', "  # noqa: E501
-                                    'which is no need to export.',  # noqa: E501
+                                    'which is no need to export.',
                                     logger='export',
-                                    level=logging.INFO
-                                )
+                                    level=logging.INFO)
                                 need_to_be_remove = keyword
                                 break
 
@@ -178,14 +175,16 @@ def _postprocess_importfrom_module_to_pack(file_path: str):
         needed_change_alias = []
 
         for alias in node.names:
-            # if the import module's name is equal to the class or function name, it can not be transfer for avoiding circular import.
+            # if the import module's name is equal to the class or function
+            # name, it can not be transfer for avoiding circular import.
             if alias.name in _module_path_dict.keys(
             ) and alias.name not in can_not_change_module:
 
                 if export_module_path is None:
                     export_module_path = _module_path_dict[alias.name]
                 else:
-                    assert _module_path_dict[alias.name] == export_module_path,\
+                    assert _module_path_dict[alias.name] == \
+                        export_module_path,\
                         'There are two module from the same downstream repo,'\
                         " but can't change to the same export path."
 
@@ -329,8 +328,7 @@ def _wrapper_all_registries_build_func(export_module_dir: str, scope: str):
 
     # replace 'repo' name in Registry.locations to 'pack'
     with open(
-            osp.join(export_module_dir, 'registry.py'), 'r',
-            encoding='utf-8') as f:
+            osp.join(export_module_dir, 'registry.py'), encoding='utf-8') as f:
         ast_tree = ast.parse(f.read())
         for node in ast.walk(ast_tree):
             if isinstance(node, ast.Constant):
@@ -357,6 +355,7 @@ def _wrapper_all_registries_build_func(export_module_dir: str, scope: str):
         Registry.build = _wrap_build(Registry.build, export_module_dir)
         Registry.get = _wrap_get(Registry.get, export_module_dir)
 
+
 def ignore_self_cache(func):
     """Ignore the ``@lru_cache`` for function.
 
@@ -367,6 +366,7 @@ def ignore_self_cache(func):
         Callable: The function without ``@lru_cache``.
     """
     cache = {}
+
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         key = args
@@ -377,6 +377,7 @@ def ignore_self_cache(func):
             return
 
     return wrapper
+
 
 @ignore_self_cache
 def _export_module(self, obj_cls: type, pack_module_dir, obj_type: str):
@@ -457,10 +458,11 @@ def _export_module(self, obj_cls: type, pack_module_dir, obj_type: str):
                                                ImgDataPreprocessor]) \
                             and 'torch' not in super_cls.__module__:  # noqa: E501
 
-                        print_log(f'need_flatten: {cls_name}\n',
-                                  logger='export',
-                                  level=logging.INFO)
-                        
+                        print_log(
+                            f'need_flatten: {cls_name}\n',
+                            logger='export',
+                            level=logging.INFO)
+
                         flatten_inheritance_chain(top_ast_tree, cls)
                         break
             postprocess_super_call(top_ast_tree)
@@ -489,14 +491,14 @@ def _export_module(self, obj_cls: type, pack_module_dir, obj_type: str):
         # had been registered.
         root_registry = self if self.parent is None else self.parent
         if (obj_type not in self._extra_module_set) and (
-                root_registry.init_get_func(obj_type) is
-                None):  # TODO 这里不应该是 obj_cls.name因为注册名字可能不一样
+                root_registry.init_get_func(obj_type) is None):
             self._extra_module_set.add(obj_type)
             with open(osp.join(pack_module_dir, 'registry.py'), 'a') as f:
 
-                # TODO: the downstream repo registries' name maybe
-                # different with mmengine for example: EVALUATOR in
-                # mmengine, EVALUATORS in mmdet.
+                # TODO: When the downstream repo registries' name are
+                # different with mmengine, the module may not be registried
+                # to the right register.
+                # For example: `EVALUATOR` in mmengine, `EVALUATORS` in mmdet.
                 f.write('\n')
                 f.write(f'from {module} import {obj_cls.__name__}\n')
                 f.write(
@@ -550,4 +552,3 @@ def _wrap_get(get_func: Callable, pack_module_dir: str):
         return obj_cls
 
     return wrapper
-

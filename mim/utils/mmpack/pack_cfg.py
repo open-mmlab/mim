@@ -1,6 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import ast
-import copy
 import logging
 import os
 import os.path as osp
@@ -11,9 +9,10 @@ import traceback
 from datetime import datetime
 from typing import Optional, Union
 
+from mmengine import MMLogger
 from mmengine.config import Config, ConfigDict
 from mmengine.hub import get_config
-from mmengine import MMLogger
+from mmengine.logging import print_log
 from mmengine.registry import init_default_scope
 from mmengine.runner import Runner
 from mmengine.utils import get_installed_path, mkdir_or_exist
@@ -31,7 +30,6 @@ from .utils import (
 
 def export_from_cfg(cfg: Union[str, ConfigDict],
                     export_root_dir: Optional[str] = None,
-                    fast_test: Optional[bool] = False,
                     model_only: Optional[bool] = False,
                     keep_log: Optional[bool] = False):
     """A function to pack the minimum available package according to config
@@ -40,10 +38,12 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
     Args:
         cfg  (:obj:`ConfigDict` or str): Config file for packing the
             minimum package.
-        export_root_dir (str, optional): The pack directory to save the packed package.
-        fast_test (bool, optional): Trun to fast testing mode. Defaults to "False".
+        export_root_dir (str, optional): The pack directory to save the
+            packed package.
+        fast_test (bool, optional): Turn to fast testing mode.
+            Defaults to "False".
     """
-    # delete the uncomplete export package when keyboard interupt
+    # delete the incomplete export package when keyboard interrupt
     signal.signal(signal.SIGINT, lambda sig, frame: keyboardinterupt_handler(
         sig, frame, export_root_dir))  # type: ignore[arg-type]
 
@@ -54,25 +54,24 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
         else:
             cfg = Config.fromfile(cfg)
 
-    origin_cfg = copy.deepcopy(cfg)
     default_scope = cfg.get('default_scope', 'mmengine')
 
     # automatically generate ``export_root_dir`` and ``export_module_dir``
     if export_root_dir is None:
-        export_root_dir = f"pack_from_{default_scope}_{datetime.now().strftime(r'%Y%m%d_%H%M%S')}"    
-    
+        export_root_dir = f'pack_from_{default_scope}_' + \
+            f"{datetime.now().strftime(r'%Y%m%d_%H%M%S')}"
+
     if osp.sep in export_root_dir:
         export_path = osp.dirname(export_root_dir)
     else:
         export_path = os.getcwd()
-    
+
     export_log_dir = osp.join(export_path, 'export_log')
     mkdir_or_exist(export_log_dir)
-    
-    export_logger = MMLogger.get_instance(
-        "export",
-        log_file=osp.join(export_log_dir, 'export.log'),
-    )
+
+    export_logger = MMLogger.get_instance(  # noqa: F841
+        'export',
+        log_file=osp.join(export_log_dir, 'export.log'))
 
     export_module_dir = osp.join(export_root_dir, 'pack')
     if osp.exists(export_module_dir):
@@ -87,9 +86,6 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
             cfg.filename.split('/')[-1])
     mkdir_or_exist(osp.dirname(cfg_path))
 
-    # NOTE: use less data for faster testing
-    fast_test_mode(cfg, fast_test)
-
     # transform to default_scope
     init_default_scope(default_scope)
 
@@ -98,49 +94,74 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
         export_module_dir=export_module_dir, scope=default_scope)
 
     print_log(
-        f"[ Export Package Name ]: {export_root_dir}\n"
-        f"    package from config: {cfg_path}\n",
+        f'[ Export Package Name ]: {export_root_dir}\n'
+        f'    package from config: {cfg_path}\n',
         logger='export',
-        level=logging.INFO
-    )
+        level=logging.INFO)
 
     cfg['work_dir'] = export_log_dir  # creat temp work_dirs for export
     # use runner to export all needed modules
     runner = Runner.from_cfg(cfg)
 
-    
-    if model_only:
+    # HARD CODE: In order to deal with some module will build in
+    # ``before_run`` or ``after_run``, we can call them without need
+    # to call "runner.train())".
+
+    # Example:
+    #   >>> @HOOKS.register_module()
+    #   >>> class EMAHook(Hook):
+    #   >>>    ...
+    #   >>>   def before_run(self, runner) -> None:
+    #   >>>   """Create an ema copy of the model.
+    #   >>>   Args:
+    #   >>>       runner (Runner): The runner of the training process.
+    #   >>>   """
+    #   >>>   model = runner.model
+    #   >>>   if is_model_wrapper(model):
+    #   >>>       model = model.module
+    #   >>>   self.src_model = model
+    #   >>>   self.ema_model = MODELS.build(
+    #   >>>       self.ema_cfg, default_args=dict(model=self.src_model))
+
+    # It need to build ``self.ema_model`` in ``before_run``.
+
+    for hook in runner.hooks:
+        hook.before_run(runner)
+        hook.after_run(runner)
+
+    def dump():
+        cfg['work_dir'] = 'work_dirs'  # recover to default.
         _replace_config_scope_to_pack(cfg)
         cfg.dump(cfg_path)
         print_log(
-            f"[ Export Package Name ]: {osp.join(os.getcwd(), export_root_dir)}\n",
+            f'[ Export Package Name ]: '
+            f'{osp.join(os.getcwd(), export_root_dir)}\n',
             logger='export',
-            level=logging.INFO
-        )
+            level=logging.INFO)
+
+    if model_only:
+        dump()
         return 0
-    
+
     try:
         runner.build_train_loop(cfg.train_cfg)
     except FileNotFoundError:
         error_postprocess(export_root_dir, export_log_dir,
-                          osp.basename(cfg_path),
-                          'train_dataloader')
+                          osp.basename(cfg_path), 'train_dataloader')
 
     try:
         if 'val_cfg' in cfg and cfg.val_cfg is not None:
             runner.build_val_loop(cfg.val_cfg)
     except FileNotFoundError:
         error_postprocess(export_root_dir, export_log_dir,
-                          osp.basename(cfg_path),
-                          'val_dataloader')
+                          osp.basename(cfg_path), 'val_dataloader')
 
     try:
         if 'test_cfg' in cfg and cfg.test_cfg is not None:
             runner.build_test_loop(cfg.test_cfg)
     except FileNotFoundError:
         error_postprocess(export_root_dir, export_log_dir,
-                          osp.basename(cfg_path),
-                          'test_dataloader')
+                          osp.basename(cfg_path), 'test_dataloader')
 
     if 'optim_wrapper' in cfg and cfg.optim_wrapper is not None:
         runner.optim_wrapper = runner.build_optim_wrapper(cfg.optim_wrapper)
@@ -184,13 +205,7 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
     if not keep_log:
         shutil.rmtree(cfg['work_dir'])
 
-    _replace_config_scope_to_pack(cfg)
-    cfg.dump(cfg_path)
-    print_log(
-        f"[ Export Package Name ]: {osp.join(os.getcwd(), export_root_dir)}\n",
-        logger='export',
-        level=logging.INFO
-    )
+    dump()
     return 0
 
 
@@ -202,8 +217,8 @@ def keyboardinterupt_handler(sig: int, frame, export_root_dir: str):
     sys.exit(-1)
 
 
-def error_postprocess(export_root_dir: str, export_log_dir: str,
-                      cfg_name: str, error_key: str):
+def error_postprocess(export_root_dir: str, export_log_dir: str, cfg_name: str,
+                      error_key: str):
     """Print Debug message when package can't successfully export for missing
     datasets.
 
@@ -219,13 +234,6 @@ def error_postprocess(export_root_dir: str, export_log_dir: str,
 
     traceback.print_exc()
 
-    # print(f"[\033[94m Debug \033[0m] The data root of '{error_key}' "
-    #         f"is not found. Please modify the 'data_root' in "
-    #         f"duplicate config '\033[1m{osp.basename(absolute_cfg_path)}\033[0m'.")
-
-    # TODO: modified to print_log
-    # Examples:
-    # >>> 09/29 16:45:56 - mmengine - ERROR - /home/panguoping/mm/only_for_test/mmengine/mmengine/logging/logger.py - print_log - 350 - The data root of 'train_dataloader'is not found. Please modify the 'data_root' in duplicate config 'gl_8xb12_celeba-256x256.py'.
     print_log(
         f"The data root of '{error_key}'"
         f" is not found. Please modify the 'data_root' in "
@@ -270,46 +278,3 @@ def pack_tools(tool_name: str,
             f.seek(0)
             f.write(code)
             f.truncate()
-
-
-def fast_test_mode(cfg, fast_test: bool = False):
-    """Use less data for faster testing.
-
-    Args:
-        cfg (ConfigDict): Config of export package.
-        fast_test (bool, optional): Fast testing mode. Defaults to False.
-    """
-    if fast_test:
-        # for batch_norm using at least 2 data
-        if 'dataset' in cfg.train_dataloader.dataset:
-            cfg.train_dataloader.dataset.dataset.indices = [0, 1]
-        else:
-            cfg.train_dataloader.dataset.indices = [0, 1]
-        cfg.train_dataloader.batch_size = 2
-
-        if cfg.get('test_dataloader') is not None:
-            cfg.test_dataloader.dataset.indices = [0, 1]
-            cfg.test_dataloader.batch_size = 2
-
-        if cfg.get('val_dataloader') is not None:
-            cfg.val_dataloader.dataset.indices = [0, 1]
-            cfg.val_dataloader.batch_size = 2
-
-        if (cfg.train_cfg.get('type') == 'IterBasedTrainLoop') \
-                or (cfg.train_cfg.get('by_epoch') is None
-                    and cfg.train_cfg.get('type') != 'EpochBasedTrainLoop'):
-            cfg.train_cfg.max_iters = 2
-        else:
-            cfg.train_cfg.max_epochs = 2
-
-        cfg.train_cfg.val_interval = 1
-        cfg.default_hooks.logger.interval = 1
-
-        if 'param_scheduler' in cfg and cfg.param_scheduler is not None:
-            if isinstance(cfg.param_scheduler, list):
-                for lr_sc in cfg.param_scheduler:
-                    lr_sc.begin = 0
-                    lr_sc.end = 2
-            else:
-                cfg.param_scheduler.begin = 0
-                cfg.param_scheduler.end = 2
