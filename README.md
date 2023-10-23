@@ -217,14 +217,14 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
   from mim import train
 
   train(repo='mmcls', config='resnet18_8xb16_cifar10.py', gpus=0,
-        other_args='--work-dir tmp')
+        other_args=('--work-dir', 'tmp'))
   train(repo='mmcls', config='resnet18_8xb16_cifar10.py', gpus=1,
-        other_args='--work-dir tmp')
+        other_args=('--work-dir', 'tmp'))
   train(repo='mmcls', config='resnet18_8xb16_cifar10.py', gpus=4,
-        launcher='pytorch', other_args='--work-dir tmp')
+        launcher='pytorch', other_args=('--work-dir', 'tmp'))
   train(repo='mmcls', config='resnet18_8xb16_cifar10.py', gpus=8,
         launcher='slurm', gpus_per_node=8, partition='partition_name',
-        other_args='--work-dir tmp')
+        other_args=('--work-dir', 'tmp'))
   ```
 
 </details>
@@ -260,15 +260,15 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
   ```python
   from mim import test
   test(repo='mmcls', config='resnet101_b16x8_cifar10.py',
-       checkpoint='tmp/epoch_3.pth', gpus=1, other_args='--metrics accuracy')
+       checkpoint='tmp/epoch_3.pth', gpus=1, other_args=('--metrics', 'accuracy'))
   test(repo='mmcls', config='resnet101_b16x8_cifar10.py',
-       checkpoint='tmp/epoch_3.pth', gpus=1, other_args='--out tmp.pkl')
+       checkpoint='tmp/epoch_3.pth', gpus=1, other_args=('--out', 'tmp.pkl'))
   test(repo='mmcls', config='resnet101_b16x8_cifar10.py',
        checkpoint='tmp/epoch_3.pth', gpus=4, launcher='pytorch',
-       other_args='--metrics accuracy')
+       other_args=('--metrics', 'accuracy'))
   test(repo='mmcls', config='resnet101_b16x8_cifar10.py',
        checkpoint='tmp/epoch_3.pth', gpus=8, partition='partition_name',
-       launcher='slurm', gpus_per_node=8, other_args='--metrics accuracy')
+       launcher='slurm', gpus_per_node=8, other_args=('--metrics', 'accuracy'))
   ```
 
 </details>
@@ -305,13 +305,13 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
   from mim import run
 
   run(repo='mmcls', command='get_flops',
-      other_args='resnet101_b16x8_cifar10.py')
+      other_args=('resnet101_b16x8_cifar10.py',))
   run(repo='mmcls', command='publish_model',
-      other_args='input.pth output.pth')
+      other_args=('input.pth', 'output.pth'))
   run(repo='mmcls', command='train',
-      other_args='resnet101_b16x8_cifar10.py --work-dir tmp')
+      other_args=('resnet101_b16x8_cifar10.py', '--work-dir', 'tmp'))
   run(repo='mmcls', command='test',
-      other_args='resnet101_b16x8_cifar10.py tmp/epoch_3.pth --metrics accuracy')
+      other_args=('resnet101_b16x8_cifar10.py', 'tmp/epoch_3.pth', '--metrics accuracy'))
   ```
 
 </details>
@@ -366,28 +366,28 @@ Please refer to [installation.md](docs/en/installation.md) for installation.
 
   gridsearch(repo='mmcls', config='resnet101_b16x8_cifar10.py', gpus=0,
              search_args='--optimizer.lr 1e-2 1e-3',
-             other_args='--work-dir tmp')
+             other_args=('--work-dir', 'tmp'))
   gridsearch(repo='mmcls', config='resnet101_b16x8_cifar10.py', gpus=1,
              search_args='--optimizer.lr 1e-2 1e-3',
-             other_args='--work-dir tmp')
+             other_args=('--work-dir', 'tmp'))
   gridsearch(repo='mmcls', config='resnet101_b16x8_cifar10.py', gpus=1,
              search_args='--optimizer.weight_decay 1e-3 1e-4',
-             other_args='--work-dir tmp')
+             other_args=('--work-dir', 'tmp'))
   gridsearch(repo='mmcls', config='resnet101_b16x8_cifar10.py', gpus=1,
              search_args='--optimizer.lr 1e-2 1e-3 --optimizer.weight_decay'
                          '1e-3 1e-4',
-             other_args='--work-dir tmp')
+             other_args=('--work-dir', 'tmp'))
   gridsearch(repo='mmcls', config='resnet101_b16x8_cifar10.py', gpus=8,
              partition='partition_name', gpus_per_node=8, launcher='slurm',
              search_args='--optimizer.lr 1e-2 1e-3 --optimizer.weight_decay'
                          ' 1e-3 1e-4',
-             other_args='--work-dir tmp')
+             other_args=('--work-dir', 'tmp'))
   gridsearch(repo='mmcls', config='resnet101_b16x8_cifar10.py', gpus=8,
              partition='partition_name', gpus_per_node=8, launcher='slurm',
              max_workers=2,
              search_args='--optimizer.lr 1e-2 1e-3 --optimizer.weight_decay'
                          ' 1e-3 1e-4',
-             other_args='--work-dir tmp')
+             other_args=('--work-dir', 'tmp'))
   ```
 
 </details>
