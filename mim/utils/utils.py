@@ -23,6 +23,15 @@ from requests.models import Response
 from .default import PKG2PROJECT
 from .progress_bars import rich_progress_bar
 
+try:
+    import torch
+    import torch_npu
+
+    IS_NPU_AVAILABLE = hasattr(
+        torch, 'npu') and torch.npu.is_available()  # type: ignore
+except Exception:
+    IS_NPU_AVAILABLE = False
+
 
 def parse_url(url: str) -> Tuple[str, str]:
     """Parse username and repo from url.
@@ -327,12 +336,37 @@ def get_installed_path(package: str) -> str:
         return osp.join(pkg.location, package2module(package))
 
 
-def get_torch_cuda_version() -> Tuple[str, str]:
-    """Get PyTorch version and CUDA version if it is available.
+def is_npu_available() -> bool:
+    """Returns True if Ascend PyTorch and npu devices exist."""
+    return IS_NPU_AVAILABLE
+
+
+def get_npu_version() -> str:
+    """Returns the version of NPU when npu devices exist."""
+    if not is_npu_available():
+        return ''
+    ascend_home_path = os.environ.get('ASCEND_HOME_PATH', None)
+    if not ascend_home_path or not os.path.exists(ascend_home_path):
+        raise RuntimeError(
+            highlighted_error(
+                f'ASCEND_HOME_PATH:{ascend_home_path} does not exists when '
+                'installing OpenMMLab projects on Ascend NPU.'
+                "Please run 'source set_env.sh' in the CANN installation path."
+            ))
+    npu_version = torch_npu.get_cann_version(ascend_home_path)
+    return npu_version
+
+
+def get_torch_device_version() -> Tuple[str, str, str]:
+    """Get PyTorch version and CUDA/NPU version if it is available.
 
     Example:
-        >>> get_torch_cuda_version()
-        '1.8.0', '102'
+        >>> get_torch_device_version()
+        '1.8.0', 'cpu', ''
+        >>> get_torch_device_version()
+        '1.8.0', 'cuda', '102'
+        >>> get_torch_device_version()
+        '1.11.0', 'ascend', '602'
     """
     try:
         import torch
@@ -344,11 +378,17 @@ def get_torch_cuda_version() -> Tuple[str, str]:
         torch_v = torch_v.split('+')[0]
 
     if torch.version.cuda is not None:
+        device = 'cuda'
         # torch.version.cuda like 10.2 -> 102
-        cuda_v = ''.join(torch.version.cuda.split('.'))
+        device_v = ''.join(torch.version.cuda.split('.'))
+    elif is_npu_available():
+        device = 'ascend'
+        device_v = get_npu_version()
+        device_v = ''.join(device_v.split('.'))
     else:
-        cuda_v = 'cpu'
-    return torch_v, cuda_v
+        device = 'cpu'
+        device_v = ''
+    return torch_v, device, device_v
 
 
 def cast2lowercase(input: Union[list, tuple, str]) -> Any:
