@@ -11,7 +11,7 @@
 ```bash
 mim export config_path
 
-# config_path 有以下三种可选类型：
+# config_path 有以下两种可选类型：
 # 下游 repo 的 config：通过 repo::configs/xxx.py 来完成调用。例如：
 mim export mmdet::configs/mask_rcnn/mask-rcnn_r101_fpn_1x_coco.py
 

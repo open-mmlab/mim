@@ -716,7 +716,7 @@ def collect_needed_node_from_super(super_ast_tree: ast.Module,
             print_log(
                 f'Add function {func_name}.',
                 logger='export',
-                level=logging.INFO)
+                level=logging.DEBUG)
             top_cls_node.body.extend(
                 func_need_append)  # type: ignore[arg-type]  # noqa: E501
 

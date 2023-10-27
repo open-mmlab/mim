@@ -29,9 +29,9 @@ from .utils import (
 
 
 def export_from_cfg(cfg: Union[str, ConfigDict],
-                    export_root_dir: Optional[str] = None,
+                    export_root_dir: str,
                     model_only: Optional[bool] = False,
-                    keep_log: Optional[bool] = False):
+                    save_log: Optional[bool] = False):
     """A function to pack the minimum available package according to config
     file.
 
@@ -57,7 +57,7 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
     default_scope = cfg.get('default_scope', 'mmengine')
 
     # automatically generate ``export_root_dir`` and ``export_module_dir``
-    if export_root_dir is None:
+    if export_root_dir == 'auto-dir':
         export_root_dir = f'pack_from_{default_scope}_' + \
             f"{datetime.now().strftime(r'%Y%m%d_%H%M%S')}"
 
@@ -95,7 +95,8 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
 
     print_log(
         f'[ Export Package Name ]: {export_root_dir}\n'
-        f'    package from config: {cfg_path}\n',
+        f'    package from config: {cfg.filename}\n'
+        f"    from downstream package: '{default_scope}'\n",
         logger='export',
         level=logging.INFO)
 
@@ -189,20 +190,19 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
     tools_dir = osp.join(export_root_dir, 'tools')
     mkdir_or_exist(tools_dir)
 
-    pack_tools(
-        'train.py',
-        scope=default_scope,
-        path=osp.join(export_root_dir, 'tools/train.py'),
-        auto_import=True)
-    pack_tools(
-        'test.py',
-        scope=default_scope,
-        path=osp.join(export_root_dir, 'tools/test.py'),
-        auto_import=True)
+    for tool_name in [
+            'train.py', 'test.py', 'dist_train.sh', 'dist_test.sh',
+            'slurm_train.sh', 'slurm_test.sh'
+    ]:
+        pack_tools(
+            tool_name=tool_name,
+            scope=default_scope,
+            tool_dir=tools_dir,
+            auto_import=True)
 
     # TODO: get demo.py
 
-    if not keep_log:
+    if not save_log:
         shutil.rmtree(cfg['work_dir'])
 
     dump()
@@ -229,25 +229,29 @@ def error_postprocess(export_root_dir: str, export_log_dir: str, cfg_name: str,
         error_key (str): _description_
         logger (_type_): _description_
     """
+    from mim.utils import echo_error
     if osp.exists(export_root_dir):
         shutil.rmtree(export_root_dir)
 
     traceback.print_exc()
 
-    print_log(
-        f"The data root of '{error_key}'"
-        f" is not found. Please modify the 'data_root' in "
-        f"duplicate config '{export_log_dir}/{cfg_name}' or use"
-        f" '--model_only' to export model only.",
-        logger='export',
-        level=logging.ERROR)
+    error_msg = f"{'=' * 20} Debug Message {'=' * 20}"\
+        f"\nThe data root of '{error_key}' is not found. You can"\
+        ' use the below two method to deal with.\n\n'\
+        "    >>> Method 1: Please modify the 'data_root' in"\
+        f" duplicate config '{export_log_dir}/{cfg_name}'.\n"\
+        "    >>> Method 2: Use '--model_only' to export model only.\n\n"\
+        "After finishing one of the above steps, you can use 'mim export"\
+        f" {export_log_dir}/{cfg_name} [--model-only]' to export again."
+
+    echo_error(error_msg)
 
     sys.exit(-1)
 
 
 def pack_tools(tool_name: str,
                scope: str,
-               path: str,
+               tool_dir: str,
                auto_import: Optional[bool] = False):
     """pack tools from installed repo.
 
@@ -259,6 +263,7 @@ def pack_tools(tool_name: str,
             tool file. Defaults to "False"
     """
     pkg_root = get_installed_path(scope)
+    path = osp.join(tool_dir, tool_name)
 
     if os.path.exists(path):
         os.remove(path)

@@ -8,7 +8,8 @@ import os.path as osp
 all_files = os.listdir(osp.dirname(__file__))
 
 for file in all_files:
-    exec(f'from .{osp.splitext(file)[0]} import *')
+    if (file.endswith('.py') and file != '__init__.py') or '.' not in file:
+        exec(f'from .{osp.splitext(file)[0]} import *')
 """
 
 # import pack path for tools

@@ -6,10 +6,75 @@ import click
 from mmengine.config import Config
 from mmengine.hub import get_config
 
+from mim._internal.export.pack_cfg import export_from_cfg
 from mim.click import CustomCommand
-from mim.utils.mmpack.pack_cfg import export_from_cfg
 
 PYTHON = sys.executable
+
+
+@click.command(
+    name='export',
+    context_settings=dict(ignore_unknown_options=True),
+    cls=CustomCommand)
+@click.argument('config', type=str)
+@click.argument('export_dir', type=str, default=None)
+@click.option(
+    '-ft',
+    '--fast-test',
+    is_flag=True,
+    help='The fast_test mode. In order to quickly test if'
+    ' there is any error in the export package,'
+    ' it only use the first two data of your datasets'
+    ' which only be used to train 2 iters/epoches.')
+@click.option(
+    '--save-log',
+    is_flag=True,
+    help='The flag to keep the export log of the process. The log of export'
+    " process will be save to directory 'export_log'. Default will"
+    ' automatically delete the log after export.')
+def cli(config: str,
+        export_dir: Optional[str] = None,
+        fast_test: bool = False,
+        save_log: bool = False) -> None:
+    """Export package from config file.
+
+    Example:
+
+    \b
+    >>> # Export package from downstream config file.
+    >>> mim export mmdet::dab_detr/dab-detr_r50_8xb2-50e_coco.py \\
+    ... dab_detr
+    >>>
+    >>> # Export package from specified config file.
+    >>> mim export mmdetection/configs/dab_detr/dab-detr_r50_8xb2-50e_coco.py dab_detr # noqa: E501
+    >>>
+    >>> # Use auto-dir. It can auto generate a export dir
+    >>> # like：'pack_from_mmdet_20231026_052704.
+    >>> mim export mmdet::dab_detr/dab-detr_r50_8xb2-50e_coco.py \\
+    ... auto-dir
+    >>>
+    >>> # Only export the model of config file.
+    >>> mim export mmdet::dab_detr/dab-detr_r50_8xb2-50e_coco.py \\
+    ... mask_rcnn_package --model-only
+    >>>
+    >>> # Keep the export log of the process.
+    >>> mim export mmdet::dab_detr/dab-detr_r50_8xb2-50e_coco.py \\
+    ... mask_rcnn_package --save-log
+    >>>
+    >>> # Print the help information of export command.
+    >>> mim export -h
+    """
+
+    # get config
+    if isinstance(config, str):
+        if '::' in config:
+            config = get_config(config)
+        else:
+            config = Config.fromfile(config)
+
+    fast_test_mode(config, fast_test)
+
+    export_from_cfg(config, export_root_dir=export_dir, save_log=save_log)
 
 
 def fast_test_mode(cfg, fast_test: bool = False):
@@ -53,39 +118,3 @@ def fast_test_mode(cfg, fast_test: bool = False):
             else:
                 cfg.param_scheduler.begin = 0
                 cfg.param_scheduler.end = 2
-
-
-@click.command(
-    name='export',
-    context_settings=dict(ignore_unknown_options=True),
-    cls=CustomCommand)
-@click.argument('config', type=str)
-@click.option(
-    '-p',
-    '--export_root_dir',
-    type=str,
-    help='The root directory name of export packge')
-@click.option(
-    '-ft',
-    '--fast_test',
-    is_flag=True,
-    help='The fast_test mode using few data for testing')
-@click.option(
-    '--keep_log',
-    is_flag=True,
-    help='The fast_test mode using few data for testing')
-def cli(config: str,
-        export_root_dir: Optional[str] = None,
-        fast_test: bool = False,
-        keep_log: bool = False) -> None:
-
-    # get config
-    if isinstance(config, str):
-        if '::' in config:
-            config = get_config(config)
-        else:
-            config = Config.fromfile(config)
-
-    fast_test_mode(config, fast_test)
-
-    export_from_cfg(config, export_root_dir=export_root_dir, keep_log=keep_log)

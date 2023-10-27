@@ -96,7 +96,7 @@ def _postprocess_registry_locations(export_root_dir: str):
                                     f"'{osp.join(export_root_dir, path).replace('.','/')}', "  # noqa: E501
                                     'which is no need to export.',
                                     logger='export',
-                                    level=logging.INFO)
+                                    level=logging.DEBUG)
                                 need_to_be_remove = keyword
                                 break
 
@@ -409,7 +409,7 @@ def _export_module(self, obj_cls: type, pack_module_dir, obj_type: str):
             f'building class: '
             f'{obj_cls.__name__} from file: {file_path}.',
             logger='export',
-            level=logging.INFO)
+            level=logging.DEBUG)
     else:
         raise FileExistsError(f"file [{file_path}] doesn't exist.")
 
