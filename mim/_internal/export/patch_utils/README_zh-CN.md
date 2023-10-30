@@ -1,6 +1,6 @@
 # Patch Utils
 
-### 问题
+## 问题
 
 该补丁主要是为了解决下游 repo 中存在对注册器进行重命名导致模块无法被正确注册的问题，如 `mmsegmentation` 中的一个例子：
 
@@ -42,7 +42,7 @@ class OHEMPixelSampler(BasePixelSampler):
             ...
 ```
 
-### 解决方案
+## 解决方案
 
 因此我们目前已经将如下 `mmpose / mmdetection / mmseg / mmpretrain` 中必要的模块直接迁移到 `patch_utils.patch_model` 和 `patch_utils.patch_task` 中构建一个包含注册器重命名和特殊模块构造函数的补丁。
 

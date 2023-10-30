@@ -14,9 +14,9 @@ for file in all_files:
 
 # import pack path for tools
 _import_pack_str = """
-import os
+import os.path as osp
 import sys
-sys.path.append(os.path.dirname(__file__)+'/../')
+sys.path.append(osp.dirname(osp.dirname(__file__)))
 import pack
 
 """

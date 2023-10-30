@@ -1,6 +1,6 @@
 # Patch Utils
 
-### Problem
+## Problem
 
 This patch is mainly to solve the problem that the module cannot be properly registered due to the renaming of the registry in the downstream repo, such as an example of the `mmsegmentation`:
 
@@ -42,7 +42,7 @@ class OHEMPixelSampler(BasePixelSampler):
             ...
 ```
 
-### Solution
+## Solution
 
 Therefore, we have currently migrated the necessary modules in `mmpose/mmdetection/mmseg/mmpretrain` listed below, directly to `patch_utils.patch_model` and `patch_utils.patch_task`. In order to build a patch containing renamed registry and special module constructor functions.
 

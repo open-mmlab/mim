@@ -5,6 +5,7 @@ import os.path as osp
 import shutil
 import signal
 import sys
+import tempfile
 import traceback
 from datetime import datetime
 from typing import Optional, Union
@@ -17,8 +18,8 @@ from mmengine.registry import init_default_scope
 from mmengine.runner import Runner
 from mmengine.utils import get_installed_path, mkdir_or_exist
 
+from mim.utils import echo_error
 from .common import _import_pack_str, _init_str
-from .utils import *  # noqa: F401,F403
 from .utils import (
     _get_all_files,
     _postprocess_importfrom_module_to_pack,
@@ -41,11 +42,16 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
         export_root_dir (str, optional): The pack directory to save the
             packed package.
         fast_test (bool, optional): Turn to fast testing mode.
-            Defaults to "False".
+            Defaults to False.
     """
+    # generate temp dir for export
+    export_root_tempdir = tempfile.TemporaryDirectory()
+    export_log_tempdir = tempfile.TemporaryDirectory()
+
     # delete the incomplete export package when keyboard interrupt
     signal.signal(signal.SIGINT, lambda sig, frame: keyboardinterupt_handler(
-        sig, frame, export_root_dir))  # type: ignore[arg-type]
+        sig, frame, export_root_tempdir, export_log_tempdir)
+                  )  # type: ignore[arg-type]
 
     # get config
     if isinstance(cfg, str):
@@ -56,34 +62,32 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
 
     default_scope = cfg.get('default_scope', 'mmengine')
 
-    # automatically generate ``export_root_dir`` and ``export_module_dir``
+    # automatically generate ``export_root_dir``
     if export_root_dir == 'auto-dir':
         export_root_dir = f'pack_from_{default_scope}_' + \
             f"{datetime.now().strftime(r'%Y%m%d_%H%M%S')}"
 
+    # generate ``export_log_dir``
     if osp.sep in export_root_dir:
         export_path = osp.dirname(export_root_dir)
     else:
         export_path = os.getcwd()
-
     export_log_dir = osp.join(export_path, 'export_log')
-    mkdir_or_exist(export_log_dir)
 
     export_logger = MMLogger.get_instance(  # noqa: F841
         'export',
-        log_file=osp.join(export_log_dir, 'export.log'))
+        log_file=osp.join(export_log_tempdir.name, 'export.log'))
 
-    export_module_dir = osp.join(export_root_dir, 'pack')
-    if osp.exists(export_module_dir):
-        shutil.rmtree(export_module_dir)
+    export_module_tempdir_name = osp.join(export_root_tempdir.name, 'pack')
 
     # export config
-    if '.mim/' in cfg.filename:
-        cfg_path = osp.join(export_module_dir, cfg.filename.split('.mim/')[-1])
+    if '.mim' in cfg.filename:
+        cfg_path = osp.join(export_module_tempdir_name,
+                            cfg.filename[cfg.filename.find('configs'):])
     else:
         cfg_path = osp.join(
-            osp.join(export_module_dir, 'configs'),
-            cfg.filename.split('/')[-1])
+            osp.join(export_module_tempdir_name, 'configs'),
+            osp.basename(cfg.filename))
     mkdir_or_exist(osp.dirname(cfg_path))
 
     # transform to default_scope
@@ -91,7 +95,7 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
 
     # wrap ``Registry.build()`` for exporting modules
     _wrapper_all_registries_build_func(
-        export_module_dir=export_module_dir, scope=default_scope)
+        export_module_dir=export_module_tempdir_name, scope=default_scope)
 
     print_log(
         f'[ Export Package Name ]: {export_root_dir}\n'
@@ -100,7 +104,9 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
         logger='export',
         level=logging.INFO)
 
-    cfg['work_dir'] = export_log_dir  # creat temp work_dirs for export
+    # creat temp work_dirs for export
+    cfg['work_dir'] = export_log_tempdir.name
+
     # use runner to export all needed modules
     runner = Runner.from_cfg(cfg)
 
@@ -134,6 +140,19 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
         cfg['work_dir'] = 'work_dirs'  # recover to default.
         _replace_config_scope_to_pack(cfg)
         cfg.dump(cfg_path)
+
+        # copy temp log to export log
+        if save_log:
+            shutil.copytree(
+                export_log_tempdir.name, export_log_dir, dirs_exist_ok=True)
+
+        export_log_tempdir.cleanup()
+
+        # copy temp_package_dir to export_package_dir
+        shutil.copytree(
+            export_root_tempdir.name, export_root_dir, dirs_exist_ok=True)
+        export_root_tempdir.cleanup()
+
         print_log(
             f'[ Export Package Name ]: '
             f'{osp.join(os.getcwd(), export_root_dir)}\n',
@@ -147,21 +166,24 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
     try:
         runner.build_train_loop(cfg.train_cfg)
     except FileNotFoundError:
-        error_postprocess(export_root_dir, export_log_dir,
+        error_postprocess(export_log_dir,
+                          export_root_tempdir, export_log_tempdir,
                           osp.basename(cfg_path), 'train_dataloader')
 
     try:
         if 'val_cfg' in cfg and cfg.val_cfg is not None:
             runner.build_val_loop(cfg.val_cfg)
     except FileNotFoundError:
-        error_postprocess(export_root_dir, export_log_dir,
+        error_postprocess(export_log_dir,
+                          export_root_tempdir, export_log_tempdir,
                           osp.basename(cfg_path), 'val_dataloader')
 
     try:
         if 'test_cfg' in cfg and cfg.test_cfg is not None:
             runner.build_test_loop(cfg.test_cfg)
     except FileNotFoundError:
-        error_postprocess(export_root_dir, export_log_dir,
+        error_postprocess(export_log_dir,
+                          export_root_tempdir, export_log_tempdir,
                           osp.basename(cfg_path), 'test_dataloader')
 
     if 'optim_wrapper' in cfg and cfg.optim_wrapper is not None:
@@ -171,23 +193,22 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
 
     # add ``__init__.py`` to all dirs, for transferring directories
     # to be modules
-    for directory, _, _ in os.walk(export_module_dir):
+    for directory, _, _ in os.walk(export_module_tempdir_name):
         if not osp.exists(osp.join(directory, '__init__.py')) \
-                and 'configs' not in directory \
-                and not directory.endswith(f'{export_module_dir}/'):
+                and 'configs' not in directory:
             with open(osp.join(directory, '__init__.py'), 'w') as f:
                 f.write(_init_str)
 
     # postprocess for ``pack/registry.py``
-    _postprocess_registry_locations(export_root_dir)
+    _postprocess_registry_locations(export_root_tempdir.name)
 
     # postprocess for ImportFrom Node, turn to import from export path
-    all_export_files = _get_all_files(export_module_dir)
+    all_export_files = _get_all_files(export_module_tempdir_name)
     for file in all_export_files:
         _postprocess_importfrom_module_to_pack(file)
 
     # get tools from web
-    tools_dir = osp.join(export_root_dir, 'tools')
+    tools_dir = osp.join(export_root_tempdir.name, 'tools')
     mkdir_or_exist(tools_dir)
 
     for tool_name in [
@@ -202,23 +223,28 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
 
     # TODO: get demo.py
 
-    if not save_log:
-        shutil.rmtree(cfg['work_dir'])
-
     dump()
     return 0
 
 
-def keyboardinterupt_handler(sig: int, frame, export_root_dir: str):
+def keyboardinterupt_handler(
+    sig: int,
+    frame,
+    export_root_tempdir: tempfile.TemporaryDirectory,
+    export_log_tempdir: tempfile.TemporaryDirectory,
+):
     """Clear uncompleted exported package by interrupting with keyboard."""
-    if osp.exists(export_root_dir):
-        shutil.rmtree(export_root_dir)
+
+    export_log_tempdir.cleanup()
+    export_root_tempdir.cleanup()
 
     sys.exit(-1)
 
 
-def error_postprocess(export_root_dir: str, export_log_dir: str, cfg_name: str,
-                      error_key: str):
+def error_postprocess(export_log_dir: str,
+                      export_root_dir_tempfile: tempfile.TemporaryDirectory,
+                      export_log_dir_tempfile: tempfile.TemporaryDirectory,
+                      cfg_name: str, error_key: str):
     """Print Debug message when package can't successfully export for missing
     datasets.
 
@@ -229,9 +255,10 @@ def error_postprocess(export_root_dir: str, export_log_dir: str, cfg_name: str,
         error_key (str): _description_
         logger (_type_): _description_
     """
-    from mim.utils import echo_error
-    if osp.exists(export_root_dir):
-        shutil.rmtree(export_root_dir)
+    shutil.copytree(
+        export_log_dir_tempfile.name, export_log_dir, dirs_exist_ok=True)
+    export_root_dir_tempfile.cleanup()
+    export_log_dir_tempfile.cleanup()
 
     traceback.print_exc()
 
@@ -282,4 +309,3 @@ def pack_tools(tool_name: str,
             code = ''.join(lines[:1] + [_import_pack_str] + lines[1:])
             f.seek(0)
             f.write(code)
-            f.truncate()

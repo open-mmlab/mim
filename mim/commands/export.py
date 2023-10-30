@@ -19,7 +19,7 @@ PYTHON = sys.executable
 @click.argument('config', type=str)
 @click.argument('export_dir', type=str, default=None)
 @click.option(
-    '-ft',
+    '-f',
     '--fast-test',
     is_flag=True,
     help='The fast_test mode. In order to quickly test if'
@@ -81,7 +81,7 @@ def fast_test_mode(cfg, fast_test: bool = False):
     """Use less data for faster testing.
 
     Args:
-        cfg (ConfigDict): Config of export package.
+        cfg (Config): Config of export package.
         fast_test (bool, optional): Fast testing mode. Defaults to False.
     """
     if fast_test:

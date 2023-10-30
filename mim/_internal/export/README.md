@@ -1,6 +1,6 @@
 # Export (experimental)
 
-`mim export` is a new function in `mim`, which can export a minimum trainable and testable model package through the config file.
+`mim export` is a new feature in `mim`, which can export a minimum trainable and testable model package through the config file.
 
 The minimal model compactly combines `model, datasets, engine` and other components. There is no need to search for each module separately based on the config file. Users who do not install from source can also get the model file at a glance.
 
@@ -11,11 +11,12 @@ In addition, lengthy inheritance relationships, such as `CondInstBboxHead -> FCO
 ```bash
 mim export config_path
 
-# config_path has the following three optional types:
-#Config of downstream repo: Complete the call through repo::configs/xxx.py. For example:
+# config_path has the following two optional types:
+
+# 1. config of downstream repo: Complete the call through repo::model_name/xxx.py. For example:
 mim export mmdet::configs/mask_rcnn/mask-rcnn_r101_fpn_1x_coco.py
 
-# config in a certain folder, for example:
+# 2. config in a certain folder, for example:
 mim export config_dir/mask-rcnn_r101_fpn_1x_coco.py
 ```
 
@@ -49,7 +50,7 @@ minimun_package(Named as pack_from_{repo}_20231212_121212)
 
 ### limit
 
-The implementation of `mim export` function depends on `mim/utils/mmpack`. Currently, only some config files of `mmpose/mmdetection/mmagic/mmsegmentation` are supported. And there are some constraints on the downstream repo.
+Currently, `mim export` only supports some config files of `mmpose`, `mmdetection`, `mmagic`, and `mmsegmentation` Besides, there are some constraints on the downstream repo.
 
 #### For downstream repos
 
@@ -73,7 +74,7 @@ The implementation of `mim export` function depends on `mim/utils/mmpack`. Curre
    )
    ```
 
-4. In addition, if you add a register that is not in mmengine, such as `DIFFUSION_SCHEDULERS` in mmagic, you need to add a key-value pair in `REGISTRY_TYPE` in `mim/utils/mmpack/common.py` for registering `torch `Module to `DIFFUSION_SCHEDULERS`
+4. In addition, if you add a register that is not in mmengine, such as `DIFFUSION_SCHEDULERS` in mmagic, you need to add a key-value pair in `REGISTRY_TYPE` in `mim/_internal/export/common.py` for registering `torch `Module to `DIFFUSION_SCHEDULERS`
 
    ```python
    # "mmagic/mmagic/registry.py"

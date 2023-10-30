@@ -49,7 +49,7 @@ minimun_package(Named as pack_from_{repo}_20231212_121212)
 
 ### 限制
 
-`mim export` 功能实现依赖于 `mim/utils/mmpack`。目前只支持 `mmpose/mmdetection/mmagic/mmsegmentation`的部分 config 配置文件。并且对下游repo 有一些约束。
+`mim export` 目前只支持 `mmpose`、`mmdetection`、`mmagic` 和 `mmsegmentation` 的部分 config 配置文件，并且对下游算法库有一些约束。
 
 #### 针对下游库
 
@@ -60,7 +60,7 @@ minimun_package(Named as pack_from_{repo}_20231212_121212)
 
 2. 针对 `mmsegmentation`, 在使用 `mim.export` 导出 `mmseg` 的 config 之前, 首先需要去掉对于 `registry.py` 的外层文件夹封装， 即修改 `mmseg/registry/registry.py -> mmseg/registry.py`。
 
-3. 建议下游继承于 mmengine 的 Registry名字不要改动，如 mmagic 中就将 `EVALUATOR` 重新命名为了 `EVALUATORS`
+3. 建议下游继承于 mmengine 的 Registry 名字不要改动，如 mmagic 中就将 `EVALUATOR` 重新命名为了 `EVALUATORS`
 
    ```python
    from mmengine.registry import EVALUATOR as MMENGINE_EVALUATOR
@@ -73,7 +73,7 @@ minimun_package(Named as pack_from_{repo}_20231212_121212)
    )
    ```
 
-4. 另外，如果添加了 mmengine 中没有的注册器，如 mmagic 中的 `DIFFUSION_SCHEDULERS`，需要在 `mim/utils/mmpack/common.py` 的 `REGISTRY_TYPE` 中添加键值对，用于注册 `torch` 模块到 `DIFFUSION_SCHEDULERS`
+4. 另外，如果添加了 mmengine 中没有的注册器，如 mmagic 中的 `DIFFUSION_SCHEDULERS`，需要在 `mim/_internal/export/common.py` 的 `REGISTRY_TYPE` 中添加键值对，用于注册 `torch` 模块到 `DIFFUSION_SCHEDULERS`
 
    ```python
    # "mmagic/mmagic/registry.py"
@@ -95,6 +95,6 @@ minimun_package(Named as pack_from_{repo}_20231212_121212)
 
 1. 目前还不支持双父类的继承关系展开，后续看需求进行改进
 
-2. 对于用到 isinstance()时，如果父类只是继承链中某个类，可能展开后判断就会为False，因为并不会保留原有的继承关系
+2. 对于用到 `isinstance()` 时，如果父类只是继承链中某个类，可能展开后判断就会为 False，因为并不会保留原有的继承关系
 
-3. 当 config 文件中含有当前文件夹没法被访问到的`数据集路径`，导出可能会失败。目前的临时解决方法是：将原来的 config 文件保存到当前文件夹下，然后需要使用者手动修改`数据集路径`为当前路径下的可访问路径。如：`data/ADEChallengeData2016/ -> your_data_dir/ADEChallengeData2016/`
+3. 当 config 文件中含有当前文件夹没法被访问到的`数据集路径`，导出可能会失败。目前的临时解决方法是：将原来的 config 文件保存到当前文件夹下，然后需要用户手动修改`数据集路径`为当前路径下的可访问路径。如：`data/ADEChallengeData2016/ -> your_data_dir/ADEChallengeData2016/`
