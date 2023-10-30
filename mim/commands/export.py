@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os.path as osp
 import sys
-from typing import Optional
 
 import click
 from mmengine.config import Config
@@ -16,6 +16,7 @@ PYTHON = sys.executable
     name='export',
     context_settings=dict(ignore_unknown_options=True),
     cls=CustomCommand)
+@click.argument('package', type=str)
 @click.argument('config', type=str)
 @click.argument('export_dir', type=str, default=None)
 @click.option(
@@ -33,7 +34,8 @@ PYTHON = sys.executable
     " process will be save to directory 'export_log'. Default will"
     ' automatically delete the log after export.')
 def cli(config: str,
-        export_dir: Optional[str] = None,
+        package: str,
+        export_dir: str,
         fast_test: bool = False,
         save_log: bool = False) -> None:
     """Export package from config file.
@@ -42,23 +44,23 @@ def cli(config: str,
 
     \b
     >>> # Export package from downstream config file.
-    >>> mim export mmdet::dab_detr/dab-detr_r50_8xb2-50e_coco.py \\
+    >>> mim export mmdet dab_detr/dab-detr_r50_8xb2-50e_coco.py \\
     ... dab_detr
     >>>
     >>> # Export package from specified config file.
-    >>> mim export mmdetection/configs/dab_detr/dab-detr_r50_8xb2-50e_coco.py dab_detr # noqa: E501
+    >>> mim export mmdet mmdetection/configs/dab_detr/dab-detr_r50_8xb2-50e_coco.py dab_detr # noqa: E501
     >>>
     >>> # Use auto-dir. It can auto generate a export dir
     >>> # like：'pack_from_mmdet_20231026_052704.
-    >>> mim export mmdet::dab_detr/dab-detr_r50_8xb2-50e_coco.py \\
+    >>> mim export mmdet dab_detr/dab-detr_r50_8xb2-50e_coco.py \\
     ... auto-dir
     >>>
     >>> # Only export the model of config file.
-    >>> mim export mmdet::dab_detr/dab-detr_r50_8xb2-50e_coco.py \\
+    >>> mim export mmdet dab_detr/dab-detr_r50_8xb2-50e_coco.py \\
     ... mask_rcnn_package --model-only
     >>>
     >>> # Keep the export log of the process.
-    >>> mim export mmdet::dab_detr/dab-detr_r50_8xb2-50e_coco.py \\
+    >>> mim export mmdet dab_detr/dab-detr_r50_8xb2-50e_coco.py \\
     ... mask_rcnn_package --save-log
     >>>
     >>> # Print the help information of export command.
@@ -66,11 +68,14 @@ def cli(config: str,
     """
 
     # get config
-    if isinstance(config, str):
-        if '::' in config:
-            config = get_config(config)
-        else:
-            config = Config.fromfile(config)
+    if osp.exists(config):
+        config = Config.fromfile(config)  # from local
+    else:
+        try:
+            config = get_config(package + '::' + config)  # from downstream
+        except Exception:
+            raise FileNotFoundError(
+                f"Config file '{config}' or '{package + '::' + config}'.")
 
     fast_test_mode(config, fast_test)
 

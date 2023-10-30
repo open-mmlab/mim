@@ -166,7 +166,7 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
     try:
         runner.build_train_loop(cfg.train_cfg)
     except FileNotFoundError:
-        error_postprocess(export_log_dir,
+        error_postprocess(export_log_dir, default_scope,
                           export_root_tempdir, export_log_tempdir,
                           osp.basename(cfg_path), 'train_dataloader')
 
@@ -174,7 +174,7 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
         if 'val_cfg' in cfg and cfg.val_cfg is not None:
             runner.build_val_loop(cfg.val_cfg)
     except FileNotFoundError:
-        error_postprocess(export_log_dir,
+        error_postprocess(export_log_dir, default_scope,
                           export_root_tempdir, export_log_tempdir,
                           osp.basename(cfg_path), 'val_dataloader')
 
@@ -182,7 +182,7 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
         if 'test_cfg' in cfg and cfg.test_cfg is not None:
             runner.build_test_loop(cfg.test_cfg)
     except FileNotFoundError:
-        error_postprocess(export_log_dir,
+        error_postprocess(export_log_dir, default_scope,
                           export_root_tempdir, export_log_tempdir,
                           osp.basename(cfg_path), 'test_dataloader')
 
@@ -241,7 +241,7 @@ def keyboardinterupt_handler(
     sys.exit(-1)
 
 
-def error_postprocess(export_log_dir: str,
+def error_postprocess(export_log_dir: str, scope: str,
                       export_root_dir_tempfile: tempfile.TemporaryDirectory,
                       export_log_dir_tempfile: tempfile.TemporaryDirectory,
                       cfg_name: str, error_key: str):
@@ -269,7 +269,8 @@ def error_postprocess(export_log_dir: str,
         f" duplicate config '{export_log_dir}/{cfg_name}'.\n"\
         "    >>> Method 2: Use '--model_only' to export model only.\n\n"\
         "After finishing one of the above steps, you can use 'mim export"\
-        f" {export_log_dir}/{cfg_name} [--model-only]' to export again."
+        f" {scope} {export_log_dir}/{cfg_name} [--model-only]' to export"\
+        ' again.'
 
     echo_error(error_msg)
 
