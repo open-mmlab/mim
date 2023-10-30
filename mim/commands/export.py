@@ -18,7 +18,7 @@ PYTHON = sys.executable
     cls=CustomCommand)
 @click.argument('package', type=str)
 @click.argument('config', type=str)
-@click.argument('export_dir', type=str, default=None)
+@click.argument('export_dir', type=str, default=None, required=False)
 @click.option(
     '-f',
     '--fast-test',
@@ -50,10 +50,9 @@ def cli(config: str,
     >>> # Export package from specified config file.
     >>> mim export mmdet mmdetection/configs/dab_detr/dab-detr_r50_8xb2-50e_coco.py dab_detr # noqa: E501
     >>>
-    >>> # Use auto-dir. It can auto generate a export dir
+    >>> # It can auto generate a export dir when not specified.
     >>> # like：'pack_from_mmdet_20231026_052704.
-    >>> mim export mmdet dab_detr/dab-detr_r50_8xb2-50e_coco.py \\
-    ... auto-dir
+    >>> mim export mmdet dab_detr/dab-detr_r50_8xb2-50e_coco.py
     >>>
     >>> # Only export the model of config file.
     >>> mim export mmdet dab_detr/dab-detr_r50_8xb2-50e_coco.py \\

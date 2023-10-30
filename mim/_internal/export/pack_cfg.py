@@ -63,7 +63,7 @@ def export_from_cfg(cfg: Union[str, ConfigDict],
     default_scope = cfg.get('default_scope', 'mmengine')
 
     # automatically generate ``export_root_dir``
-    if export_root_dir == 'auto-dir':
+    if export_root_dir is None:
         export_root_dir = f'pack_from_{default_scope}_' + \
             f"{datetime.now().strftime(r'%Y%m%d_%H%M%S')}"
 
