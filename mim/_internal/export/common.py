@@ -21,7 +21,7 @@ import pack
 
 """
 
-BUILDER_TRANS = {
+OBJECTS_TO_BE_PATCHED = {
     'MODELS': [
         'BACKBONES',
         'NECKS',
@@ -47,7 +47,7 @@ BUILDER_TRANS = {
     ]
 }
 
-REGISTRY_TYPE = {
+REGISTRY_TYPES = {
     'runner': 'RUNNERS',
     'runner constructor': 'RUNNER_CONSTRUCTORS',
     'hook': 'HOOKS',

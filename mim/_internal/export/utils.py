@@ -24,7 +24,7 @@ from mmengine.registry import Registry
 from yapf.yapflib.yapf_api import FormatCode
 
 from mim.utils import OFFICIAL_MODULES
-from .common import REGISTRY_TYPE
+from .common import REGISTRY_TYPES
 from .flatten_func import *  # noqa: F403, F401
 from .flatten_func import (
     ImportResolverTransformer,
@@ -502,7 +502,7 @@ def _export_module(self, obj_cls: type, pack_module_dir, obj_type: str):
                 f.write('\n')
                 f.write(f'from {module} import {obj_cls.__name__}\n')
                 f.write(
-                    f"{REGISTRY_TYPE[self.name]}.register_module('{obj_type}', module={obj_cls.__name__}, force=True)"  # noqa: E501
+                    f"{REGISTRY_TYPES[self.name]}.register_module('{obj_type}', module={obj_cls.__name__}, force=True)"  # noqa: E501
                 )
 
 

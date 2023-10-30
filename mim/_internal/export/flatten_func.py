@@ -14,7 +14,7 @@ from mmengine.model import (
     ImgDataPreprocessor,
 )
 
-from .common import BUILDER_TRANS
+from .common import OBJECTS_TO_BE_PATCHED
 
 
 @dataclass
@@ -1041,12 +1041,12 @@ class ImportResolverTransformer(ast.NodeTransformer):
             # `mmpose.registry` and does not contain these aliases.
 
             # Therefore, we gather all registries with aliases under
-            # `mim.utils.mmpack.patch_utils` and hardcode the redirection
+            # `mim._internal.export.patch_utils` and hardcode the redirection
             # of import sources.
             if matched == 'MODELS':
-                node.module = 'mim.utils.mmpack.patch_utils.patch_model'
+                node.module = 'mim._internal.export.patch_utils.patch_model'
             elif matched == 'TASK_UTILS':
-                node.module = 'mim.utils.mmpack.patch_utils.patch_task'
+                node.module = 'mim._internal.export.patch_utils.patch_task'
             node.level = 0
             return node
 
@@ -1070,7 +1070,7 @@ class ImportResolverTransformer(ast.NodeTransformer):
 
     def _match_alias_registry(self, node) -> Optional[str]:
         match_patch_key = None
-        for key, list_value in BUILDER_TRANS.items():
+        for key, list_value in OBJECTS_TO_BE_PATCHED.items():
             for alias in node.names:
                 if alias.name in list_value:
                     match_patch_key = key
