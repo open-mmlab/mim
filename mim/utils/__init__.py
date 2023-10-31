@@ -4,6 +4,7 @@ from .default import (
     DEFAULT_MMCV_BASE_URL,
     DEFAULT_URL,
     MODULE2PKG,
+    OFFICIAL_MODULES,
     PKG2MODULE,
     PKG2PROJECT,
     RAW_GITHUB_URL,
@@ -90,4 +91,5 @@ __all__ = [
     'parse_home_page',
     'ensure_installation',
     'rich_progress_bar',
+    'OFFICIAL_MODULES',
 ]
