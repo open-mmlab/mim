@@ -90,10 +90,10 @@ def _postprocess_registry_locations(export_root_dir: str):
                             path = sub_node.value
                             if not osp.exists(
                                     osp.join(export_root_dir, path).replace(
-                                        '.', '/')):
+                                        '.', osp.sep)):
                                 print_log(
                                     '[ Pass ] Remove Registry.locations '
-                                    f"'{osp.join(export_root_dir, path).replace('.','/')}', "  # noqa: E501
+                                    f"'{osp.join(export_root_dir, path).replace('.',osp.sep)}', "  # noqa: E501
                                     'which is no need to export.',
                                     logger='export',
                                     level=logging.DEBUG)
@@ -474,7 +474,8 @@ def _export_module(self, obj_cls: type, pack_module_dir, obj_type: str):
         RegisterModuleTransformer().visit(top_ast_tree)
 
         # unparse ast tree and save reformat code
-        new_file_path = new_module.strip('pack.').replace('.', '/') + '.py'
+        new_file_path = new_module.split('.', 1)[1].replace('.',
+                                                            osp.sep) + '.py'
         new_file_path = osp.join(pack_module_dir, new_file_path)
         new_dir = osp.dirname(new_file_path)
         mkdir_or_exist(new_dir)
