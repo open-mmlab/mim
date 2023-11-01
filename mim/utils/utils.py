@@ -353,7 +353,7 @@ def get_npu_version() -> str:
                 'installing OpenMMLab projects on Ascend NPU.'
                 "Please run 'source set_env.sh' in the CANN installation path."
             ))
-    npu_version = torch_npu.get_cann_version(ascend_home_path)
+    npu_version = torch_npu.get_cann_version(ascend_home_path).lower()
     return npu_version
 
 

@@ -170,10 +170,6 @@ def get_mmcv_full_find_link(mmcv_base_url: str) -> str:
     if device == 'cuda' and device_v.isdigit():
         device_link = f'cu{device_v}'
     elif device == 'ascend':
-        if not device_v.isdigit():
-            exit_with_error('Unable to install OpenMMLab projects via mim '
-                            'on the current Ascend NPU, '
-                            'please compile from source code to install.')
         device_link = f'ascend{device_v}'
     else:
         device_link = 'cpu'

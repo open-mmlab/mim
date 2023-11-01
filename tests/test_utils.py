@@ -45,7 +45,6 @@ def test_get_torch_device_version():
     assert torch_v.replace('.', '').isdigit()
     if is_npu_available():
         assert device == 'ascend'
-        assert device_v.replace('.', '').isdigit()
 
 
 def teardown_module():
