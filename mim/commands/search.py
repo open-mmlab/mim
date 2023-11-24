@@ -336,7 +336,7 @@ def convert2df(metadata: ModelIndex) -> DataFrame:
             if isinstance(value, str):
                 parsed_data[name] = cast2lowercase(value)
             elif isinstance(value, (list, tuple)):
-                if isinstance(value[0], dict):
+                if value and isinstance(value[0], dict):
                     # inference time is a list of dict like List[dict]
                     # each item of inference time represents the environment
                     # where it is tested
